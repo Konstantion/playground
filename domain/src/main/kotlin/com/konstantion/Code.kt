@@ -1,0 +1,15 @@
+package com.konstantion
+
+interface Code<L, R> where L : Lang, R : Code.ReturnType {
+  fun code(): String
+
+  fun lang(): L
+
+  fun returnType(): R
+
+  sealed interface ReturnType {
+    data object BOOLEAN : ReturnType
+
+    data object STRING : ReturnType
+  }
+}
