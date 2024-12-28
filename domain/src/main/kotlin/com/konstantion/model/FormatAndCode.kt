@@ -1,4 +1,4 @@
-package com.konstantion
+package com.konstantion.model
 
 data class FormatAndCode(private val format: String, private val code: String) {
   init {

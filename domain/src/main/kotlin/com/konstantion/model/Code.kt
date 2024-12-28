@@ -1,4 +1,4 @@
-package com.konstantion
+package com.konstantion.model
 
 interface Code<L, R> where L : Lang, R : Code.ReturnType {
   fun code(): String
@@ -8,8 +8,8 @@ interface Code<L, R> where L : Lang, R : Code.ReturnType {
   fun returnType(): R
 
   sealed interface ReturnType {
-    data object BOOLEAN : ReturnType
+    data object BOOL : ReturnType
 
-    data object STRING : ReturnType
+    data object STR : ReturnType
   }
 }

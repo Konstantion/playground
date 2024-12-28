@@ -9,22 +9,21 @@ object ImagePuller {
   @JvmStatic
   @Throws(InterruptedException::class)
   fun DockerClient.pull(
-      image: Image,
-      timeout: Duration = Duration.ofMillis(Long.MAX_VALUE),
+    image: Image,
+    timeout: Duration = Duration.ofMillis(Long.MAX_VALUE),
   ): Either<Throwable, Boolean> =
-      try {
-        Either.right(
-            pullImageCmd(image.name)
-                .start()
-                .awaitCompletion(timeout.toMillis(), TimeUnit.MILLISECONDS))
-      } catch (error: Throwable) {
-        Either.left(error)
-      }
+    try {
+      Either.right(
+        pullImageCmd(image.name).start().awaitCompletion(timeout.toMillis(), TimeUnit.MILLISECONDS)
+      )
+    } catch (error: Throwable) {
+      Either.left(error)
+    }
 
   @JvmStatic
   @Throws(InterruptedException::class)
   fun pull(
-      image: Image,
-      timeout: Duration = Duration.ofMillis(Long.MAX_VALUE),
+    image: Image,
+    timeout: Duration = Duration.ofMillis(Long.MAX_VALUE),
   ): Either<Throwable, Boolean> = DockerClientBuilder.getInstance().build().pull(image, timeout)
 }

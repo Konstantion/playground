@@ -23,7 +23,7 @@ class CommonPlugin : Plugin<Project> {
 }
 
 class SpringPlugin : Plugin<Project> {
-    override fun apply(target: Project) : Unit = with(target) {
+    override fun apply(target: Project): Unit = with(target) {
         common()
 
         plugins.apply("org.springframework.boot")
@@ -76,8 +76,8 @@ private fun Project.common() {
             ext.googleJavaFormat()
         }
         kotlin { ext ->
+            ext.ktfmt("0.42").googleStyle()
             ext.lineEndings = LineEnding.PLATFORM_NATIVE
-            ext.ktfmt()
         }
     }
 

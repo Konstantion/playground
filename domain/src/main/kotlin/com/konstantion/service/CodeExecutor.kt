@@ -1,5 +1,8 @@
-package com.konstantion
+package com.konstantion.service
 
+import com.konstantion.Either
+import com.konstantion.model.Code
+import com.konstantion.model.Lang
 import kotlin.jvm.Throws
 
 interface CodeExecutor<Id, L> where Id : Any, L : Lang {
