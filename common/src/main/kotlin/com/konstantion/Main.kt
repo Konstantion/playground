@@ -17,6 +17,7 @@ fun pythonTest() {
   val placeholders: LinkedList<PlaceholderLabel> = LinkedList()
   placeholders += PlaceholderLabel(PlaceholderIdentifier.P_1, "a")
   placeholders += PlaceholderLabel(PlaceholderIdentifier.P_2, "b")
+  placeholders += PlaceholderLabel(PlaceholderIdentifier.P_2, "c")
   placeholders += PlaceholderLabel(PlaceholderIdentifier.P_3, "w")
   val definitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>> =
     mapOf(

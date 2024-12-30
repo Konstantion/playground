@@ -6,7 +6,7 @@ includeBuild("common-plugin")
 include("container")
 include("std")
 include("web-app")
-include("domain")
+include("common")
 include("internal")
 
 dependencyResolutionManagement {

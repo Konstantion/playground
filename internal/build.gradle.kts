@@ -5,6 +5,5 @@ plugins {
 
 
 dependencies {
-    implementation(project(":std"))
-    implementation(project(":domain"))
+    implementation(project(":common"))
 }
