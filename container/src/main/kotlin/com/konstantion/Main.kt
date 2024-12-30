@@ -16,7 +16,7 @@ def userfunction(a, b, w):
 	a *= 3
 	result = c - a
 	return str(result) + w
-	
+
 
 if __name__ == "__main__":
 		print(userfunction(a, b, w))

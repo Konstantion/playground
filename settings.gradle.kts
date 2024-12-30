@@ -7,6 +7,7 @@ include("container")
 include("std")
 include("web-app")
 include("domain")
+include("internal")
 
 dependencyResolutionManagement {
     versionCatalogs {

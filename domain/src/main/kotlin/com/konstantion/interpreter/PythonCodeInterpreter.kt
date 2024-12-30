@@ -9,10 +9,10 @@ import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
 import com.konstantion.model.PlaceholderValue
 import java.util.LinkedList
+import jdk.javadoc.internal.doclets.formats.html.markup.Text.NL
 
 private val SUPPORTED_VALUE_TYPES: Set<Class<out PlaceholderValue>> =
   setOf(PlaceholderValue.Num.I32::class.java, PlaceholderValue.Str::class.java)
-private const val NL: String = "\n"
 
 object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
   override fun <R : Code.ReturnType> toExecutableCode(
