@@ -8,6 +8,7 @@ include("std")
 include("web-app")
 include("common")
 include("internal")
+include("sandbox")
 
 dependencyResolutionManagement {
     versionCatalogs {
