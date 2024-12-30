@@ -6,4 +6,5 @@ plugins {
 
 dependencies {
     api(project(":std"))
+    implementation(libs.slf4j)
 }
