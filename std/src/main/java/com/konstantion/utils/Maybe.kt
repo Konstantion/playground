@@ -1,4 +1,4 @@
-package com.konstantion
+package com.konstantion.utils
 
 import java.util.Optional
 import java.util.function.Consumer

@@ -7,6 +7,7 @@ import com.konstantion.model.PlaceholderDefinition
 import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
 import com.konstantion.model.PlaceholderValue
+import com.konstantion.utils.Either
 import java.util.LinkedList
 
 fun main() {

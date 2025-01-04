@@ -2,6 +2,7 @@ package com.konstantion
 
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.core.DockerClientBuilder
+import com.konstantion.utils.Either
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 

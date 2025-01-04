@@ -1,13 +1,13 @@
 package com.konstantion.interpreter
 
-import com.konstantion.Either
-import com.konstantion.Maybe
 import com.konstantion.model.Code
 import com.konstantion.model.Lang
 import com.konstantion.model.PlaceholderDefinition
 import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
 import com.konstantion.model.PlaceholderValue
+import com.konstantion.utils.Either
+import com.konstantion.utils.Maybe
 import java.util.LinkedList
 
 private val SUPPORTED_VALUE_TYPES: Set<Class<out PlaceholderValue>> =
@@ -18,7 +18,7 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
     code: Code<Lang.Python, R>,
     callArgs: LinkedList<PlaceholderLabel>,
     placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>
-  ): Either<GeneratorIssue, String> {
+  ): Either<InterpreterIssue, String> {
     val codeBuilder: StringBuilder = StringBuilder()
 
     when (val maybeIssue = codeBuilder.initVariables(callArgs, placeholderDefinitions)) {
@@ -34,23 +34,23 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
   private fun StringBuilder.initVariables(
     callArgs: LinkedList<PlaceholderLabel>,
     placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>
-  ): Maybe<GeneratorIssue.VariablesIssue> {
+  ): Maybe<InterpreterIssue.Variables> {
     if (callArgs.toSet().size != callArgs.size) {
-      return Maybe.just(GeneratorIssue.VariablesIssue("variable names should be unique."))
+      return Maybe.just(InterpreterIssue.Variables("variable names should be unique."))
     }
 
     for (placeholder in callArgs) {
       val definition =
         placeholderDefinitions[placeholder.identifier]
           ?: return Maybe.just(
-            GeneratorIssue.VariablesIssue("variable definition missing for $placeholder")
+            InterpreterIssue.Variables("variable definition missing for $placeholder")
           )
 
       val value: PlaceholderValue = definition.value()
 
       if (value.javaClass !in SUPPORTED_VALUE_TYPES) {
         return Maybe.just(
-          GeneratorIssue.VariablesIssue("unsupported variable type ${value.javaClass}")
+          InterpreterIssue.Variables("unsupported variable type ${value.javaClass}")
         )
       }
 

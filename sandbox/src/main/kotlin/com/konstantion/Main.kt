@@ -1,5 +1,6 @@
 package com.konstantion
 
+import com.konstantion.utils.Either
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

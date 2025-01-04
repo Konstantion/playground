@@ -1,4 +1,4 @@
-package com.konstantion;
+package com.konstantion.utils;
 
 public interface CheckedFunction1<I, O, E extends Exception> {
   O apply(I input) throws E;
