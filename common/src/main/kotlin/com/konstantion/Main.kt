@@ -27,8 +27,8 @@ fun pythonTest() {
       PlaceholderIdentifier.P_3 to PlaceholderDefinition.Value(PlaceholderValue.Str("haha"))
     )
 
-  val code: Code<Lang.Python, Code.ReturnType.STR> =
-    object : Code<Lang.Python, Code.ReturnType.STR> {
+  val code =
+    object : Code<Lang.Python, Code.Output.Str> {
       override fun code(): String {
         return """
                     c = b * a
@@ -44,8 +44,8 @@ fun pythonTest() {
         return Lang.Python
       }
 
-      override fun returnType(): Code.ReturnType.STR {
-        return Code.ReturnType.STR
+      override fun outputType(): Class<Code.Output.Str> {
+        return Code.Output.Str::class.java
       }
     }
 

@@ -14,7 +14,7 @@ private val SUPPORTED_VALUE_TYPES: Set<Class<out PlaceholderValue>> =
   setOf(PlaceholderValue.Num.I32::class.java, PlaceholderValue.Str::class.java)
 
 object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
-  override fun <R : Code.ReturnType> toExecutableCode(
+  override fun <R : Code.Output> toExecutableCode(
     code: Code<Lang.Python, R>,
     callArgs: LinkedList<PlaceholderLabel>,
     placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>
@@ -65,7 +65,7 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
   private fun <R> StringBuilder.initFunction(
     callArgs: LinkedList<PlaceholderLabel>,
     code: Code<Lang.Python, R>
-  ) where R : Code.ReturnType {
+  ) where R : Code.Output {
     this.append("def $USER_FUNCTION_NAME(")
     val argsLine = callArgs.joinToString(", ") { label -> label.name }
     this.append("$argsLine):$NL")

@@ -1,15 +1,29 @@
 package com.konstantion.model
 
-interface Code<L, R> where L : Lang, R : Code.ReturnType {
+import com.konstantion.lang.Unreachable
+
+interface Code<L, O> where L : Lang, O : Code.Output {
   fun code(): String
 
   fun lang(): L
 
-  fun returnType(): R
+  fun outputType(): Class<O>
 
-  sealed interface ReturnType {
-    data object BOOL : ReturnType
+  sealed interface Output {
+    data class Bool(val value: Boolean) : Output
 
-    data object STR : ReturnType
+    data class Str(val value: String) : Output
+
+    data object Parser {
+      @Suppress("UNCHECKED_CAST")
+      fun <O> parse(outputType: Class<O>, rawOutput: List<String>): O where O : Output {
+        return when {
+          outputType.isAssignableFrom(Bool::class.java) -> Bool(true)
+          outputType.isAssignableFrom(Str::class.java) -> Str(rawOutput.joinToString())
+          else -> throw Unreachable("All return types should be handled.")
+        }
+          as O
+      }
+    }
   }
 }

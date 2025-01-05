@@ -12,34 +12,30 @@ import java.util.LinkedList
 
 @JvmInline value class TaskId(val value: Long)
 
-@JvmInline value class Output(val value: String)
-
 interface CodeExecutor<Id, L> where Id : Any, L : Lang {
-  fun <R> submit(
+  fun <O> submit(
     groupId: Id,
-    code: Code<L, R>,
+    code: Code<L, O>,
     callArgs: LinkedList<PlaceholderLabel>,
     placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>
-  ): Task<R> where R : Code.ReturnType
+  ): Task<O> where O : Code.Output
 
-  fun <R> subscribe(groupId: Id, listener: Listener<Id, R>) where R : Code.ReturnType
+  fun subscribe(groupId: Id, listener: Listener<Id>)
 
-  fun unsubscribe(groupId: Id, listener: Listener<Id, *>)
+  fun unsubscribe(groupId: Id, listener: Listener<Id>)
 
-  interface Task<R> where R : Code.ReturnType {
+  interface Task<O> where O : Code.Output {
     fun id(): TaskId
 
-    fun returnType(): R
+    fun outputType(): Class<O>
 
-    @Throws(InterruptedException::class) fun get(): Either<Issue, Output>
+    @Throws(InterruptedException::class) fun get(): Either<Issue, O>
   }
 
-  interface Listener<Id, R> where Id : Any, R : Code.ReturnType {
-    fun onSuccess(groupId: Id, taskId: TaskId, success: Output)
+  interface Listener<Id> where Id : Any {
+    fun onSuccess(groupId: Id, taskId: TaskId, output: Code.Output)
 
     fun onError(groupId: Id, taskId: TaskId, issue: Issue)
-
-    fun returnType(): R
   }
 
   sealed interface Issue {

@@ -13,7 +13,7 @@ interface CodeInterpreter<L> where L : Lang {
     code: Code<L, R>,
     callArgs: LinkedList<PlaceholderLabel>,
     placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>
-  ): Either<InterpreterIssue, String> where R : Code.ReturnType
+  ): Either<InterpreterIssue, String> where R : Code.Output
 }
 
 sealed interface InterpreterIssue {
