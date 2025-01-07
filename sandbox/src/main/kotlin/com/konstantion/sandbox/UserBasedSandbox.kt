@@ -14,14 +14,19 @@ import com.konstantion.service.CodeExecutor.Issue
 import com.konstantion.service.CodeExecutor.Listener
 import com.konstantion.service.CodeExecutor.Task
 import com.konstantion.service.TaskId
+import com.konstantion.storage.FileType
+import com.konstantion.storage.TempFileStorage
 import com.konstantion.utils.CmdHelper
 import com.konstantion.utils.Either
 import com.konstantion.utils.IdGenerator
+import com.konstantion.utils.UlimitHelper.ExitCode
+import com.konstantion.utils.closeForcefully
 import com.konstantion.utils.schedule
 import com.konstantion.utils.shrink
 import java.io.IOException
+import java.nio.file.Path
 import java.time.Duration
-import java.util.LinkedList
+import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
@@ -31,26 +36,38 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
+import java.util.stream.Collectors
 import org.slf4j.Logger
 
 @JvmInline value class GroupId(val value: Long)
 
 private val NOTIFICATION_DELAY: Duration = Duration.ofMillis(5)
+private val EXTERNAL_SHUTDOWN_TIMEOUT: Duration = Duration.ofSeconds(30)
 private const val SCHEDULER_POOL_SIZE: Int = 2
 
 class UserBasedSandbox<L>(
   logs: Logs,
+  private val lang: L,
   private val username: String,
   private val cmdHelper: CmdHelper<L>,
   private val interpreter: CodeInterpreter<L>,
   private val config: SandboxConfig = SandboxConfig.DEFAULT,
-  private val executor: ExecutorService = Executors.newSingleThreadExecutor(),
+  private val executor: ExecutorService =
+    Executors.newSingleThreadExecutor(
+      Thread.ofPlatform().name("user-based-executor-", 0).factory()
+    ),
 ) : CodeExecutor<GroupId, L> where L : Lang {
   private val log: Logger = logs.forService(javaClass)
+  private val fileStorage: TempFileStorage<TaskId> =
+    TempFileStorage("user_based_sandbox_${username}_$lang")
   private val listenersHelper: ListenersHelper<GroupId> = ListenersHelper()
   private val tasks: MutableMap<GroupId, MutableSet<Task<*>>> = ConcurrentHashMap()
+  private val shutdownAfter: Duration = config.cpuTime.plus(EXTERNAL_SHUTDOWN_TIMEOUT)
   private val scheduler: ScheduledExecutorService =
-    Executors.newScheduledThreadPool(SCHEDULER_POOL_SIZE)
+    Executors.newScheduledThreadPool(
+      SCHEDULER_POOL_SIZE,
+      Thread.ofPlatform().name("user-based-scheduler-", 0).factory()
+    )
   private val taskIdGen: IdGenerator<TaskId> =
     IdGenerator.AtomicLong(System.currentTimeMillis()).andThen(::TaskId)
 
@@ -73,18 +90,26 @@ class UserBasedSandbox<L>(
 
         notifyListenersOfError(groupId, taskId, issue)
 
-        object : Task<O> {
-          override fun id(): TaskId = taskId
-
-          override fun outputType(): Class<O> = code.outputType()
-
-          override fun get(): Either<Issue, O> = Either.Left(issue)
-        }
+        failedTask(taskId, issue, code.outputType())
       }
       is Either.Right -> {
-        val cmd: List<String> = cmdHelper.create(result.value)
+        val path: Path =
+          when (val fileResult = fileStorage.save(taskId, result.value, FileType.of(lang))) {
+            is Either.Left -> {
+              val issue = Issue.Io(fileResult.value)
+              log.debug(
+                "Failed to write code to file taskId={}, issue={}. Notifying listeners.",
+                taskId,
+                issue
+              )
+              notifyListenersOfError(groupId, taskId, issue)
+              return failedTask(taskId, issue, code.outputType())
+            }
+            is Either.Right -> fileResult.value
+          }
 
-        log.debug("Submitting to executor taskId={}, cmd={}.", taskId, cmd.joinToString().shrink())
+        val cmd = withLimitations(cmdHelper.build(path.toAbsolutePath().toString()))
+        log.debug("Submitting to executor taskId={}, path={}, cmd={}.", taskId, path, cmd)
 
         val cancelerTask =
           object {
@@ -99,8 +124,27 @@ class UserBasedSandbox<L>(
                   process = ProcessBuilder(cmd).start()
                   val exitCode = process.waitFor()
                   if (exitCode != 0) {
-                    log.debug("Process for taskId={} exited with unexpected code={}.", taskId, code)
-                    Either.left(Issue.UnexpectedCode(exitCode))
+                    log.debug(
+                      "Process for taskId={} exited with unexpected code={}.",
+                      taskId,
+                      exitCode
+                    )
+                    val issue =
+                      when (ExitCode.parse(exitCode)) {
+                        ExitCode.SigCpu -> Issue.CpuTimeExceeded
+                        ExitCode.SigKill -> Issue.Killed
+                        ExitCode.SigSegv -> Issue.MemoryViolation
+                        is ExitCode.Unknown -> {
+                          val stderr: String? =
+                            try {
+                              process.errorReader().lines().collect(Collectors.joining())
+                            } catch (_: IOException) {
+                              null
+                            }
+                          Issue.UnexpectedCode(exitCode, stderr)
+                        }
+                      }
+                    Either.left(issue)
                   } else {
                     val output = process.inputReader().lines().toList()
                     log.debug(
@@ -164,7 +208,7 @@ class UserBasedSandbox<L>(
           }
 
         cancelerTask.deref =
-          scheduler.schedule(config.executionTime) {
+          scheduler.schedule(shutdownAfter) {
             log.debug("Canceling taskId={}, because of timeout.", taskId)
             task.cancel(true)
           }
@@ -211,10 +255,42 @@ class UserBasedSandbox<L>(
     }
   }
 
+  private fun withLimitations(cmd: List<String>): List<String> {
+    val memoryKb = config.memoryLimitKb
+    val cpuSeconds = config.cpuTime.toSeconds()
+    check(cpuSeconds > 0) { "cpu seconds should be greater than 0." }
+
+    val joinedCmd = cmd.joinToString(" ")
+
+    val bashScript = buildString {
+      append("ulimit -v $memoryKb; ")
+      append("ulimit -t $cpuSeconds; ")
+      append(joinedCmd)
+    }
+
+    return listOf("bash", "-c", bashScript)
+  }
+
   private fun tasks(groupId: GroupId): MutableSet<Task<*>> =
     tasks.computeIfAbsent(groupId) { ConcurrentHashMap.newKeySet() }
 
+  private fun <O> failedTask(taskId: TaskId, issue: Issue, outputType: Class<O>): Task<O> where
+  O : Output {
+    return object : Task<O> {
+      override fun id(): TaskId = taskId
+
+      override fun outputType(): Class<O> = outputType
+
+      override fun get(): Either<Issue, O> = Either.left(issue)
+    }
+  }
+
   override fun toString(): String {
     return "UserBasedSandbox[username=$username]"
+  }
+
+  override fun close() {
+    executor.closeForcefully()
+    scheduler.closeForcefully()
   }
 }

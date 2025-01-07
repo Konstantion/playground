@@ -1,6 +1,6 @@
 package com.konstantion.utils
 
-import java.util.Optional
+import java.util.*
 import java.util.function.Consumer
 
 sealed interface Maybe<out T> {

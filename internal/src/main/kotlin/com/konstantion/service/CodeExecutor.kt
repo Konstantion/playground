@@ -8,11 +8,14 @@ import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
 import com.konstantion.utils.Either
 import java.io.IOException
-import java.util.LinkedList
+import java.util.*
 
-@JvmInline value class TaskId(val value: Long)
+@JvmInline
+value class TaskId(private val value: Long) {
+  override fun toString(): String = value.toString()
+}
 
-interface CodeExecutor<Id, L> where Id : Any, L : Lang {
+interface CodeExecutor<Id, L> : AutoCloseable where Id : Any, L : Lang {
   fun <O> submit(
     groupId: Id,
     code: Code<L, O>,
@@ -42,7 +45,10 @@ interface CodeExecutor<Id, L> where Id : Any, L : Lang {
     data class Interpretation(val cause: InterpreterIssue) : Issue
     data class Unknown(val description: String, val reason: Throwable? = null) : Issue
     data class Io(val cause: IOException) : Issue
-    data class UnexpectedCode(val code: Int) : Issue
+    data class UnexpectedCode(val code: Int, val stderr: String? = null) : Issue
+    data object Killed : Issue
+    data object MemoryViolation : Issue
+    data object CpuTimeExceeded : Issue
     data object Canceled : Issue
   }
 }

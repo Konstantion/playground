@@ -8,7 +8,7 @@ import com.konstantion.model.PlaceholderLabel
 import com.konstantion.model.PlaceholderValue
 import com.konstantion.utils.Either
 import com.konstantion.utils.Maybe
-import java.util.LinkedList
+import java.util.*
 
 private val SUPPORTED_VALUE_TYPES: Set<Class<out PlaceholderValue>> =
   setOf(PlaceholderValue.Num.I32::class.java, PlaceholderValue.Str::class.java)

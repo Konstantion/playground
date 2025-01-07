@@ -9,13 +9,15 @@ import com.konstantion.model.PlaceholderDefinition.RandomOneOf
 import com.konstantion.model.PlaceholderDefinition.Value
 import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
-import com.konstantion.model.PlaceholderValue.*
+import com.konstantion.model.PlaceholderValue.Num
+import com.konstantion.model.PlaceholderValue.Str
 import com.konstantion.sandbox.GroupId
 import com.konstantion.sandbox.UserBasedSandbox
 import com.konstantion.service.CodeExecutor
 import com.konstantion.service.TaskId
 import com.konstantion.utils.CmdHelper
-import java.util.LinkedList
+import java.util.*
+import java.util.concurrent.CountDownLatch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -23,22 +25,33 @@ fun main() {
   val log: Logger = LoggerFactory.getLogger("main")
   val groupId = GroupId(10L)
 
+  val latch = CountDownLatch(1)
   val sandbox: CodeExecutor<GroupId, Lang.Python> =
-    UserBasedSandbox(LoggerFactory::getLogger, "", CmdHelper.Python3, PythonCodeInterpreter)
+    UserBasedSandbox(
+      LoggerFactory::getLogger,
+      Lang.Python,
+      "kostia",
+      CmdHelper.Python3File,
+      PythonCodeInterpreter
+    )
   sandbox.subscribe(
     groupId,
     object : CodeExecutor.Listener<GroupId> {
       override fun onSuccess(groupId: GroupId, taskId: TaskId, output: Code.Output) {
         log.info("Success groupId={}, taskId={}, output={}.", groupId, taskId, output)
+        latch.countDown()
       }
 
       override fun onError(groupId: GroupId, taskId: TaskId, issue: CodeExecutor.Issue) {
         log.info("Error groupId={}, taskId={}, issue={}.", groupId, taskId, issue)
+        latch.countDown()
       }
     }
   )
 
   sandboxTest(sandbox, groupId)
+  latch.await()
+  sandbox.close()
 }
 
 fun sandboxTest(sandbox: CodeExecutor<GroupId, Lang.Python>, groupId: GroupId) {
@@ -60,6 +73,8 @@ fun sandboxTest(sandbox: CodeExecutor<GroupId, Lang.Python>, groupId: GroupId) {
         return """
                     c = x * y
                     z *= 3
+                    while True:
+                      pass
                     result = c - z
                     return str(result) + d
                 
@@ -76,7 +91,5 @@ fun sandboxTest(sandbox: CodeExecutor<GroupId, Lang.Python>, groupId: GroupId) {
       }
     }
 
-  for (i in 0..10) {
-    sandbox.submit(groupId, code, placeholders, definitions)
-  }
+  sandbox.submit(groupId, code, placeholders, definitions)
 }
