@@ -34,7 +34,7 @@ class UserBasedSandboxTest {
     val sandbox = sandbox()
     val (placeholders, definitions) = placeholdersAndDefinitions()
     val code =
-      code(
+      codeStr(
         """
                 c = x * y
                 z *= 3
@@ -72,7 +72,7 @@ class UserBasedSandboxTest {
     val (placeholders, definitions) = placeholdersAndDefinitions()
 
     val code =
-      code(
+      codeStr(
         """
         large_data = []
         while True:
@@ -99,15 +99,51 @@ class UserBasedSandboxTest {
   }
 
   @Test
+  fun shouldFailToParse() {
+    val latch = CountDownLatch(1)
+    val sandbox = sandbox()
+    val (placeholders, definitions) = placeholdersAndDefinitions()
+
+    val code =
+      codeBool(
+        """
+        c = x * y
+        z *= 2
+        result = c + z
+        return str(result) + d
+        """
+          .trimIndent()
+      )
+
+    sandbox.subscribe(groupId, listener(latch, log))
+
+    val task = sandbox.submit(groupId, code, placeholders, definitions)
+
+    latch.await()
+    sandbox.close()
+
+    when (val result = task.get()) {
+      is Either.Left -> {
+        if (result.value !is CodeExecutor.Issue.Parse) {
+          fail("task should fail because of parsing, got ${result.value}.")
+        }
+
+        log.info("Failed to parse successfully {}.", result.value)
+      }
+      is Either.Right -> {
+        fail("Test should fail to parse, but got success: ${result.value}")
+      }
+    }
+  }
+
+  @Test
   fun shouldReturnSuccessfully() {
     val latch = CountDownLatch(1)
     val sandbox = sandbox()
     val (placeholders, definitions) = placeholdersAndDefinitions()
 
-    // A simple code snippet that does some small calculation and returns a result.
-    // This should not exceed CPU or memory limits and should succeed.
     val code =
-      code(
+      codeStr(
         """
         c = x * y
         z *= 2
@@ -148,7 +184,21 @@ class UserBasedSandboxTest {
     }
   }
 
-  private fun code(rawCode: String): Code<Lang.Python, Code.Output.Str> {
+  private fun codeBool(rawCode: String): Code<Lang.Python, Code.Output.Bool> {
+    return object : Code<Lang.Python, Code.Output.Bool> {
+      override fun code(): String = rawCode
+
+      override fun lang(): Lang.Python {
+        return Lang.Python
+      }
+
+      override fun outputType(): Class<Code.Output.Bool> {
+        return Code.Output.Bool::class.java
+      }
+    }
+  }
+
+  private fun codeStr(rawCode: String): Code<Lang.Python, Code.Output.Str> {
     return object : Code<Lang.Python, Code.Output.Str> {
       override fun code(): String = rawCode
 

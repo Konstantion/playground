@@ -140,6 +140,14 @@ class UserBasedSandbox<L>(
                     )
                     Either.right(Output.Parser.parse(code.outputType(), output))
                   }
+                } catch (parseError: Output.ParserException) {
+                  log.debug(
+                    "Task groupId={}, taskId={}, failed to parse message={}.",
+                    groupId,
+                    taskId,
+                    parseError.message
+                  )
+                  Either.left(Issue.Parse(parseError.message))
                 } catch (_: InterruptedException) {
                   log.debug("Task groupId={}, taskId={} was interrupted.", groupId, taskId)
                   process?.destroyForcibly()

@@ -45,6 +45,7 @@ interface CodeExecutor<Id, L> : AutoCloseable where Id : Any, L : Lang {
     data class Interpretation(val cause: InterpreterIssue) : Issue
     data class Unknown(val description: String, val reason: Throwable? = null) : Issue
     data class Io(val cause: IOException) : Issue
+    data class Parse(val description: String) : Issue
     data class UnexpectedCode(val code: Int, val stderr: String? = null) : Issue
     data object Killed : Issue
     data object MemoryViolation : Issue
