@@ -1,6 +1,6 @@
 package com.konstantion.interpreter
 
-import com.konstantion.Maybe
+import com.konstantion.utils.Maybe
 
 interface VariableNameSupport {
   fun nextName(): Maybe<String>

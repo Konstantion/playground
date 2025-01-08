@@ -1,0 +1,13 @@
+<Configuration>
+    <Appenders>
+        <Console name="ConsoleAppender" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS(zzz)} %p [%t] %c -- %m%n"/>
+        </Console>
+    </Appenders>
+
+    <Loggers>
+        <Root level="ALL" additivity="false">
+            <AppenderRef ref="ConsoleAppender"/>
+        </Root>
+    </Loggers>
+</Configuration>

@@ -1,4 +1,4 @@
-package com.konstantion;
+package com.konstantion.utils;
 
 import java.util.function.Function;
 

@@ -8,7 +8,7 @@ data class Question<L>(
   private val formatAndCode: FormatAndCode,
   private val placeholderDefinitions: Map<PlaceholderLabel, PlaceholderDefinition<*>>,
   private val callArgs: LinkedList<PlaceholderLabel>,
-  private val additionalCheck: Code<L, Code.ReturnType.BOOL>? = null,
+  private val additionalCheck: Code<L, Code.Output.Bool>? = null,
   private val correctVariant: Variant.Correct<L>,
   private val incorrectVariants: List<Variant.Incorrect<L>>,
 ) where L : Lang {
@@ -22,12 +22,12 @@ data class Question<L>(
 
     data class Correct<L>(
       override val id: UUID = UUID.randomUUID(),
-      private val code: Code<L, Code.ReturnType.STR>
+      private val code: Code<L, Code.Output.Str>
     ) : Variant<L> where L : Lang
 
     data class Incorrect<L>(
       override val id: UUID = UUID.randomUUID(),
-      private val code: Code<L, Code.ReturnType.STR>
+      private val code: Code<L, Code.Output.Str>
     ) : Variant<L> where L : Lang
   }
 }

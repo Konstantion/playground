@@ -1,26 +1,55 @@
 package com.konstantion.service
 
-import com.konstantion.Either
+import com.konstantion.interpreter.InterpreterIssue
 import com.konstantion.model.Code
 import com.konstantion.model.Lang
-import kotlin.jvm.Throws
+import com.konstantion.model.PlaceholderDefinition
+import com.konstantion.model.PlaceholderIdentifier
+import com.konstantion.model.PlaceholderLabel
+import com.konstantion.utils.Either
+import java.io.IOException
+import java.util.*
 
-interface CodeExecutor<Id, L> where Id : Any, L : Lang {
-  fun <R> submit(groupId: Id, code: Code<L, R>): Task<R> where R : Code.ReturnType
+@JvmInline
+value class TaskId(private val value: Long) {
+  override fun toString(): String = value.toString()
+}
 
-  fun <R> subscribe(groupId: Id, listener: Listener<Id, R>) where R : Code.ReturnType
+interface CodeExecutor<Id, L> : AutoCloseable where Id : Any, L : Lang {
+  fun <O> submit(
+    groupId: Id,
+    code: Code<L, O>,
+    callArgs: LinkedList<PlaceholderLabel>,
+    placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>
+  ): Task<O> where O : Code.Output
 
-  fun unsubscribe(groupId: Id, listener: Listener<Id, *>)
+  fun subscribe(groupId: Id, listener: Listener<Id>)
 
-  interface Task<R> where R : Code.ReturnType {
-    fun id(): Long
+  fun unsubscribe(groupId: Id, listener: Listener<Id>)
 
-    @Throws(InterruptedException::class) fun get(): Either<Throwable, R>
+  interface Task<O> where O : Code.Output {
+    fun id(): TaskId
+
+    fun outputType(): Class<O>
+
+    @Throws(InterruptedException::class) fun get(): Either<Issue, O>
   }
 
-  interface Listener<Id, R> where Id : Any, R : Code.ReturnType {
-    fun onSuccess(groupId: Id, taskId: Long, success: R)
+  interface Listener<Id> where Id : Any {
+    fun onSuccess(groupId: Id, taskId: TaskId, output: Code.Output)
 
-    fun onError(groupId: Id, taskId: Long, error: Throwable)
+    fun onError(groupId: Id, taskId: TaskId, issue: Issue)
+  }
+
+  sealed interface Issue {
+    data class Interpretation(val cause: InterpreterIssue) : Issue
+    data class Unknown(val description: String, val reason: Throwable? = null) : Issue
+    data class Io(val cause: IOException) : Issue
+    data class Parse(val description: String) : Issue
+    data class UnexpectedCode(val code: Int, val stderr: String? = null) : Issue
+    data object Killed : Issue
+    data object MemoryViolation : Issue
+    data object CpuTimeExceeded : Issue
+    data object Canceled : Issue
   }
 }
