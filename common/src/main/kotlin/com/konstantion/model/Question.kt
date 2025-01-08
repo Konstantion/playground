@@ -1,6 +1,7 @@
 package com.konstantion.model
 
-import java.util.*
+import java.util.LinkedList
+import java.util.UUID
 
 data class Question<L>(
   private val title: String,

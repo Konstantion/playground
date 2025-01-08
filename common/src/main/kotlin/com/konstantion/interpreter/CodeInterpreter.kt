@@ -6,7 +6,7 @@ import com.konstantion.model.PlaceholderDefinition
 import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
 import com.konstantion.utils.Either
-import java.util.*
+import java.util.LinkedList
 
 interface CodeInterpreter<L> where L : Lang {
   fun <R> toExecutableCode(
