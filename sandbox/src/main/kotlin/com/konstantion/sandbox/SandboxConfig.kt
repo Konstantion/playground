@@ -1,5 +1,7 @@
 package com.konstantion.sandbox
 
+import com.konstantion.utils.MemoryMeasure
+import com.konstantion.utils.MemoryUtils
 import java.time.Duration
 
 data class SandboxConfig(
@@ -7,6 +9,10 @@ data class SandboxConfig(
   val memoryLimitKb: Long,
 ) {
   companion object {
-    val DEFAULT = SandboxConfig(Duration.ofSeconds(2), 500 * 1024 * 10)
+    val DEFAULT =
+      SandboxConfig(
+        Duration.ofSeconds(2),
+        MemoryUtils.convert(50, MemoryMeasure.Megabytes, MemoryMeasure.Kilobytes)
+      )
   }
 }

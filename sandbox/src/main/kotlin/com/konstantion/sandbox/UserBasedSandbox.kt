@@ -19,6 +19,7 @@ import com.konstantion.storage.TempFileStorage
 import com.konstantion.utils.CmdHelper
 import com.konstantion.utils.Either
 import com.konstantion.utils.IdGenerator
+import com.konstantion.utils.UlimitHelper
 import com.konstantion.utils.UlimitHelper.ExitCode
 import com.konstantion.utils.closeForcefully
 import com.konstantion.utils.schedule
@@ -42,6 +43,7 @@ import org.slf4j.Logger
 @JvmInline value class GroupId(val value: Long)
 
 private val NOTIFICATION_DELAY: Duration = Duration.ofMillis(5)
+private val CPU_TIME_THRESHOLD: Duration = Duration.ofMillis(30)
 private val EXTERNAL_SHUTDOWN_TIMEOUT: Duration = Duration.ofSeconds(30)
 private const val SCHEDULER_POOL_SIZE: Int = 2
 
@@ -53,9 +55,7 @@ class UserBasedSandbox<L>(
   private val interpreter: CodeInterpreter<L>,
   private val config: SandboxConfig = SandboxConfig.DEFAULT,
   private val executor: ExecutorService =
-    Executors.newSingleThreadExecutor(
-      Thread.ofPlatform().name("user-based-executor-", 0).factory()
-    ),
+    Executors.newCachedThreadPool(Thread.ofPlatform().name("user-based-executor-", 0).factory()),
 ) : CodeExecutor<GroupId, L> where L : Lang {
   private val log: Logger = logs.forService(javaClass)
   private val fileStorage: TempFileStorage<TaskId> =
@@ -122,6 +122,7 @@ class UserBasedSandbox<L>(
               val taskResult: Either<Issue, O> =
                 try {
                   process = ProcessBuilder(cmd).start()
+                  val start: Long = System.nanoTime()
                   val exitCode = process.waitFor()
                   if (exitCode != 0) {
                     log.debug(
@@ -129,22 +130,7 @@ class UserBasedSandbox<L>(
                       taskId,
                       exitCode
                     )
-                    val issue =
-                      when (ExitCode.parse(exitCode)) {
-                        ExitCode.SigCpu -> Issue.CpuTimeExceeded
-                        ExitCode.SigKill -> Issue.Killed
-                        ExitCode.SigSegv -> Issue.MemoryViolation
-                        is ExitCode.Unknown -> {
-                          val stderr: String? =
-                            try {
-                              process.errorReader().lines().collect(Collectors.joining())
-                            } catch (_: IOException) {
-                              null
-                            }
-                          Issue.UnexpectedCode(exitCode, stderr)
-                        }
-                      }
-                    Either.left(issue)
+                    Either.left(parseIssue(exitCode, start, process))
                   } else {
                     val output = process.inputReader().lines().toList()
                     log.debug(
@@ -263,8 +249,8 @@ class UserBasedSandbox<L>(
     val joinedCmd = cmd.joinToString(" ")
 
     val bashScript = buildString {
-      append("ulimit -v $memoryKb; ")
-      append("ulimit -t $cpuSeconds; ")
+      append(UlimitHelper.memoryLimit(memoryKb))
+      append(UlimitHelper.cpuTimeLimit(cpuSeconds))
       append(joinedCmd)
     }
 
@@ -273,6 +259,30 @@ class UserBasedSandbox<L>(
 
   private fun tasks(groupId: GroupId): MutableSet<Task<*>> =
     tasks.computeIfAbsent(groupId) { ConcurrentHashMap.newKeySet() }
+
+  private fun parseIssue(exitCode: Int, start: Long, process: Process): Issue {
+    return when (ExitCode.parse(exitCode)) {
+      ExitCode.SigCpu -> Issue.CpuTimeExceeded
+      ExitCode.SigKill -> {
+        val timePassed = Duration.ofNanos(System.nanoTime() - start)
+        if (timePassed.plus(CPU_TIME_THRESHOLD) > config.cpuTime) {
+          Issue.CpuTimeExceeded
+        } else {
+          Issue.Killed
+        }
+      }
+      ExitCode.SigSegv -> Issue.MemoryViolation
+      is ExitCode.Unknown -> {
+        val stderr: String? =
+          try {
+            process.errorReader().lines().collect(Collectors.joining())
+          } catch (_: IOException) {
+            null
+          }
+        Issue.UnexpectedCode(exitCode, stderr)
+      }
+    }
+  }
 
   private fun <O> failedTask(taskId: TaskId, issue: Issue, outputType: Class<O>): Task<O> where
   O : Output {

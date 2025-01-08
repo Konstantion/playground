@@ -8,7 +8,7 @@ import com.konstantion.model.PlaceholderLabel
 import com.konstantion.model.PlaceholderValue
 import com.konstantion.utils.Either
 import com.konstantion.utils.Maybe
-import java.util.*
+import java.util.LinkedList
 
 private val SUPPORTED_VALUE_TYPES: Set<Class<out PlaceholderValue>> =
   setOf(PlaceholderValue.Num.I32::class.java, PlaceholderValue.Str::class.java)
@@ -21,12 +21,15 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
   ): Either<InterpreterIssue, String> {
     val codeBuilder: StringBuilder = StringBuilder()
 
+    codeBuilder.appendImports()
+
     when (val maybeIssue = codeBuilder.initVariables(callArgs, placeholderDefinitions)) {
       is Maybe.Just -> return Either.left(maybeIssue.value)
       Maybe.None -> {}
     }
 
     codeBuilder.initFunction(callArgs, code)
+    codeBuilder.defineMainGuard(callArgs)
 
     return Either.right(codeBuilder.toString())
   }
@@ -62,6 +65,10 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
     return Maybe.none()
   }
 
+  private fun StringBuilder.appendImports() {
+    append("import sys$NL")
+  }
+
   private fun <R> StringBuilder.initFunction(
     callArgs: LinkedList<PlaceholderLabel>,
     code: Code<Lang.Python, R>
@@ -71,9 +78,16 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
     this.append("$argsLine):$NL")
 
     code.code().lines().forEach { line -> this.append("$PYTHON_INDENT$line$NL") }
+  }
 
-    this.append("${NL}if __name__ == \"__main__\":$NL")
-    this.append("$PYTHON_INDENT${PYTHON_INDENT}print($USER_FUNCTION_NAME($argsLine))")
+  private fun StringBuilder.defineMainGuard(callArgs: LinkedList<PlaceholderLabel>) {
+    val argsLine = callArgs.joinToString(", ") { label -> label.name }
+    append(NL)
+    append("if __name__ == \"__main__\":$NL")
+    append("${PYTHON_INDENT}try:$NL")
+    append("${PYTHON_INDENT}${PYTHON_INDENT}print($USER_FUNCTION_NAME($argsLine))$NL")
+    append("${PYTHON_INDENT}except MemoryError:$NL")
+    append("${PYTHON_INDENT}${PYTHON_INDENT}sys.exit(139)$NL")
   }
 
   private fun PlaceholderValue.asString(): String {

@@ -1,6 +1,11 @@
 package com.konstantion.utils
 
 object UlimitHelper {
+
+  fun memoryLimit(kilobytes: Long): String = "ulimit -v $kilobytes;"
+
+  fun cpuTimeLimit(seconds: Long): String = "ulimit -t $seconds;"
+
   sealed interface ExitCode {
 
     data object SigKill : ExitCode
