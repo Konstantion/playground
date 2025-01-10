@@ -16,8 +16,9 @@ import com.konstantion.sandbox.UserBasedSandbox
 import com.konstantion.service.CodeExecutor
 import com.konstantion.service.TaskId
 import com.konstantion.utils.CmdHelper
+import com.konstantion.utils.Either
 import java.util.LinkedList
-import java.util.concurrent.CountDownLatch
+import kotlin.random.Random
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -25,7 +26,6 @@ fun main() {
   val log: Logger = LoggerFactory.getLogger("main")
   val groupId = GroupId(10L)
 
-  val latch = CountDownLatch(1)
   val sandbox: CodeExecutor<GroupId, Lang.Python> =
     UserBasedSandbox(
       LoggerFactory::getLogger,
@@ -39,22 +39,31 @@ fun main() {
     object : CodeExecutor.Listener<GroupId> {
       override fun onSuccess(groupId: GroupId, taskId: TaskId, output: Code.Output) {
         log.info("Success groupId={}, taskId={}, output={}.", groupId, taskId, output)
-        latch.countDown()
       }
 
       override fun onError(groupId: GroupId, taskId: TaskId, issue: CodeExecutor.Issue) {
         log.info("Error groupId={}, taskId={}, issue={}.", groupId, taskId, issue)
-        latch.countDown()
       }
     }
   )
 
-  sandboxTest(sandbox, groupId)
-  latch.await()
+  val tasks = sandboxTest(sandbox, groupId)
+  var counter = 0
+  for (task in tasks) {
+    when (task.get()) {
+      is Either.Left -> {}
+      is Either.Right -> counter++
+    }
+  }
+
   sandbox.close()
+  println(counter)
 }
 
-fun sandboxTest(sandbox: CodeExecutor<GroupId, Lang.Python>, groupId: GroupId) {
+fun sandboxTest(
+  sandbox: CodeExecutor<GroupId, Lang.Python>,
+  groupId: GroupId
+): MutableList<CodeExecutor.Task<Code.Output.Str>> {
   val placeholders: LinkedList<PlaceholderLabel> = LinkedList()
   placeholders += PlaceholderLabel(PlaceholderIdentifier.P_1, "x")
   placeholders += PlaceholderLabel(PlaceholderIdentifier.P_2, "y")
@@ -67,29 +76,43 @@ fun sandboxTest(sandbox: CodeExecutor<GroupId, Lang.Python>, groupId: GroupId) {
       PlaceholderIdentifier.P_3 to Value(Str("haha"))
     )
 
-  val code =
-    object : Code<Lang.Python, Code.Output.Str> {
-      override fun code(): String {
-        return """
-                    c = x * y
-                    z *= 3
-                    while True:
-                      pass
-                    result = c - z
-                    return str(result) + d
-                
-            """
+  val tasks: MutableList<CodeExecutor.Task<Code.Output.Str>> = mutableListOf()
+
+  for (i in 0..40) {
+    val rawCode: String =
+      if (Random.nextBoolean()) {
+        """
+          c = x * y
+          z *= 3
+          result = c - z
+          return str(result) + d
+              
+        """
+          .trimIndent()
+      } else {
+        """
+          while True:
+            pass
+        """
           .trimIndent()
       }
 
-      override fun lang(): Lang.Python {
-        return Lang.Python
-      }
+    val code =
+      object : Code<Lang.Python, Code.Output.Str> {
+        override fun code(): String {
+          return rawCode
+        }
 
-      override fun outputType(): Class<Code.Output.Str> {
-        return Code.Output.Str::class.java
-      }
-    }
+        override fun lang(): Lang.Python {
+          return Lang.Python
+        }
 
-  sandbox.submit(groupId, code, placeholders, definitions)
+        override fun outputType(): Class<Code.Output.Str> {
+          return Code.Output.Str::class.java
+        }
+      }
+    tasks += sandbox.submit(groupId, code, placeholders, definitions)
+  }
+
+  return tasks
 }

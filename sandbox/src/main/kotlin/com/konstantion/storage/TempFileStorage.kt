@@ -1,11 +1,15 @@
 package com.konstantion.storage
 
 import com.konstantion.model.Lang
+import com.konstantion.utils.CommonScheduler
 import com.konstantion.utils.Either
 import java.io.IOException
 import java.nio.charset.Charset
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.exists
@@ -28,7 +32,31 @@ enum class FileType(val type: String) {
   }
 }
 
-class TempFileStorage<Id>(dirName: String) where Id : Any {
+sealed interface DeleteStrategy {
+  data class WithInterval(val delay: Duration) : DeleteStrategy
+}
+
+class TempFileStorage<Id>(
+  dirName: String,
+  deleteStrategy: DeleteStrategy = DeleteStrategy.WithInterval(Duration.ofSeconds(5))
+) where Id : Any {
+  private val toDelete: MutableSet<Path> = ConcurrentHashMap.newKeySet()
+
+  init {
+    when (deleteStrategy) {
+      is DeleteStrategy.WithInterval ->
+        CommonScheduler.loopWithDelay(deleteStrategy.delay) {
+          toDelete.toSet().forEach { path: Path ->
+            try {
+              if (Files.deleteIfExists(path.toAbsolutePath())) {
+                toDelete.remove(path)
+              }
+            } catch (_: Throwable) {}
+          }
+        }
+    }
+  }
+
   private val storagePath =
     BASE_PATH.resolve(dirName).also { path ->
       if (path.exists()) {
@@ -78,6 +106,13 @@ class TempFileStorage<Id>(dirName: String) where Id : Any {
       return Either.right(filePath.toAbsolutePath())
     } catch (ioError: IOException) {
       return Either.left(ioError)
+    }
+  }
+
+  fun scheduleDeletion(id: Id, type: FileType) {
+    when (val result = resolve(id, type)) {
+      is Either.Left -> {}
+      is Either.Right -> toDelete.add(result.value)
     }
   }
 

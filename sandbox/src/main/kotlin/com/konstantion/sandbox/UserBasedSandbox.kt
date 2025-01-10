@@ -60,7 +60,16 @@ class UserBasedSandbox<L>(
   private val log: Logger = logs.forService(javaClass)
   private val fileStorage: TempFileStorage<TaskId> =
     TempFileStorage("user_based_sandbox_${username}_$lang")
-  private val listenersHelper: ListenersHelper<GroupId> = ListenersHelper()
+  private val listenersHelper: ListenersHelper<GroupId> =
+    ListenersHelper.withGlobal(
+      object : Listener<GroupId> {
+        override fun onSuccess(groupId: GroupId, taskId: TaskId, output: Output) {
+          fileStorage.scheduleDeletion(taskId, FileType.of(lang))
+        }
+
+        override fun onError(groupId: GroupId, taskId: TaskId, issue: Issue) {}
+      }
+    )
   private val tasks: MutableMap<GroupId, MutableSet<Task<*>>> = ConcurrentHashMap()
   private val shutdownAfter: Duration = config.cpuTime.plus(EXTERNAL_SHUTDOWN_TIMEOUT)
   private val scheduler: ScheduledExecutorService =
