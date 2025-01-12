@@ -1,33 +1,42 @@
 package com.konstantion.model
 
-import java.util.LinkedList
+import com.konstantion.model.serializaers.OutputTypeSerializer
+import com.konstantion.model.serializaers.UUIDSerializer
 import java.util.UUID
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class Question<L>(
-  private val title: String,
+  private val lang: L,
+  private val body: String,
   private val formatAndCode: FormatAndCode,
-  private val placeholderDefinitions: Map<PlaceholderLabel, PlaceholderDefinition<*>>,
-  private val callArgs: LinkedList<PlaceholderLabel>,
-  private val additionalCheck: Code<L, Code.Output.Bool>? = null,
-  private val correctVariant: Variant.Correct<L>,
+  private val placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>,
+  private val callArgs: List<PlaceholderLabel>,
+  private val additionalCheck:
+    Code<L, @Serializable(with = OutputTypeSerializer::class) Code.Output.Bool>? =
+    null,
+  private val correctVariants: List<Variant.Correct<L>>,
   private val incorrectVariants: List<Variant.Incorrect<L>>,
 ) where L : Lang {
 
   fun variants(): List<Variant<L>> {
-    return incorrectVariants + correctVariant
+    return incorrectVariants + correctVariants
   }
 
+  @Serializable
   sealed interface Variant<L> where L : Lang {
     val id: UUID
 
+    @Serializable
     data class Correct<L>(
-      override val id: UUID = UUID.randomUUID(),
-      private val code: Code<L, Code.Output.Str>
+      @Serializable(with = UUIDSerializer::class) override val id: UUID = UUID.randomUUID(),
+      private val code: Code<L, @Serializable(with = OutputTypeSerializer::class) Code.Output.Str>
     ) : Variant<L> where L : Lang
 
+    @Serializable
     data class Incorrect<L>(
-      override val id: UUID = UUID.randomUUID(),
-      private val code: Code<L, Code.Output.Str>
+      @Serializable(with = UUIDSerializer::class) override val id: UUID = UUID.randomUUID(),
+      private val code: Code<L, @Serializable(with = OutputTypeSerializer::class) Code.Output.Str>
     ) : Variant<L> where L : Lang
   }
 }

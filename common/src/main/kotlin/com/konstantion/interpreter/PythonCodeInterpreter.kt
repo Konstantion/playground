@@ -11,7 +11,7 @@ import com.konstantion.utils.Maybe
 import java.util.LinkedList
 
 private val SUPPORTED_VALUE_TYPES: Set<Class<out PlaceholderValue>> =
-  setOf(PlaceholderValue.Num.I32::class.java, PlaceholderValue.Str::class.java)
+  setOf(PlaceholderValue.I32::class.java, PlaceholderValue.Str::class.java)
 
 object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
   override fun <R : Code.Output> toExecutableCode(
@@ -77,7 +77,7 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
     val argsLine = callArgs.joinToString(", ") { label -> label.name }
     this.append("$argsLine):$NL")
 
-    code.code().lines().forEach { line -> this.append("$PYTHON_INDENT$line$NL") }
+    code.code.lines().forEach { line -> this.append("$PYTHON_INDENT$line$NL") }
   }
 
   private fun StringBuilder.defineMainGuard(callArgs: LinkedList<PlaceholderLabel>) {
@@ -92,7 +92,7 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
 
   private fun PlaceholderValue.asString(): String {
     return when (this) {
-      is PlaceholderValue.Num.I32 -> this.value.toString()
+      is PlaceholderValue.I32 -> this.value.toString()
       is PlaceholderValue.Str -> "\"${this.value.replace("\"", "\\\"")}\""
     }
   }

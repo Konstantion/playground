@@ -4,12 +4,11 @@ import com.konstantion.interpreter.PythonCodeInterpreter
 import com.konstantion.model.Code
 import com.konstantion.model.Lang
 import com.konstantion.model.PlaceholderDefinition
-import com.konstantion.model.PlaceholderDefinition.RandomFromRange
 import com.konstantion.model.PlaceholderDefinition.RandomOneOf
 import com.konstantion.model.PlaceholderDefinition.Value
 import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
-import com.konstantion.model.PlaceholderValue.Num
+import com.konstantion.model.PlaceholderValue
 import com.konstantion.model.PlaceholderValue.Str
 import com.konstantion.sandbox.GroupId
 import com.konstantion.sandbox.UserBasedSandbox
@@ -71,9 +70,10 @@ fun sandboxTest(
   placeholders += PlaceholderLabel(PlaceholderIdentifier.P_3, "d")
   val definitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>> =
     mapOf(
-      PlaceholderIdentifier.P_1 to RandomOneOf(listOf(Num.I32(10), Num.I32(20))),
-      PlaceholderIdentifier.P_2 to RandomFromRange.IntRange(5, 10),
-      PlaceholderIdentifier.P_3 to Value(Str("haha"))
+      PlaceholderIdentifier.P_1 to
+        RandomOneOf.of(listOf(PlaceholderValue.I32(10), PlaceholderValue.I32(20))),
+      PlaceholderIdentifier.P_2 to PlaceholderDefinition.I32Range(5, 10),
+      PlaceholderIdentifier.P_3 to Value.of(Str("haha"))
     )
 
   val tasks: MutableList<CodeExecutor.Task<Code.Output.Str>> = mutableListOf()
@@ -97,20 +97,8 @@ fun sandboxTest(
           .trimIndent()
       }
 
-    val code =
-      object : Code<Lang.Python, Code.Output.Str> {
-        override fun code(): String {
-          return rawCode
-        }
+    val code = Code(rawCode, Lang.Python, Code.Output.Str::class.java)
 
-        override fun lang(): Lang.Python {
-          return Lang.Python
-        }
-
-        override fun outputType(): Class<Code.Output.Str> {
-          return Code.Output.Str::class.java
-        }
-      }
     tasks += sandbox.submit(groupId, code, placeholders, definitions)
   }
 

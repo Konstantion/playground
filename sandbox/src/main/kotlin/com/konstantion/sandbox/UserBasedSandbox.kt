@@ -88,7 +88,7 @@ class UserBasedSandbox<L>(
   ): Task<O> {
     val taskId: TaskId = taskIdGen.nextId()
 
-    log.debug("Processing groupId={}, taskId={}, code={}.", groupId, taskId, code.code().shrink())
+    log.debug("Processing groupId={}, taskId={}, code={}.", groupId, taskId, code.code.shrink())
 
     return when (
       val result = interpreter.toExecutableCode(code, callArgs, placeholderDefinitions)
@@ -99,7 +99,7 @@ class UserBasedSandbox<L>(
 
         notifyListenersOfError(groupId, taskId, issue)
 
-        failedTask(taskId, issue, code.outputType())
+        failedTask(taskId, issue, code.outputType)
       }
       is Either.Right -> {
         val path: Path =
@@ -112,7 +112,7 @@ class UserBasedSandbox<L>(
                 issue
               )
               notifyListenersOfError(groupId, taskId, issue)
-              return failedTask(taskId, issue, code.outputType())
+              return failedTask(taskId, issue, code.outputType)
             }
             is Either.Right -> fileResult.value
           }
@@ -147,7 +147,7 @@ class UserBasedSandbox<L>(
                       taskId,
                       output.joinToString().shrink()
                     )
-                    Either.right(Output.Parser.parse(code.outputType(), output))
+                    Either.right(Output.Parser.parse(code.outputType, output))
                   }
                 } catch (parseError: Output.ParserException) {
                   log.debug(
@@ -197,7 +197,7 @@ class UserBasedSandbox<L>(
           object : Task<O> {
             override fun id(): TaskId = taskId
 
-            override fun outputType(): Class<O> = code.outputType()
+            override fun outputType(): Class<O> = code.outputType
 
             override fun get(): Either<Issue, O> {
               return try {
