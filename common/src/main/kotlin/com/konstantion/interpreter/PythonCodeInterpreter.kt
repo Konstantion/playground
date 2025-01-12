@@ -77,7 +77,7 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
     val argsLine = callArgs.joinToString(", ") { label -> label.name }
     this.append("$argsLine):$NL")
 
-    code.code().lines().forEach { line -> this.append("$PYTHON_INDENT$line$NL") }
+    code.code.lines().forEach { line -> this.append("$PYTHON_INDENT$line$NL") }
   }
 
   private fun StringBuilder.defineMainGuard(callArgs: LinkedList<PlaceholderLabel>) {

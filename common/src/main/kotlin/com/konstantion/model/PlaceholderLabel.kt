@@ -1,6 +1,8 @@
 package com.konstantion.model
 
-data class PlaceholderLabel(val identifier: PlaceholderIdentifier, val name: String)
+import kotlinx.serialization.Serializable
+
+@Serializable data class PlaceholderLabel(val identifier: PlaceholderIdentifier, val name: String)
 
 enum class PlaceholderIdentifier {
   P_1,

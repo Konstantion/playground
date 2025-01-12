@@ -185,31 +185,11 @@ class UserBasedSandboxTest {
   }
 
   private fun codeBool(rawCode: String): Code<Lang.Python, Code.Output.Bool> {
-    return object : Code<Lang.Python, Code.Output.Bool> {
-      override fun code(): String = rawCode
-
-      override fun lang(): Lang.Python {
-        return Lang.Python
-      }
-
-      override fun outputType(): Class<Code.Output.Bool> {
-        return Code.Output.Bool::class.java
-      }
-    }
+    return Code(rawCode, Lang.Python, Code.Output.Bool::class.java)
   }
 
   private fun codeStr(rawCode: String): Code<Lang.Python, Code.Output.Str> {
-    return object : Code<Lang.Python, Code.Output.Str> {
-      override fun code(): String = rawCode
-
-      override fun lang(): Lang.Python {
-        return Lang.Python
-      }
-
-      override fun outputType(): Class<Code.Output.Str> {
-        return Code.Output.Str::class.java
-      }
-    }
+    return Code(rawCode, Lang.Python, Code.Output.Str::class.java)
   }
 
   private fun placeholdersAndDefinitions():

@@ -76,6 +76,7 @@ fun sandboxTest(
       PlaceholderIdentifier.P_3 to Value(Str("haha"))
     )
 
+<<<<<<< Updated upstream
   val tasks: MutableList<CodeExecutor.Task<Code.Output.Str>> = mutableListOf()
 
   for (i in 0..40) {
@@ -106,6 +107,23 @@ fun sandboxTest(
         override fun lang(): Lang.Python {
           return Lang.Python
         }
+=======
+  val code =
+    Code(
+      """
+                    c = x * y
+                    z *= 3
+                    while True:
+                      pass
+                    result = c - z
+                    return str(result) + d
+                
+            """
+        .trimIndent(),
+      Lang.Python,
+      Code.Output.Str::class.java
+    )
+>>>>>>> Stashed changes
 
         override fun outputType(): Class<Code.Output.Str> {
           return Code.Output.Str::class.java

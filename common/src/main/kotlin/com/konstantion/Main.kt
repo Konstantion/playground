@@ -28,26 +28,18 @@ fun pythonTest() {
     )
 
   val code =
-    object : Code<Lang.Python, Code.Output.Str> {
-      override fun code(): String {
-        return """
+    Code(
+      """
                     c = b * a
                     a *= 3
                     result = c - a
                     return str(result) + w
                 
             """
-          .trimIndent()
-      }
-
-      override fun lang(): Lang.Python {
-        return Lang.Python
-      }
-
-      override fun outputType(): Class<Code.Output.Str> {
-        return Code.Output.Str::class.java
-      }
-    }
+        .trimIndent(),
+      Lang.Python,
+      Code.Output.Str::class.java,
+    )
 
   val executableCode: String =
     when (val result = PythonCodeInterpreter.toExecutableCode(code, placeholders, definitions)) {
