@@ -1,14 +1,15 @@
 package com.konstantion.model
 
 import com.konstantion.lang.Unreachable
-import kotlin.jvm.Throws
+import com.konstantion.model.serializaers.OutputTypeSerializer
+import kotlinx.serialization.Serializable
 
-interface Code<L, O> where L : Lang, O : Code.Output {
-  fun code(): String
-
-  fun lang(): L
-
-  fun outputType(): Class<O>
+@Serializable
+data class Code<L, O>(
+  val code: String,
+  val lang: L,
+  @Serializable(with = OutputTypeSerializer::class) val outputType: Class<O>
+) where L : Lang, O : Code.Output {
 
   sealed interface Output {
 
