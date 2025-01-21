@@ -1,0 +1,11 @@
+package com.konstantion.model
+
+import java.util.UUID
+
+data class QuestionMetadata(
+  val formatAndCode: FormatAndCode,
+  val correctAnswers: List<Answer>,
+  val intersectAnswer: List<Answer>,
+)
+
+data class Answer(val uuid: UUID, val text: String)

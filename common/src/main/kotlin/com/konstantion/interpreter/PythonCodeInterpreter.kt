@@ -8,7 +8,6 @@ import com.konstantion.model.PlaceholderLabel
 import com.konstantion.model.PlaceholderValue
 import com.konstantion.utils.Either
 import com.konstantion.utils.Maybe
-import java.util.LinkedList
 
 private val SUPPORTED_VALUE_TYPES: Set<Class<out PlaceholderValue>> =
   setOf(PlaceholderValue.I32::class.java, PlaceholderValue.Str::class.java)
@@ -16,7 +15,7 @@ private val SUPPORTED_VALUE_TYPES: Set<Class<out PlaceholderValue>> =
 object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
   override fun <R : Code.Output> toExecutableCode(
     code: Code<Lang.Python, R>,
-    callArgs: LinkedList<PlaceholderLabel>,
+    callArgs: List<PlaceholderLabel>,
     placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>
   ): Either<InterpreterIssue, String> {
     val codeBuilder: StringBuilder = StringBuilder()
@@ -35,7 +34,7 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
   }
 
   private fun StringBuilder.initVariables(
-    callArgs: LinkedList<PlaceholderLabel>,
+    callArgs: List<PlaceholderLabel>,
     placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>
   ): Maybe<InterpreterIssue.Variables> {
     if (callArgs.toSet().size != callArgs.size) {
@@ -70,7 +69,7 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
   }
 
   private fun <R> StringBuilder.initFunction(
-    callArgs: LinkedList<PlaceholderLabel>,
+    callArgs: List<PlaceholderLabel>,
     code: Code<Lang.Python, R>
   ) where R : Code.Output {
     this.append("def $USER_FUNCTION_NAME(")
@@ -80,7 +79,7 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
     code.code.lines().forEach { line -> this.append("$PYTHON_INDENT$line$NL") }
   }
 
-  private fun StringBuilder.defineMainGuard(callArgs: LinkedList<PlaceholderLabel>) {
+  private fun StringBuilder.defineMainGuard(callArgs: List<PlaceholderLabel>) {
     val argsLine = callArgs.joinToString(", ") { label -> label.name }
     append(NL)
     append("if __name__ == \"__main__\":$NL")

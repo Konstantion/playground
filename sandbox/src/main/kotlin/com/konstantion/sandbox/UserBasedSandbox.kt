@@ -9,11 +9,11 @@ import com.konstantion.model.Lang
 import com.konstantion.model.PlaceholderDefinition
 import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
+import com.konstantion.model.TaskId
 import com.konstantion.service.CodeExecutor
 import com.konstantion.service.CodeExecutor.Issue
 import com.konstantion.service.CodeExecutor.Listener
 import com.konstantion.service.CodeExecutor.Task
-import com.konstantion.service.TaskId
 import com.konstantion.storage.FileType
 import com.konstantion.storage.TempFileStorage
 import com.konstantion.utils.CmdHelper
@@ -27,7 +27,6 @@ import com.konstantion.utils.shrink
 import java.io.IOException
 import java.nio.file.Path
 import java.time.Duration
-import java.util.LinkedList
 import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
@@ -83,7 +82,7 @@ class UserBasedSandbox<L>(
   override fun <O : Output> submit(
     groupId: GroupId,
     code: Code<L, O>,
-    callArgs: LinkedList<PlaceholderLabel>,
+    callArgs: List<PlaceholderLabel>,
     placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>
   ): Task<O> {
     val taskId: TaskId = taskIdGen.nextId()
