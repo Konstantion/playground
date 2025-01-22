@@ -8,4 +8,4 @@ data class QuestionMetadata(
   val intersectAnswer: List<Answer>,
 )
 
-data class Answer(val uuid: UUID, val text: String)
+data class Answer(val uuid: UUID, val text: String, val executorTaskId: TaskId)

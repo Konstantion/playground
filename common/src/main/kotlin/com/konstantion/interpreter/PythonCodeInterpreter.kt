@@ -66,6 +66,7 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
 
   private fun StringBuilder.appendImports() {
     append("import sys$NL")
+    append("import time$NL")
   }
 
   private fun <R> StringBuilder.initFunction(

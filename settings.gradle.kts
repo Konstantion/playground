@@ -9,6 +9,7 @@ include("web-app")
 include("common")
 include("internal")
 include("sandbox")
+include("core")
 
 dependencyResolutionManagement {
     versionCatalogs {

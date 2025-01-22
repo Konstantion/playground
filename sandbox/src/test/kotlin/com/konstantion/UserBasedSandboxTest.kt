@@ -9,10 +9,10 @@ import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
 import com.konstantion.model.PlaceholderValue
 import com.konstantion.model.PlaceholderValue.Str
+import com.konstantion.model.TaskId
 import com.konstantion.sandbox.GroupId
 import com.konstantion.sandbox.UserBasedSandbox
 import com.konstantion.service.CodeExecutor
-import com.konstantion.service.TaskId
 import com.konstantion.utils.CmdHelper
 import com.konstantion.utils.Either
 import java.util.LinkedList
@@ -72,10 +72,9 @@ class UserBasedSandboxTest {
     val code =
       codeStr(
         """
-        large_data = []
-        while True:
-            large_data.append("x" * 1000000)
-        """
+            data = "x" * 60_000_000  # ~60MB in characters
+            time.sleep(10) 
+           """
           .trimIndent()
       )
 
