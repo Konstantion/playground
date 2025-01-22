@@ -1,4 +1,4 @@
-package com.konstantion.service
+package com.konstantion
 
 import com.konstantion.model.Code
 import com.konstantion.model.FormatAndCode
