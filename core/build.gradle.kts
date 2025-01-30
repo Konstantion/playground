@@ -5,11 +5,10 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":common"))
-    implementation(project(":internal"))
-    implementation(project(":sandbox"))
+    api(project(":internal"))
+    api(project(":sandbox"))
     implementation(libs.slf4j)
-    runtimeOnly(libs.log4j.slf4j2.impl)
-    implementation(libs.kotlinx.serialization.core)
-    implementation(libs.kotlinx.serialization.json)
+    runtimeOnly(libs.logback.classic)
+    api(libs.kotlinx.serialization.core)
+    api(libs.kotlinx.serialization.json)
 }

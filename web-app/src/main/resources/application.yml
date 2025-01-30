@@ -1,2 +1,26 @@
 server:
   port: 8079
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/playground
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      connectionTimeout: 30000
+      idleTimeout: 600000
+      maxLifetime: 1800000
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+logging:
+  level:
+    root: info
+    org:
+      springframework: info

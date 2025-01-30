@@ -36,13 +36,8 @@ class SpringPlugin : Plugin<Project> {
             }
         }
 
-        tasks.named("jar", Jar::class.java) { task ->
-            task.enabled = false
-            task.dependsOn(tasks.named("bootJar", BootJar::class.java))
-        }
-
         dependencies.apply {
-            add("implementation", "org.springframework.boot:spring-boot-starter-web")
+            add("implementation", "org.springframework.boot:spring-boot-starter")
             add("testImplementation", "org.springframework.boot:spring-boot-starter-test")
         }
 

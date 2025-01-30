@@ -10,6 +10,7 @@ include("common")
 include("internal")
 include("sandbox")
 include("core")
+include("database")
 
 dependencyResolutionManagement {
     versionCatalogs {
@@ -41,6 +42,17 @@ dependencyResolutionManagement {
                 library("log4j-core", "$prefix:log4j-core:$version")
                 library("log4j-slf4j2-impl", "$prefix:log4j-slf4j2-impl:$version")
             }
+
+            run {
+                val version = "1.4.14"
+                val prefix = "ch.qos.logback"
+                library("logback-classic", "$prefix:logback-classic:$version")
+            }
+
+
+            library("postgresql", "org.postgresql:postgresql:42.5.0")
+            library("hikariCp", "com.zaxxer:HikariCP:5.0.1")
+            library("flyway", "org.flywaydb:flyway-core:9.15.1")
         }
     }
 }
