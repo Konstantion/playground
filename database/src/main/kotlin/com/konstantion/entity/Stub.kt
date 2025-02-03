@@ -9,7 +9,5 @@ import jakarta.persistence.Table
 @Entity
 @Table(name = "stabs")
 class Stub {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null
+  @Id @GeneratedValue(strategy = GenerationType.IDENTITY) val id: Long? = null
 }

@@ -10,18 +10,16 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/stubs")
-class StubController(
-    private val repository: StubRepository
-) {
+class StubController(private val repository: StubRepository) {
 
-    @GetMapping
-    fun getAll(): ResponseEntity<List<Stub>> {
-        return ResponseEntity.ok(repository.findAll())
-    }
+  @GetMapping
+  fun getAll(): ResponseEntity<List<Stub>> {
+    return ResponseEntity.ok(repository.findAll())
+  }
 
-    @PostMapping
-    fun create(): ResponseEntity<Stub> {
-        val stub = repository.save(Stub())
-        return ResponseEntity.ok(stub)
-    }
+  @PostMapping
+  fun create(): ResponseEntity<Stub> {
+    val stub = repository.save(Stub())
+    return ResponseEntity.ok(stub)
+  }
 }
