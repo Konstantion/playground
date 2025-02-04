@@ -19,12 +19,22 @@ data class Question<L>(
   private val incorrectVariants: List<Variant.Incorrect<L>>,
 ) where L : Lang {
 
+  fun lang(): L = lang
+
+  fun body() = body
+
   fun formatAndCode(): FormatAndCode = formatAndCode
 
   fun callArgs(): List<PlaceholderLabel> = callArgs
 
   fun placeholderDefinitions(): Map<PlaceholderIdentifier, PlaceholderDefinition<*>> =
     placeholderDefinitions
+
+  fun additionalCheck(): Code<L, Code.Output.Bool>? = additionalCheck
+
+  fun correctVariants(): List<Variant.Correct<L>> = correctVariants
+
+  fun incorrectVariants(): List<Variant.Incorrect<L>> = incorrectVariants
 
   fun variants(): List<Variant<L>> = incorrectVariants + correctVariants
 

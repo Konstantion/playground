@@ -1,10 +1,12 @@
 package com.konstantion.entity
 
 import com.konstantion.model.Code
+import com.konstantion.model.FormatAndCode
 import com.konstantion.model.Lang
 import com.konstantion.model.PlaceholderDefinition
 import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
+import com.konstantion.model.PlaceholderValue
 import com.konstantion.model.Question
 import com.konstantion.utils.FieldUtils.nonNull
 import com.konstantion.utils.FieldUtils.refine
@@ -76,9 +78,13 @@ open class QuestionEntity {
   )
   open var incorrectVariants: MutableList<VariantEntity> = mutableListOf()
 
+  override fun toString(): String {
+    return "QuestionEntity(id=$id, lang=$lang, body=$body, formatAndCode=$formatAndCode, placeholderDefinitions=$placeholderDefinitions, callArgs=$callArgs, additionalCheck=$additionalCheck, correctVariants=$correctVariants, incorrectVariants=$incorrectVariants)"
+  }
+
   fun toModel(): Question<*> {
     val lang: Lang = Json.decodeFromString(nonNull(this.lang))
-    val placeholderDefinition: Map<PlaceholderIdentifier, PlaceholderDefinition<*>> =
+    val placeholderDefinition: Map<PlaceholderIdentifier, PlaceholderDefinition<PlaceholderValue>> =
       this.placeholderDefinitions
         .mapKeys { (identifier, _) -> PlaceholderIdentifier.valueOf(identifier) }
         .mapValues { (_, definition) -> Json.decodeFromString(definition) }
@@ -100,5 +106,37 @@ open class QuestionEntity {
       correctVariants = correctVariants,
       incorrectVariants = incorrectVariants
     )
+  }
+
+  companion object {
+    fun fromModel(question: Question<*>): QuestionEntity {
+      val entity = QuestionEntity()
+      entity.lang = Json.encodeToString(Lang.serializer(), question.lang())
+      entity.body = question.body()
+      entity.formatAndCode =
+        Json.encodeToString(FormatAndCode.serializer(), question.formatAndCode())
+      entity.placeholderDefinitions =
+        question
+          .placeholderDefinitions()
+          .mapKeys { (identifier, _) -> identifier.toString() }
+          .mapValues { (_, definition) ->
+            Json.encodeToString(
+              PlaceholderDefinition.serializer(PlaceholderValue.serializer()),
+              refine(definition)
+            )
+          }
+          .toMutableMap()
+      entity.callArgs =
+        question
+          .callArgs()
+          .map { callArg -> Json.encodeToString(PlaceholderLabel.serializer(), callArg) }
+          .toMutableList()
+      entity.additionalCheck = question.additionalCheck()?.let(CodeEntity::fromModel)
+      entity.correctVariants =
+        question.correctVariants().map(VariantEntity::fromCorrect).toMutableList()
+      entity.incorrectVariants =
+        question.incorrectVariants().map(VariantEntity::fromIncorrect).toMutableList()
+      return entity
+    }
   }
 }

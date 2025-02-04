@@ -1,6 +1,7 @@
 plugins {
     `java-library`
     alias(libs.plugins.common.spring)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 dependencies {

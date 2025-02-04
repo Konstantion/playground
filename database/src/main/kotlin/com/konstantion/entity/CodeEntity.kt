@@ -30,4 +30,18 @@ open class CodeEntity {
       Json.decodeFromString(OutputTypeSerializer, nonNull(outputType))
     )
   }
+
+  override fun toString(): String {
+    return "CodeEntity(id=$id, code=$code, outputType=$outputType)"
+  }
+
+  companion object {
+    fun fromModel(code: Code<*, *>): CodeEntity {
+      return CodeEntity().apply {
+        id = null
+        this.code = code.code
+        outputType = Json.encodeToString(OutputTypeSerializer, code.outputType)
+      }
+    }
+  }
 }
