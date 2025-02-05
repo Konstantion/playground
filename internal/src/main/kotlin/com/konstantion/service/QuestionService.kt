@@ -2,27 +2,32 @@ package com.konstantion.service
 
 import com.konstantion.model.Lang
 import com.konstantion.model.Question
-import com.konstantion.model.QuestionMetadata
 import com.konstantion.model.TaskId
+import com.konstantion.model.User
 import com.konstantion.utils.Either
+import java.util.UUID
 
-interface QuestionService<L> : AutoCloseable where L : Lang {
-  fun submit(question: Question<L>): Task
+interface QuestionService<Entry> {
+  fun save(user: User, question: Question<Lang>): Either<Issue, Entry>
 
-  @Throws(InterruptedException::class)
-  fun run(question: Question<L>): Either<Issue, QuestionMetadata>
+  fun getQuestions(user: User): Either<Issue, List<Entry>>
 
-  sealed interface Issue {
-    data class Multiple(val issues: List<Issue>) : Issue
-    data class VariantExecution(
-      val variant: Question.Variant<*>,
-      val underlying: CodeExecutor.Issue
-    ) : Issue
-  }
+  fun getQuestion(user: User, id: UUID): Either<Issue, Entry>
 
-  interface Task {
-    fun id(): TaskId
+  fun deleteQuestion(user: User, id: UUID): Either<Issue, Entry>
 
-    @Throws(InterruptedException::class) fun get(): Either<Issue, QuestionMetadata>
+  fun registerQuestion(user: User, question: Question<Lang>): Either<Issue, RegisterResponse>
+
+  fun registrationStatus(user: User, taskId: TaskId): Either<Issue, StatusResponse>
+
+  sealed interface Issue {}
+
+  data class RegisterResponse(val taskId: TaskId)
+
+  sealed interface StatusResponse {
+    data object NotRegistered : StatusResponse
+    data object Pending : StatusResponse
+    data class Submitted(val taskId: TaskId) : StatusResponse
+    data object Completed : StatusResponse
   }
 }

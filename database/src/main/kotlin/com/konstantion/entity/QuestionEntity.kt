@@ -8,8 +8,8 @@ import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
 import com.konstantion.model.PlaceholderValue
 import com.konstantion.model.Question
+import com.konstantion.utils.CastHelper.refine
 import com.konstantion.utils.FieldUtils.nonNull
-import com.konstantion.utils.FieldUtils.refine
 import jakarta.persistence.CascadeType
 import jakarta.persistence.CollectionTable
 import jakarta.persistence.Column

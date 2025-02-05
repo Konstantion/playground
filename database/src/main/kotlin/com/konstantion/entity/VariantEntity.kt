@@ -2,8 +2,8 @@ package com.konstantion.entity
 
 import com.konstantion.model.Lang
 import com.konstantion.model.Question
+import com.konstantion.utils.CastHelper.refine
 import com.konstantion.utils.FieldUtils.nonNull
-import com.konstantion.utils.FieldUtils.refine
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

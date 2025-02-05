@@ -1,5 +1,7 @@
 package com.konstantion
 
+import com.konstantion.executor.NaiveQuestionExecutor
+import com.konstantion.executor.QuestionExecutor
 import com.konstantion.interpreter.PythonCodeInterpreter
 import com.konstantion.model.Answer
 import com.konstantion.model.Code
@@ -13,8 +15,6 @@ import com.konstantion.model.Question
 import com.konstantion.model.QuestionMetadata
 import com.konstantion.sandbox.GroupId
 import com.konstantion.sandbox.UserBasedSandbox
-import com.konstantion.service.NaiveQuestionService
-import com.konstantion.service.QuestionService
 import com.konstantion.utils.CmdHelper
 import com.konstantion.utils.Either
 import java.util.UUID
@@ -23,8 +23,8 @@ import org.junit.jupiter.api.fail
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class QuestionServiceTest {
-  private val log: Logger = LoggerFactory.getLogger(QuestionServiceTest::class.java)
+class QuestionExecutorTest {
+  private val log: Logger = LoggerFactory.getLogger(QuestionExecutorTest::class.java)
 
   @Test
   fun shouldSucceed() {
@@ -70,7 +70,7 @@ class QuestionServiceTest {
       )
 
     when (
-      val result: Either<QuestionService.Issue, QuestionMetadata> =
+      val result: Either<QuestionExecutor.Issue, QuestionMetadata> =
         service.run(question(correct, incorrect))
     ) {
       is Either.Left -> fail("Expected success, got error ${result.value}.")
@@ -111,15 +111,15 @@ class QuestionServiceTest {
       )
 
     when (
-      val result: Either<QuestionService.Issue, QuestionMetadata> =
+      val result: Either<QuestionExecutor.Issue, QuestionMetadata> =
         service.run(question(listOf(), incorrect))
     ) {
       is Either.Left -> {
-        if (result.value !is QuestionService.Issue.Multiple) {
+        if (result.value !is QuestionExecutor.Issue.Multiple) {
           fail("Issue should be of multiple, got ${result.value}.")
         }
 
-        if ((result.value as QuestionService.Issue.Multiple).issues.size != 1) {
+        if ((result.value as QuestionExecutor.Issue.Multiple).issues.size != 1) {
           fail("Underlying issue should be one, got ${result.value}.")
         }
 
@@ -154,8 +154,8 @@ class QuestionServiceTest {
     )
   }
 
-  private fun service(): QuestionService<Lang.Python> {
-    return NaiveQuestionService(sandbox(), GroupId(0))
+  private fun service(): QuestionExecutor<Lang.Python> {
+    return NaiveQuestionExecutor(sandbox(), GroupId(0))
   }
 
   private fun sandbox(): UserBasedSandbox<Lang.Python> {

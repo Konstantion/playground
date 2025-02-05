@@ -9,7 +9,11 @@ import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
 import com.konstantion.model.PlaceholderValue
 import com.konstantion.model.Question
+import com.konstantion.model.User
 import com.konstantion.repository.QuestionRepository
+import com.konstantion.service.QuestionService
+import com.konstantion.utils.CastHelper
+import com.konstantion.utils.Either
 import java.util.UUID
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonArray
@@ -20,24 +24,32 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/questions")
-class QuestionController(
-  private val repository: QuestionRepository,
-  private val questionRepository: QuestionRepository
+data class QuestionController(
+  private val questionRepository: QuestionRepository,
+  private val questionService: QuestionService<QuestionEntity>
 ) {
   @GetMapping
   fun getAllQuestions(): ResponseEntity<String> {
-    val toReturn = buildJsonArray {
-      repository.findAll().forEach { question ->
-        add(
-          Json.encodeToJsonElement(
-            Question.serializer(Lang.serializer()),
-            question.toModel() as Question<Lang>
-          )
-        )
+    return when (
+      val result: Either<QuestionService.Issue, List<QuestionEntity>> =
+        questionService.getQuestions(User.admin())
+    ) {
+      is Either.Left -> ResponseEntity.ok("Error ${result.value}")
+      is Either.Right -> {
+        val toReturn = buildJsonArray {
+          questionRepository.findAll().forEach { question ->
+            add(
+              Json.encodeToJsonElement(
+                Question.serializer(Lang.serializer()),
+                CastHelper.refine(question.toModel())
+              )
+            )
+          }
+        }
+
+        ResponseEntity.ok(toReturn.toString())
       }
     }
-
-    return ResponseEntity.ok(toReturn.toString())
   }
 
   @GetMapping("test")
@@ -69,9 +81,7 @@ class QuestionController(
         incorrectVariants = listOf()
       )
 
-    val entity = QuestionEntity.fromModel(question)
-    println(entity)
-    repository.save(entity)
+    questionService.save(User.admin(), question)
 
     return ResponseEntity.ok("Hello from the server!")
   }

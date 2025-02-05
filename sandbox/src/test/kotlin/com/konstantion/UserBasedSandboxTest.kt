@@ -1,5 +1,6 @@
 package com.konstantion
 
+import com.konstantion.executor.CodeExecutor
 import com.konstantion.interpreter.PythonCodeInterpreter
 import com.konstantion.model.Code
 import com.konstantion.model.Lang
@@ -12,7 +13,6 @@ import com.konstantion.model.PlaceholderValue.Str
 import com.konstantion.model.TaskId
 import com.konstantion.sandbox.GroupId
 import com.konstantion.sandbox.UserBasedSandbox
-import com.konstantion.service.CodeExecutor
 import com.konstantion.utils.CmdHelper
 import com.konstantion.utils.Either
 import java.util.LinkedList

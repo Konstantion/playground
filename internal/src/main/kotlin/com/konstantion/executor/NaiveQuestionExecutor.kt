@@ -1,12 +1,12 @@
-package com.konstantion.service
+package com.konstantion.executor
 
+import com.konstantion.executor.QuestionExecutor.Issue
+import com.konstantion.executor.QuestionExecutor.Task
 import com.konstantion.model.Answer
 import com.konstantion.model.Lang
 import com.konstantion.model.Question
 import com.konstantion.model.QuestionMetadata
 import com.konstantion.model.TaskId
-import com.konstantion.service.QuestionService.Issue
-import com.konstantion.service.QuestionService.Task
 import com.konstantion.utils.Either
 import com.konstantion.utils.IdGenerator
 import com.konstantion.utils.closeForcefully
@@ -15,12 +15,12 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
-class NaiveQuestionService<Id, L>(
+class NaiveQuestionExecutor<Id, L>(
   private val codeExecutor: CodeExecutor<Id, L>,
   private val id: Id,
   private val executor: ExecutorService =
     Executors.newCachedThreadPool(Thread.ofPlatform().name("naive-question-service", 0).factory()),
-) : QuestionService<L> where L : Lang, Id : Any {
+) : QuestionExecutor<L> where L : Lang, Id : Any {
 
   private val taskIdGen: IdGenerator<TaskId> = IdGenerator.AtomicLong(0).andThen(::TaskId)
 

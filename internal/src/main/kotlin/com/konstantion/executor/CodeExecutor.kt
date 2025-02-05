@@ -1,4 +1,4 @@
-package com.konstantion.service
+package com.konstantion.executor
 
 import com.konstantion.interpreter.InterpreterIssue
 import com.konstantion.model.Code
