@@ -62,9 +62,9 @@ class NaiveQuestionExecutor<Id, L>(
         is Either.Left -> issues += Issue.VariantExecution(variant, result.value)
         is Either.Right ->
           if (variant.isCorrect()) {
-            correct += Answer(variant.id, result.value.value, id)
+            correct += Answer(variant.identifier, result.value.value, id)
           } else {
-            incorrect += Answer(variant.id, result.value.value, id)
+            incorrect += Answer(variant.identifier, result.value.value, id)
           }
       }
     }

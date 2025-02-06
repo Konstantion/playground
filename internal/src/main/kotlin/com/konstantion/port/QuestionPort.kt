@@ -1,6 +1,10 @@
 package com.konstantion.port
 
-interface QuestionPort<Entry> where Entry : Any {
-  fun save(entry: Entry): Entry
-  fun findAll(): List<Entry>
+import java.util.UUID
+
+interface QuestionPort<Entity> where Entity : Any {
+  fun findAllByCreatorId(creatorId: UUID): List<Entity>
+  fun findAllByPublic(public: Boolean) : List<Entity>
+  fun save(entry: Entity): Entity
+  fun findAll(): List<Entity>
 }

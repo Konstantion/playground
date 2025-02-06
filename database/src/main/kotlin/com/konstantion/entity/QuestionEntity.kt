@@ -21,12 +21,15 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.MapKeyColumn
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import java.util.UUID
 import kotlinx.serialization.json.Json
+import org.hibernate.annotations.OnDelete
+import org.hibernate.annotations.OnDeleteAction
 
 @Entity
 @Table(name = "questions")
@@ -77,6 +80,17 @@ open class QuestionEntity {
     inverseJoinColumns = [JoinColumn(name = "variant_id")]
   )
   open var incorrectVariants: MutableList<VariantEntity> = mutableListOf()
+
+  @Column(name = "is_validated", nullable = false)
+  open var validated: Boolean = false
+
+  @Column(name = "is_public", nullable = false)
+  open var public : Boolean = false
+
+  @ManyToOne(fetch = FetchType.LAZY, optional = true)
+  @JoinColumn(name = "creator_id", nullable = true)
+  @OnDelete(action = OnDeleteAction.SET_NULL)
+  open var creator: UserEntity? = null
 
   override fun toString(): String {
     return "QuestionEntity(id=$id, lang=$lang, body=$body, formatAndCode=$formatAndCode, placeholderDefinitions=$placeholderDefinitions, callArgs=$callArgs, additionalCheck=$additionalCheck, correctVariants=$correctVariants, incorrectVariants=$incorrectVariants)"

@@ -40,20 +40,20 @@ data class Question<L>(
 
   @Serializable
   sealed interface Variant<L> where L : Lang {
-    val id: UUID
+    val identifier: UUID
     val code: Code<L, Code.Output.Str>
 
     fun isCorrect(): Boolean = this is Correct
 
     @Serializable
     data class Correct<L>(
-      @Serializable(with = UUIDSerializer::class) override val id: UUID = UUID.randomUUID(),
+      @Serializable(with = UUIDSerializer::class) override val identifier: UUID = UUID.randomUUID(),
       override val code: Code<L, @Serializable(with = OutputTypeSerializer::class) Code.Output.Str>
     ) : Variant<L> where L : Lang
 
     @Serializable
     data class Incorrect<L>(
-      @Serializable(with = UUIDSerializer::class) override val id: UUID = UUID.randomUUID(),
+      @Serializable(with = UUIDSerializer::class) override val identifier: UUID = UUID.randomUUID(),
       override val code: Code<L, @Serializable(with = OutputTypeSerializer::class) Code.Output.Str>
     ) : Variant<L> where L : Lang
   }
