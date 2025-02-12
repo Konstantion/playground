@@ -3,29 +3,35 @@ package com.konstantion.model
 import java.util.UUID
 
 interface User {
-    fun id(): UUID
+  fun id(): UUID
 
-    fun getUsername(): String
+  fun getUsername(): String
 
-    fun getPassword(): String
+  fun getPassword(): String
 
-    fun role(): Role
+  fun role(): Role
 
-    fun permissions(): List<Permission>
+  fun permissions(): List<Permission>
 
-    companion object {
-        fun admin(): User {
-            return object : User {
-                override fun id() = UUID.randomUUID()
+  fun isAdmin() = role() == Role.Admin
 
-                override fun getUsername() = "username"
+  fun isTeacher() = role() == Role.Teacher
 
-                override fun getPassword(): String = "password"
+  fun hasPermission(permission: Permission) = permissions().contains(permission)
 
-                override fun role() = Role.Admin
+  companion object {
+    fun admin(): User {
+      return object : User {
+        override fun id() = UUID.randomUUID()
 
-                override fun permissions() = emptyList<Permission>()
-            }
-        }
+        override fun getUsername() = "username"
+
+        override fun getPassword(): String = "password"
+
+        override fun role() = Role.Admin
+
+        override fun permissions() = emptyList<Permission>()
+      }
     }
+  }
 }

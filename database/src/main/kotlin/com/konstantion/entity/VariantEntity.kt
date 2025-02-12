@@ -20,10 +20,10 @@ import java.util.UUID
 @Table(name = "variants")
 open class VariantEntity {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.UUID) open var id: UUID? = null
+  @Id @GeneratedValue(strategy = GenerationType.UUID) open var id: UUID? = null
 
-  @Column(name =  "identifier", updatable = false, nullable = false) open var identifier: UUID? = null
+  @Column(name = "identifier", updatable = false, nullable = false)
+  open var identifier: UUID? = null
 
   @OneToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
   @JoinColumn(name = "code_id")

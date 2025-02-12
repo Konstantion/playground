@@ -8,29 +8,30 @@ import com.konstantion.utils.Either
 import java.util.UUID
 
 interface QuestionService<Entity> {
-    fun save(user: User, question: Question<Lang>): Either<Issue, Entity>
+  fun save(user: User, question: Question<Lang>): Either<Issue, Entity>
 
-    fun getQuestions(user: User): Either<Issue, List<Entity>>
+  fun getQuestions(user: User): Either<Issue, List<Entity>>
 
-    fun getPublicQuestions(user: User): Either<Issue, List<Entity>>
+  fun getPublicQuestions(user: User): Either<Issue, List<Entity>>
 
-    fun getQuestion(user: User, id: UUID): Either<Issue, Entity>
+  fun getQuestion(user: User, id: UUID): Either<Issue, Entity>
 
-    fun deleteQuestion(user: User, id: UUID): Either<Issue, Entity>
+  fun deleteQuestion(user: User, id: UUID): Either<Issue, Entity>
 
-    fun validateQuestion(user: User, id: UUID): Either<Issue, ValidationResponse>
+  fun validateQuestion(user: User, id: UUID): Either<Issue, ValidationResponse>
 
-    fun validationStatus(user: User, taskId: TaskId): Either<Issue, StatusResponse>
+  fun validationStatus(user: User, id: UUID): Either<Issue, StatusResponse>
 
-    sealed interface Issue {}
+  sealed interface Issue {
+    data class UnexpectedAction(val action: String) : Issue
+  }
 
-    data class ValidationResponse(val taskId: TaskId)
+  data class ValidationResponse(val taskId: TaskId)
 
-    sealed interface StatusResponse {
-        data object NotRegistered : StatusResponse
-        data object Pending : StatusResponse
-        data class Submitted(val taskId: TaskId) : StatusResponse
-        data object Success : StatusResponse
-        data object Error : StatusResponse
-    }
+  sealed interface StatusResponse {
+    data object NotRegistered : StatusResponse
+    data class Submitted(val taskId: TaskId) : StatusResponse
+    data object Success : StatusResponse
+    data class Error(val message: String) : StatusResponse
+  }
 }
