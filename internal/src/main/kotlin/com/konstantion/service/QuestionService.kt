@@ -18,15 +18,26 @@ interface QuestionService<Entity> {
 
   fun deleteQuestion(user: User, id: UUID): Either<Issue, Entity>
 
-  fun validateQuestion(user: User, id: UUID): Either<Issue, ValidationResponse>
+  fun validateQuestion(user: User, id: UUID): Either<Issue, ValidationId>
 
   fun validationStatus(user: User, id: UUID): Either<Issue, StatusResponse>
 
   sealed interface Issue {
-    data class UnexpectedAction(val action: String) : Issue
+    fun code(): Int
+    fun message(): String
+
+    data class UnexpectedAction(val action: String) : Issue {
+      override fun code(): Int {
+        return 400
+      }
+
+      override fun message(): String {
+        return "Unexpected action: $action"
+      }
+    }
   }
 
-  data class ValidationResponse(val taskId: TaskId)
+  data class ValidationId(val taskId: TaskId)
 
   sealed interface StatusResponse {
     data object NotRegistered : StatusResponse

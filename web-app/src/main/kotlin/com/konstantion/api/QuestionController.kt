@@ -1,5 +1,7 @@
 package com.konstantion.api
 
+import com.konstantion.api.ControllerUtils.asResponse
+import com.konstantion.dto.Response
 import com.konstantion.entity.QuestionEntity
 import com.konstantion.model.Code
 import com.konstantion.model.FormatAndCode
@@ -19,6 +21,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonArray
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -29,12 +32,12 @@ data class QuestionController(
   private val questionService: QuestionService<QuestionEntity>
 ) {
   @GetMapping
-  fun getAllQuestions(): ResponseEntity<String> {
+  fun getAllQuestions(): ResponseEntity<Response> {
     return when (
       val result: Either<QuestionService.Issue, List<QuestionEntity>> =
         questionService.getQuestions(User.admin())
     ) {
-      is Either.Left -> ResponseEntity.ok("Error ${result.value}")
+      is Either.Left -> result.value.asResponse()
       is Either.Right -> {
         val toReturn = buildJsonArray {
           questionRepository.findAll().forEach { question ->
@@ -47,7 +50,52 @@ data class QuestionController(
           }
         }
 
-        ResponseEntity.ok(toReturn.toString())
+        ResponseEntity.ok(Response.OfString(toReturn.toString()))
+      }
+    }
+  }
+
+  @GetMapping("public")
+  fun getPublicQuestions(): ResponseEntity<Response> {
+    return when (
+      val result: Either<QuestionService.Issue, List<QuestionEntity>> =
+        questionService.getPublicQuestions(User.admin())
+    ) {
+      is Either.Left -> result.value.asResponse()
+      is Either.Right -> {
+        val toReturn = buildJsonArray {
+          questionRepository.findAll().forEach { question ->
+            add(
+              Json.encodeToJsonElement(
+                Question.serializer(Lang.serializer()),
+                CastHelper.refine(question.toModel())
+              )
+            )
+          }
+        }
+
+        ResponseEntity.ok(Response.OfString(toReturn.toString()))
+      }
+    }
+  }
+
+  @GetMapping("{id}")
+  fun getQuestionById(@PathVariable("id") id: UUID): ResponseEntity<Response> {
+    return when (
+      val result: Either<QuestionService.Issue, QuestionEntity> =
+        questionService.getQuestion(User.admin(), id)
+    ) {
+      is Either.Left -> result.value.asResponse()
+      is Either.Right -> {
+        val question = result.value
+        ResponseEntity.ok(
+          Response.OfString(
+            Json.encodeToString(
+              Question.serializer(Lang.serializer()),
+              CastHelper.refine(question.toModel())
+            )
+          )
+        )
       }
     }
   }

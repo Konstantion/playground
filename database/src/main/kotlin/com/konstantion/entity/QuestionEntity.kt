@@ -92,11 +92,33 @@ open class QuestionEntity {
 
   fun id(): UUID = nonNull(id)
 
+    fun lang(): String = nonNull(lang)
+
+    fun body(): String = nonNull(body)
+
+    fun formatAndCode(): String = nonNull(formatAndCode)
+
+    fun placeholderDefinitions(): Map<String, String> = placeholderDefinitions
+
+    fun callArgs(): List<String> = callArgs
+
+    fun additionalCheck(): CodeEntity? = additionalCheck
+
+    fun correctVariants(): List<VariantEntity> = correctVariants
+
+    fun incorrectVariants(): List<VariantEntity> = incorrectVariants
+
+    fun validated(): Boolean = validated
+
+    fun public(): Boolean = public
+
+    fun creator(): UserEntity? = creator
+
   override fun toString(): String {
     return "QuestionEntity(id=$id, lang=$lang, body=$body, formatAndCode=$formatAndCode, placeholderDefinitions=$placeholderDefinitions, callArgs=$callArgs, additionalCheck=$additionalCheck, correctVariants=$correctVariants, incorrectVariants=$incorrectVariants)"
   }
 
-  fun toModel(): Question<*> {
+  fun toModel(): Question<Lang> {
     val lang: Lang = Json.decodeFromString(nonNull(this.lang))
     val placeholderDefinition: Map<PlaceholderIdentifier, PlaceholderDefinition<PlaceholderValue>> =
       this.placeholderDefinitions

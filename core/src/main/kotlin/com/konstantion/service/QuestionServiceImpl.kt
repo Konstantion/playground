@@ -1,15 +1,20 @@
 package com.konstantion.service
 
 import com.konstantion.entity.QuestionEntity
+import com.konstantion.executor.QuestionExecutor
 import com.konstantion.model.Lang
 import com.konstantion.model.Permission
 import com.konstantion.model.Question
 import com.konstantion.model.Role
 import com.konstantion.model.User
 import com.konstantion.port.QuestionPort
+import com.konstantion.service.QuestionService.ValidationId
 import com.konstantion.utils.Either
 import com.konstantion.utils.Maybe
 import java.util.UUID
+import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -17,9 +22,12 @@ import org.springframework.stereotype.Service
 @Service
 data class QuestionServiceImpl(
   private val questionPort: QuestionPort<QuestionEntity>,
-  private val questionValidator: QuestionValidator
+  private val pythonExecutor: QuestionExecutor<Lang.Python>,
 ) : QuestionService<QuestionEntity> {
   private val log: Logger = LoggerFactory.getLogger(QuestionServiceImpl::class.java)
+  private val sqlLock: Lock = ReentrantLock()
+  private val questionValidator: QuestionValidator =
+    QuestionValidator(sqlLock, questionPort, pythonExecutor)
 
   override fun save(
     user: User,
@@ -126,26 +134,26 @@ data class QuestionServiceImpl(
     }
   }
 
-  override fun validateQuestion(
-    user: User,
-    id: UUID
-  ): Either<QuestionService.Issue, QuestionService.ValidationResponse> {
-    TODO("Not yet implemented")
+  override fun validateQuestion(user: User, id: UUID): Either<QuestionService.Issue, ValidationId> {
+    log.info("ValidateQuestion[userId={}, username={}, id={}]", user.id(), user.getUsername(), id)
+    return getQuestion(user, id).flatMap(questionValidator::validate).map(::ValidationId)
   }
 
   override fun validationStatus(
     user: User,
     id: UUID
   ): Either<QuestionService.Issue, QuestionService.StatusResponse> {
-    TODO("Not yet implemented")
+    log.info("ValidationStatus[userId={}, username={}, id={}]", user.id(), user.getUsername(), id)
+    return getQuestion(user, id).map { question -> questionValidator.status(question.id()) }
   }
 
-  private fun <T : Any> sqlAction(action: () -> T): Either<QuestionService.Issue, T> {
-    return try {
-      Either.right(action())
-    } catch (dbIssue: Exception) {
-      log.error("SqlError[message={}]", dbIssue.message)
-      Either.left(SqlError(dbIssue.message ?: "Unknown error"))
+  private fun <T : Any> sqlAction(action: () -> T): Either<QuestionService.Issue, T> =
+    sqlLock.withLock {
+      try {
+        Either.right(action())
+      } catch (dbIssue: Exception) {
+        log.error("SqlError[message={}]", dbIssue.message)
+        Either.left(SqlError(dbIssue.message ?: "Unknown error"))
+      }
     }
-  }
 }
