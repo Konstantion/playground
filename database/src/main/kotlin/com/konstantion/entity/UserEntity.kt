@@ -2,7 +2,6 @@ package com.konstantion.entity
 
 import com.konstantion.model.Permission
 import com.konstantion.model.Role
-import com.konstantion.utils.FieldUtils
 import com.konstantion.utils.FieldUtils.nonNull
 import jakarta.persistence.CollectionTable
 import jakarta.persistence.Column
@@ -21,25 +20,19 @@ import java.util.UUID
 @Table(name = "users")
 @Entity
 open class UserEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    open var id: UUID? = null
+  @Id @GeneratedValue(strategy = GenerationType.UUID) open var id: UUID? = null
 
-    @Column(name = "username", nullable = false)
-    open var username: String? = null
+  @Column(name = "username", nullable = false) open var username: String? = null
 
-    @Column(name = "password", nullable = false)
-    open var password: String? = null
+  @Column(name = "password", nullable = false) open var password: String? = null
 
-    @Column(name = "role")
-    @Enumerated(EnumType.STRING)
-    open var role: Role? = null
+  @Column(name = "role") @Enumerated(EnumType.STRING) open var role: Role? = null
 
-    @ElementCollection(targetClass = Permission::class, fetch = FetchType.LAZY)
-    @CollectionTable(name = "user_permissions", joinColumns = [JoinColumn(name = "user_id")])
-    @Column(name = "permission")
-    @Enumerated(EnumType.STRING)
-    open var permissions: MutableSet<Permission> = mutableSetOf()
+  @ElementCollection(targetClass = Permission::class, fetch = FetchType.LAZY)
+  @CollectionTable(name = "user_permissions", joinColumns = [JoinColumn(name = "user_id")])
+  @Column(name = "permission")
+  @Enumerated(EnumType.STRING)
+  open var permissions: MutableSet<Permission> = mutableSetOf()
 
-    fun id(): UUID = nonNull(id)
+  fun id(): UUID = nonNull(id)
 }

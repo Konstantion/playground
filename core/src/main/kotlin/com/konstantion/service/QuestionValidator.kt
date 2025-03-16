@@ -39,7 +39,7 @@ class QuestionValidator(
     validate(questionEntity.id(), questionEntity.toModel())
 
   private fun validate(id: UUID, question: Question<Lang>): Either<QuestionService.Issue, TaskId> {
-    if (question.lang() == Lang.Python) {
+    if (question.lang == Lang.Python) {
       return Either.left(
         QuestionService.Issue.UnexpectedAction("Python questions are not supported")
       )

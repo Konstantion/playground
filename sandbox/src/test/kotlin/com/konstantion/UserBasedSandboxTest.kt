@@ -46,7 +46,13 @@ class UserBasedSandboxTest {
 
     sandbox.subscribe(groupId, listener(latch, log))
 
-    val task = sandbox.submit(groupId, code, placeholders, definitions)
+    val task =
+      sandbox.submit(
+        groupId,
+        code,
+        placeholders,
+        definitions.mapValues { (_, definition) -> definition.value() }
+      )
 
     latch.await()
     sandbox.close()
@@ -80,7 +86,13 @@ class UserBasedSandboxTest {
 
     sandbox.subscribe(groupId, listener(latch, log))
 
-    val task = sandbox.submit(groupId, code, placeholders, definitions)
+    val task =
+      sandbox.submit(
+        groupId,
+        code,
+        placeholders,
+        definitions.mapValues { (_, definition) -> definition.value() }
+      )
 
     latch.await()
     sandbox.close()
@@ -114,7 +126,13 @@ class UserBasedSandboxTest {
 
     sandbox.subscribe(groupId, listener(latch, log))
 
-    val task = sandbox.submit(groupId, code, placeholders, definitions)
+    val task =
+      sandbox.submit(
+        groupId,
+        code,
+        placeholders,
+        definitions.mapValues { (_, definition) -> definition.value() }
+      )
 
     latch.await()
     sandbox.close()
@@ -152,7 +170,13 @@ class UserBasedSandboxTest {
 
     sandbox.subscribe(groupId, listener(latch, log))
 
-    val task = sandbox.submit(groupId, code, placeholders, definitions)
+    val task =
+      sandbox.submit(
+        groupId,
+        code,
+        placeholders,
+        definitions.mapValues { (_, definition) -> definition.value() }
+      )
 
     latch.await()
     sandbox.close()

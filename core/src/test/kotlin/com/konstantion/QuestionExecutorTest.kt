@@ -134,6 +134,7 @@ class QuestionExecutorTest {
     incorrect: List<Question.Variant.Incorrect<Lang.Python>>
   ): Question<Lang.Python> {
     return Question(
+      identifier = UUID.randomUUID(),
       lang = Lang.Python,
       body = "body",
       formatAndCode = FormatAndCode("java", "asd"),

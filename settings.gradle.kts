@@ -50,6 +50,7 @@ dependencyResolutionManagement {
             }
 
 
+            library("apache-commons-lang3", "org.apache.commons:commons-lang3:3.12.0")
             library("postgresql", "org.postgresql:postgresql:42.5.0")
             library("hikariCp", "com.zaxxer:HikariCP:5.0.1")
             library("flyway", "org.flywaydb:flyway-core:9.15.1")

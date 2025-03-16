@@ -37,6 +37,9 @@ open class QuestionEntity {
 
   @Id @GeneratedValue(strategy = GenerationType.UUID) open var id: UUID? = null
 
+  @Column(name = "identifier", updatable = false, nullable = false)
+  open var identifier: UUID? = null
+
   @Column(name = "lang", nullable = false) open var lang: String? = null
 
   @Column(name = "body", nullable = false) open var body: String? = null
@@ -92,27 +95,29 @@ open class QuestionEntity {
 
   fun id(): UUID = nonNull(id)
 
-    fun lang(): String = nonNull(lang)
+  fun identifier(): UUID = nonNull(identifier)
 
-    fun body(): String = nonNull(body)
+  fun lang(): String = nonNull(lang)
 
-    fun formatAndCode(): String = nonNull(formatAndCode)
+  fun body(): String = nonNull(body)
 
-    fun placeholderDefinitions(): Map<String, String> = placeholderDefinitions
+  fun formatAndCode(): String = nonNull(formatAndCode)
 
-    fun callArgs(): List<String> = callArgs
+  fun placeholderDefinitions(): Map<String, String> = placeholderDefinitions
 
-    fun additionalCheck(): CodeEntity? = additionalCheck
+  fun callArgs(): List<String> = callArgs
 
-    fun correctVariants(): List<VariantEntity> = correctVariants
+  fun additionalCheck(): CodeEntity? = additionalCheck
 
-    fun incorrectVariants(): List<VariantEntity> = incorrectVariants
+  fun correctVariants(): List<VariantEntity> = correctVariants
 
-    fun validated(): Boolean = validated
+  fun incorrectVariants(): List<VariantEntity> = incorrectVariants
 
-    fun public(): Boolean = public
+  fun validated(): Boolean = validated
 
-    fun creator(): UserEntity? = creator
+  fun public(): Boolean = public
+
+  fun creator(): UserEntity? = creator
 
   override fun toString(): String {
     return "QuestionEntity(id=$id, lang=$lang, body=$body, formatAndCode=$formatAndCode, placeholderDefinitions=$placeholderDefinitions, callArgs=$callArgs, additionalCheck=$additionalCheck, correctVariants=$correctVariants, incorrectVariants=$incorrectVariants)"
@@ -133,6 +138,7 @@ open class QuestionEntity {
     val incorrectVariants: List<Question.Variant.Incorrect<Lang>> =
       this.incorrectVariants.map { variant -> variant.toIncorrect(lang) }
     return Question(
+      identifier = nonNull(identifier),
       lang = lang,
       body = nonNull(body),
       formatAndCode = Json.decodeFromString(nonNull(formatAndCode)),
@@ -147,13 +153,12 @@ open class QuestionEntity {
   companion object {
     fun fromModel(question: Question<*>): QuestionEntity {
       val entity = QuestionEntity()
-      entity.lang = Json.encodeToString(Lang.serializer(), question.lang())
-      entity.body = question.body()
-      entity.formatAndCode =
-        Json.encodeToString(FormatAndCode.serializer(), question.formatAndCode())
+      entity.identifier = question.identifier
+      entity.lang = Json.encodeToString(Lang.serializer(), question.lang)
+      entity.body = question.body
+      entity.formatAndCode = Json.encodeToString(FormatAndCode.serializer(), question.formatAndCode)
       entity.placeholderDefinitions =
-        question
-          .placeholderDefinitions()
+        question.placeholderDefinitions
           .mapKeys { (identifier, _) -> identifier.toString() }
           .mapValues { (_, definition) ->
             Json.encodeToString(
@@ -163,15 +168,14 @@ open class QuestionEntity {
           }
           .toMutableMap()
       entity.callArgs =
-        question
-          .callArgs()
+        question.callArgs
           .map { callArg -> Json.encodeToString(PlaceholderLabel.serializer(), callArg) }
           .toMutableList()
-      entity.additionalCheck = question.additionalCheck()?.let(CodeEntity::fromModel)
+      entity.additionalCheck = question.additionalCheck?.let(CodeEntity::fromModel)
       entity.correctVariants =
-        question.correctVariants().map(VariantEntity::fromCorrect).toMutableList()
+        question.correctVariants.map(VariantEntity::fromCorrect).toMutableList()
       entity.incorrectVariants =
-        question.incorrectVariants().map(VariantEntity::fromIncorrect).toMutableList()
+        question.incorrectVariants.map(VariantEntity::fromIncorrect).toMutableList()
       return entity
     }
   }

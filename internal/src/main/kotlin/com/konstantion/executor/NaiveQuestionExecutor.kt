@@ -4,6 +4,8 @@ import com.konstantion.executor.QuestionExecutor.Issue
 import com.konstantion.executor.QuestionExecutor.Task
 import com.konstantion.model.Answer
 import com.konstantion.model.Lang
+import com.konstantion.model.PlaceholderIdentifier
+import com.konstantion.model.PlaceholderValue
 import com.konstantion.model.Question
 import com.konstantion.model.QuestionMetadata
 import com.konstantion.model.TaskId
@@ -39,6 +41,9 @@ class NaiveQuestionExecutor<Id, L>(
 
   @Throws(InterruptedException::class)
   override fun run(question: Question<L>): Either<Issue, QuestionMetadata> {
+    val placeholderValues: Map<PlaceholderIdentifier, PlaceholderValue> =
+      question.placeholderDefinitions.mapValues { (_, definition) -> definition.value() }
+
     val results =
       question
         .variants()
@@ -46,8 +51,8 @@ class NaiveQuestionExecutor<Id, L>(
           codeExecutor.submit(
             groupId = id,
             code = variant.code,
-            callArgs = question.callArgs(),
-            placeholderDefinitions = question.placeholderDefinitions()
+            callArgs = question.callArgs,
+            placeholderValues = placeholderValues
           )
         }
         .mapValues { (_, task) -> task.id() to task.get() }
@@ -74,7 +79,8 @@ class NaiveQuestionExecutor<Id, L>(
     } else {
       Either.right(
         QuestionMetadata(
-          formatAndCode = question.formatAndCode(),
+          question.identifier,
+          formatAndCode = question.formatAndCode.reformated(placeholderValues),
           correctAnswers = correct,
           intersectAnswer = incorrect
         )

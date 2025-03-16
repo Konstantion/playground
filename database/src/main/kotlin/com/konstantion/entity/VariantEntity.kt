@@ -37,11 +37,11 @@ open class VariantEntity {
     return Question.Variant.Incorrect(nonNull(identifier), refine(nonNull(code).toModel(lang)))
   }
 
-    fun id(): UUID = nonNull(id)
+  fun id(): UUID = nonNull(id)
 
   fun identifier(): UUID = nonNull(identifier)
 
-        fun code(): CodeEntity = nonNull(code)
+  fun code(): CodeEntity = nonNull(code)
 
   override fun toString(): String {
     return "VariantEntity(id=$id, code=$code)"

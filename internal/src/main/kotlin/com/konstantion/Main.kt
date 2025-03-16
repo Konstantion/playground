@@ -23,6 +23,7 @@ fun main() {
   )
   val question: Question<Lang> =
     Question(
+      identifier = UUID.randomUUID(),
       lang = Lang.Python,
       body = "body",
       formatAndCode = FormatAndCode("java", "asd"),

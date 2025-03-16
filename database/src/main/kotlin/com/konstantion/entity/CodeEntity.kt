@@ -33,9 +33,9 @@ open class CodeEntity {
 
   fun id(): UUID = nonNull(id)
 
-    fun code(): String = nonNull(code)
+  fun code(): String = nonNull(code)
 
-    fun outputType(): String = nonNull(outputType)
+  fun outputType(): String = nonNull(outputType)
 
   override fun toString(): String {
     return "CodeEntity(id=$id, code=$code, outputType=$outputType)"

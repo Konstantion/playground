@@ -99,7 +99,13 @@ fun sandboxTest(
 
     val code = Code(rawCode, Lang.Python, Code.Output.Str::class.java)
 
-    tasks += sandbox.submit(groupId, code, placeholders, definitions)
+    tasks +=
+      sandbox.submit(
+        groupId,
+        code,
+        placeholders,
+        definitions.mapValues { (_, definitions) -> definitions.value() }
+      )
   }
 
   return tasks

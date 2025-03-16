@@ -3,9 +3,9 @@ package com.konstantion.executor
 import com.konstantion.interpreter.InterpreterIssue
 import com.konstantion.model.Code
 import com.konstantion.model.Lang
-import com.konstantion.model.PlaceholderDefinition
 import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
+import com.konstantion.model.PlaceholderValue
 import com.konstantion.model.TaskId
 import com.konstantion.utils.Either
 import java.io.IOException
@@ -16,7 +16,7 @@ interface CodeExecutor<Id, L> : AutoCloseable where Id : Any, L : Lang {
     groupId: Id,
     code: Code<L, O>,
     callArgs: List<PlaceholderLabel>,
-    placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>
+    placeholderValues: Map<PlaceholderIdentifier, PlaceholderValue>
   ): Task<O> where O : Code.Output
 
   fun subscribe(groupId: Id, listener: Listener<Id>)

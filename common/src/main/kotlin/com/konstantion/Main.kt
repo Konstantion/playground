@@ -42,7 +42,14 @@ fun pythonTest() {
     )
 
   val executableCode: String =
-    when (val result = PythonCodeInterpreter.toExecutableCode(code, placeholders, definitions)) {
+    when (
+      val result =
+        PythonCodeInterpreter.toExecutableCode(
+          code,
+          placeholders,
+          definitions.mapValues { (_, definition) -> definition.value() }
+        )
+    ) {
       is Either.Left -> throw IllegalArgumentException(result.value.toString())
       is Either.Right -> result.value
     }
