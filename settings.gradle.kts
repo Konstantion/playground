@@ -54,6 +54,7 @@ dependencyResolutionManagement {
             library("postgresql", "org.postgresql:postgresql:42.5.0")
             library("hikariCp", "com.zaxxer:HikariCP:5.0.1")
             library("flyway", "org.flywaydb:flyway-core:9.15.1")
+            library("swagger", "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2")
         }
     }
 }

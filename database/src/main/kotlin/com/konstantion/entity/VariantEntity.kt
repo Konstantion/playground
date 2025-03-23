@@ -5,7 +5,6 @@ import com.konstantion.model.Question
 import com.konstantion.utils.CastHelper.refine
 import com.konstantion.utils.FieldUtils.nonNull
 import jakarta.persistence.CascadeType
-import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
@@ -22,24 +21,19 @@ open class VariantEntity {
 
   @Id @GeneratedValue(strategy = GenerationType.UUID) open var id: UUID? = null
 
-  @Column(name = "identifier", updatable = false, nullable = false)
-  open var identifier: UUID? = null
-
   @OneToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
   @JoinColumn(name = "code_id")
   open var code: CodeEntity? = null
 
   fun <L> toCorrect(lang: L): Question.Variant.Correct<L> where L : Lang {
-    return Question.Variant.Correct(nonNull(identifier), refine(nonNull(code).toModel(lang)))
+    return Question.Variant.Correct(nonNull(id), refine(nonNull(code).toModel(lang)))
   }
 
   fun <L> toIncorrect(lang: L): Question.Variant.Incorrect<L> where L : Lang {
-    return Question.Variant.Incorrect(nonNull(identifier), refine(nonNull(code).toModel(lang)))
+    return Question.Variant.Incorrect(nonNull(id), refine(nonNull(code).toModel(lang)))
   }
 
   fun id(): UUID = nonNull(id)
-
-  fun identifier(): UUID = nonNull(identifier)
 
   fun code(): CodeEntity = nonNull(code)
 
@@ -50,16 +44,14 @@ open class VariantEntity {
   companion object {
     fun fromCorrect(variant: Question.Variant.Correct<*>): VariantEntity {
       return VariantEntity().apply {
-        id = null
-        identifier = variant.identifier
+        id = id
         code = CodeEntity.fromModel(variant.code)
       }
     }
 
     fun fromIncorrect(variant: Question.Variant.Incorrect<*>): VariantEntity {
       return VariantEntity().apply {
-        id = null
-        identifier = variant.identifier
+        id = id
         code = CodeEntity.fromModel(variant.code)
       }
     }

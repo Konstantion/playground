@@ -37,9 +37,6 @@ open class QuestionEntity {
 
   @Id @GeneratedValue(strategy = GenerationType.UUID) open var id: UUID? = null
 
-  @Column(name = "identifier", updatable = false, nullable = false)
-  open var identifier: UUID? = null
-
   @Column(name = "lang", nullable = false) open var lang: String? = null
 
   @Column(name = "body", nullable = false) open var body: String? = null
@@ -95,8 +92,6 @@ open class QuestionEntity {
 
   fun id(): UUID = nonNull(id)
 
-  fun identifier(): UUID = nonNull(identifier)
-
   fun lang(): String = nonNull(lang)
 
   fun body(): String = nonNull(body)
@@ -138,7 +133,7 @@ open class QuestionEntity {
     val incorrectVariants: List<Question.Variant.Incorrect<Lang>> =
       this.incorrectVariants.map { variant -> variant.toIncorrect(lang) }
     return Question(
-      identifier = nonNull(identifier),
+      identifier = nonNull(id),
       lang = lang,
       body = nonNull(body),
       formatAndCode = Json.decodeFromString(nonNull(formatAndCode)),
@@ -153,7 +148,7 @@ open class QuestionEntity {
   companion object {
     fun fromModel(question: Question<*>): QuestionEntity {
       val entity = QuestionEntity()
-      entity.identifier = question.identifier
+      entity.id = question.identifier
       entity.lang = Json.encodeToString(Lang.serializer(), question.lang)
       entity.body = question.body
       entity.formatAndCode = Json.encodeToString(FormatAndCode.serializer(), question.formatAndCode)

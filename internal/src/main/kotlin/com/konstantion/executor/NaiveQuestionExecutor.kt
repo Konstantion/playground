@@ -12,6 +12,7 @@ import com.konstantion.model.TaskId
 import com.konstantion.utils.Either
 import com.konstantion.utils.IdGenerator
 import com.konstantion.utils.closeForcefully
+import com.konstantion.utils.nonNull
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -67,9 +68,9 @@ class NaiveQuestionExecutor<Id, L>(
         is Either.Left -> issues += Issue.VariantExecution(variant, result.value)
         is Either.Right ->
           if (variant.isCorrect()) {
-            correct += Answer(variant.identifier, result.value.value, id)
+            correct += Answer(variant.identifier.nonNull(), result.value.value, id)
           } else {
-            incorrect += Answer(variant.identifier, result.value.value, id)
+            incorrect += Answer(variant.identifier.nonNull(), result.value.value, id)
           }
       }
     }
@@ -79,7 +80,7 @@ class NaiveQuestionExecutor<Id, L>(
     } else {
       Either.right(
         QuestionMetadata(
-          question.identifier,
+          question.identifier.nonNull(),
           formatAndCode = question.formatAndCode.reformated(placeholderValues),
           correctAnswers = correct,
           intersectAnswer = incorrect

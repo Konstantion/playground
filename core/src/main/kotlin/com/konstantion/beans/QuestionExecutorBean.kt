@@ -7,14 +7,13 @@ import com.konstantion.model.Lang
 import com.konstantion.sandbox.GroupId
 import com.konstantion.sandbox.UserBasedSandbox
 import com.konstantion.utils.CmdHelper
-import jakarta.annotation.PreDestroy
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
 class QuestionExecutorBean {
-  @Bean
+  @Bean(destroyMethod = "close")
   fun pythonExecutor(): QuestionExecutor<Lang.Python> {
     return NaiveQuestionExecutor(pythonSandbox(), GroupId(0L))
   }
@@ -27,14 +26,5 @@ class QuestionExecutorBean {
       CmdHelper.Python3File,
       PythonCodeInterpreter
     )
-  }
-
-  @PreDestroy
-  private fun close(
-    questionExecutor: QuestionExecutor<Lang.Python>,
-    sandbox: UserBasedSandbox<Lang.Python>,
-  ) {
-    questionExecutor.close()
-    sandbox.close()
   }
 }

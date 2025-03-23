@@ -38,7 +38,7 @@ class QuestionValidator(
   fun validate(questionEntity: QuestionEntity) =
     validate(questionEntity.id(), questionEntity.toModel())
 
-  private fun validate(id: UUID, question: Question<Lang>): Either<QuestionService.Issue, TaskId> {
+  private fun validate(id: UUID, question: Question<Lang>): Either<ServiceIssue, TaskId> {
     if (question.lang == Lang.Python) {
       return Either.left(
         QuestionService.Issue.UnexpectedAction("Python questions are not supported")
@@ -82,7 +82,7 @@ class QuestionValidator(
       if (!failed) {
         sqlLock.withLock {
           log.info("Question with id={}, successfully validated", id)
-          val entity = questionPort.find(id).orElseThrow()
+          val entity = questionPort.findById(id).orElseThrow()
           entity.validated = true
           questionPort.save(entity)
           require(statuses.put(id, StatusResponse.Success) is StatusResponse.Submitted)

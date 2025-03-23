@@ -2,7 +2,13 @@ package com.konstantion.service
 
 import com.konstantion.utils.Either
 
-data class SqlError(val message: String) : QuestionService.Issue {
+interface ServiceIssue {
+  fun code(): Int
+  fun message(): String
+
+}
+
+data class SqlError(val message: String) : ServiceIssue {
   override fun code(): Int {
     return 500
   }
@@ -12,9 +18,9 @@ data class SqlError(val message: String) : QuestionService.Issue {
   }
 }
 
-data class Forbidden(val message: String) : QuestionService.Issue {
+data class Forbidden(val message: String) : ServiceIssue {
   companion object {
-    fun <R : Any> asEither(message: String): Either<QuestionService.Issue, R> {
+    fun <R : Any> asEither(message: String): Either<ServiceIssue, R> {
       return Either.left(Forbidden(message))
     }
   }

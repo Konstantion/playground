@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Question<L>(
-  @Serializable(with = UUIDSerializer::class) val identifier: UUID,
+  @Serializable(with = UUIDSerializer::class) val identifier: UUID?,
   val lang: L,
   val body: String,
   val formatAndCode: FormatAndCode,
@@ -24,20 +24,20 @@ data class Question<L>(
 
   @Serializable
   sealed interface Variant<L> where L : Lang {
-    val identifier: UUID
+    val identifier: UUID?
     val code: Code<L, Code.Output.Str>
 
     fun isCorrect(): Boolean = this is Correct
 
     @Serializable
     data class Correct<L>(
-      @Serializable(with = UUIDSerializer::class) override val identifier: UUID = UUID.randomUUID(),
+      @Serializable(with = UUIDSerializer::class) override val identifier: UUID?,
       override val code: Code<L, @Serializable(with = OutputTypeSerializer::class) Code.Output.Str>
     ) : Variant<L> where L : Lang
 
     @Serializable
     data class Incorrect<L>(
-      @Serializable(with = UUIDSerializer::class) override val identifier: UUID = UUID.randomUUID(),
+      @Serializable(with = UUIDSerializer::class) override val identifier: UUID?,
       override val code: Code<L, @Serializable(with = OutputTypeSerializer::class) Code.Output.Str>
     ) : Variant<L> where L : Lang
   }

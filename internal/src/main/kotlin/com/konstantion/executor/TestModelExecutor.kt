@@ -13,7 +13,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class TestExecutor(
+class TestModelExecutor(
   private val questionExecutors: Map<Lang, QuestionExecutor<Lang>>,
 ) : AutoCloseable {
   private val idGen: IdGenerator<TaskId> = IdGenerator.AtomicLong().andThen(::TaskId)
