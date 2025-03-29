@@ -9,8 +9,6 @@ import java.util.UUID
 
 @Repository
 interface CodeRepository : JpaRepository<CodeEntity, UUID>, CodePort<CodeEntity> {
-    override fun findById(id: UUID): Optional<CodeEntity>
-    override fun findAll(): List<CodeEntity>
     override fun save(entry: CodeEntity): CodeEntity {
         return saveAndFlush(entry)
     }

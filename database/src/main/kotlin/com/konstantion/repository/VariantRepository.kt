@@ -9,10 +9,6 @@ import java.util.UUID
 
 @Repository
 interface VariantRepository : JpaRepository<VariantEntity, UUID>, VariantPort<VariantEntity> {
-    override fun findById(id: UUID): Optional<VariantEntity>
-
-    override fun findAll(): List<VariantEntity>
-
     override fun save(entry: VariantEntity): VariantEntity {
         return saveAndFlush(entry)
     }

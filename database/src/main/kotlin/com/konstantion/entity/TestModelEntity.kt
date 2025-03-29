@@ -18,35 +18,43 @@ import java.util.UUID
 @Entity
 @Table(name = "test_models")
 open class TestModelEntity {
-  @Id @GeneratedValue(strategy = GenerationType.UUID) open var id: UUID? = null
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    open var id: UUID? = null
 
-  @Column(name = "name", nullable = false) open var name: String? = null
+    @Column(name = "name", nullable = false)
+    open var name: String? = null
 
-  @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-  @JoinTable(
-    name = "test_models_questions",
-    joinColumns = [JoinColumn(name = "test_model_id")],
-    inverseJoinColumns = [JoinColumn(name = "question_id")]
-  )
-  open var questions: MutableList<QuestionEntity> = mutableListOf()
+    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "test_models_questions",
+        joinColumns = [JoinColumn(name = "test_model_id")],
+        inverseJoinColumns = [JoinColumn(name = "question_id")]
+    )
+    open var questions: MutableList<QuestionEntity> = mutableListOf()
 
-  fun id(): UUID = nonNull(id)
+    @Column(name = "active", nullable = false)
+    open var active: Boolean = true
 
-  fun name(): String = nonNull(name)
+    fun id(): UUID = nonNull(id)
 
-  fun questions(): MutableList<QuestionEntity> = questions
+    fun name(): String = nonNull(name)
 
-  fun toModel(): TestModel {
-    return TestModel(id = id(), name = name(), questions = questions.map(QuestionEntity::toModel))
-  }
+    fun questions(): MutableList<QuestionEntity> = questions
 
-  companion object {
-    fun fromModel(testModel: TestModel): TestModelEntity {
-      val entity = TestModelEntity()
-      entity.id = testModel.id
-      entity.name = testModel.name
-      entity.questions = testModel.questions.map(QuestionEntity::fromModel).toMutableList()
-      return entity
+    fun active(): Boolean = active
+
+    fun toModel(): TestModel {
+        return TestModel(id = id(), name = name(), questions = questions.map(QuestionEntity::toModel))
     }
-  }
+
+    companion object {
+        fun fromModel(testModel: TestModel): TestModelEntity {
+            val entity = TestModelEntity()
+            entity.id = testModel.id
+            entity.name = testModel.name
+            entity.questions = testModel.questions.map(QuestionEntity::fromModel).toMutableList()
+            return entity
+        }
+    }
 }

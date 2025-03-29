@@ -4,7 +4,7 @@ import com.konstantion.model.Lang
 import com.konstantion.model.Question
 import com.konstantion.model.QuestionMetadata
 import com.konstantion.model.TaskId
-import com.konstantion.model.TestMetadata
+import com.konstantion.model.TestModelMetadata
 import com.konstantion.model.TestModel
 import com.konstantion.utils.Either
 import com.konstantion.utils.IdGenerator
@@ -21,7 +21,7 @@ class TestModelExecutor(
     Executors.newCachedThreadPool(Thread.ofPlatform().name("test-executor", 0).factory())
 
   @Throws(InterruptedException::class)
-  fun run(testModel: TestModel): Either<Issue, TestMetadata> {
+  fun run(testModel: TestModel): Either<Issue, TestModelMetadata> {
     val tasks: MutableList<QuestionExecutor.Task> = mutableListOf()
     for (question in testModel.questions) {
       tasks +=
@@ -42,7 +42,7 @@ class TestModelExecutor(
     return if (issues.isNotEmpty()) {
       Either.Left(Issue.OfQuestion(issues.toList()))
     } else {
-      Either.Right(TestMetadata(testModel.id, testModel.name, questionsMetadata))
+      Either.Right(TestModelMetadata(testModel.id, testModel.name, questionsMetadata))
     }
   }
 
@@ -53,7 +53,7 @@ class TestModelExecutor(
       override fun id(): TaskId = taskId
 
       @Throws(InterruptedException::class)
-      override fun get(): Either<Issue, TestMetadata> = task.get()
+      override fun get(): Either<Issue, TestModelMetadata> = task.get()
     }
   }
 
@@ -67,7 +67,7 @@ class TestModelExecutor(
   interface Task {
     fun id(): TaskId
 
-    @Throws(InterruptedException::class) fun get(): Either<Issue, TestMetadata>
+    @Throws(InterruptedException::class) fun get(): Either<Issue, TestModelMetadata>
   }
 
   override fun close() {
