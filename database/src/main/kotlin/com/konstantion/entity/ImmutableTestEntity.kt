@@ -1,7 +1,7 @@
 package com.konstantion.entity
 
-import com.konstantion.model.TestModel
-import com.konstantion.utils.FieldUtils.nonNull
+import com.konstantion.utils.FieldUtils
+import com.konstantion.utils.nonNull
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -20,8 +20,8 @@ import org.hibernate.annotations.OnDelete
 import org.hibernate.annotations.OnDeleteAction
 
 @Entity
-@Table(name = "test_models")
-open class TestModelEntity {
+@Table(name = "immutable_test_models")
+open class ImmutableTestEntity {
   @Id @GeneratedValue(strategy = GenerationType.UUID) open var id: UUID? = null
 
   @Column(name = "name", nullable = false) open var name: String? = null
@@ -44,27 +44,15 @@ open class TestModelEntity {
   @OnDelete(action = OnDeleteAction.SET_NULL)
   open var creator: UserEntity? = null
 
-  fun id(): UUID = nonNull(id)
+  /** The time when the test model expires. If null, the test model does not expire. */
+  @Column(name = "expires_after", nullable = true) open var expiresAfter: LocalDateTime? = null
 
-  fun name(): String = nonNull(name)
+  @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+  open var userTests: MutableList<UserTestEntity> = mutableListOf()
 
-  fun questions(): MutableList<QuestionEntity> = questions
+  fun id(): UUID = FieldUtils.nonNull(id)
 
-  fun active(): Boolean = active
+  fun name(): String = FieldUtils.nonNull(name)
 
-  fun createdAt(): LocalDateTime = createdAt
-
-  fun toModel(): TestModel {
-    return TestModel(id = id(), name = name(), questions = questions.map(QuestionEntity::toModel))
-  }
-
-  companion object {
-    fun fromModel(testModel: TestModel): TestModelEntity {
-      val entity = TestModelEntity()
-      entity.id = testModel.id
-      entity.name = testModel.name
-      entity.questions = testModel.questions.map(QuestionEntity::fromModel).toMutableList()
-      return entity
-    }
-  }
+  fun questions(): List<QuestionEntity> = FieldUtils.nonNull(questions)
 }

@@ -25,6 +25,7 @@ open class CodeEntity {
 
   fun <L> toModel(lang: L): Code<L, *> where L : Lang {
     return Code(
+      id,
       nonNull(code),
       lang,
       Json.decodeFromString(OutputTypeSerializer, nonNull(outputType))
@@ -44,7 +45,7 @@ open class CodeEntity {
   companion object {
     fun fromModel(code: Code<*, *>): CodeEntity {
       return CodeEntity().apply {
-        id = null
+        id = code.identifier
         this.code = code.code
         outputType = Json.encodeToString(OutputTypeSerializer, code.outputType)
       }

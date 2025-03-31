@@ -26,6 +26,7 @@ import jakarta.persistence.MapKeyColumn
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import java.time.LocalDateTime
 import java.util.UUID
 import kotlinx.serialization.json.Json
 import org.hibernate.annotations.OnDelete
@@ -34,7 +35,6 @@ import org.hibernate.annotations.OnDeleteAction
 @Entity
 @Table(name = "questions")
 open class QuestionEntity {
-
   @Id @GeneratedValue(strategy = GenerationType.UUID) open var id: UUID? = null
 
   @Column(name = "lang", nullable = false) open var lang: String? = null
@@ -89,6 +89,9 @@ open class QuestionEntity {
   @JoinColumn(name = "creator_id", nullable = true)
   @OnDelete(action = OnDeleteAction.SET_NULL)
   open var creator: UserEntity? = null
+
+  @Column(name = "created_at", nullable = false)
+  open var createdAt: LocalDateTime? = LocalDateTime.now()
 
   fun id(): UUID = nonNull(id)
 

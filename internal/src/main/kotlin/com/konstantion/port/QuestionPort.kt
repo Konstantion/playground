@@ -3,7 +3,7 @@ package com.konstantion.port
 import java.util.Optional
 import java.util.UUID
 
-interface QuestionPort<Entity> where Entity : Any {
+interface QuestionPort<Entity> : Port where Entity : Any {
   fun deleteById(id: UUID)
   fun findById(id: UUID): Optional<Entity>
   fun findAllByCreatorId(creatorId: UUID): List<Entity>

@@ -7,6 +7,7 @@ import com.konstantion.model.Question
 import com.konstantion.model.TaskId
 import com.konstantion.port.QuestionPort
 import com.konstantion.service.QuestionService.StatusResponse
+import com.konstantion.service.SqlHelper.sqlAction
 import com.konstantion.utils.Either
 import com.konstantion.utils.IdGenerator
 import com.konstantion.utils.closeForcefully
@@ -16,16 +17,13 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.locks.Lock
-import kotlin.concurrent.withLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 private const val VALIDATION_ATTEMPTS: Int = 5
 private const val THREAD_NAME: String = "question-validator-"
 
-class QuestionValidator(
-  private val sqlLock: Lock,
+data class QuestionValidator(
   private val questionPort: QuestionPort<QuestionEntity>,
   private val pythonExecutor: QuestionExecutor<Lang.Python>,
 ) {
@@ -40,23 +38,15 @@ class QuestionValidator(
 
   private fun validate(id: UUID, question: Question<Lang>): Either<ServiceIssue, TaskId> {
     if (question.lang == Lang.Python) {
-      return Either.left(
-        QuestionService.Issue.UnexpectedAction("Python questions are not supported")
-      )
+      return Either.left(UnexpectedAction("Python questions are not supported"))
     }
 
     when (val status = status(id)) {
       is StatusResponse.Submitted -> return Either.right(status.taskId)
       StatusResponse.Success ->
-        return Either.left(
-          QuestionService.Issue.UnexpectedAction("Validation is already successful")
-        )
+        return Either.left(UnexpectedAction("Validation is already successful"))
       is StatusResponse.Error ->
-        return Either.left(
-          QuestionService.Issue.UnexpectedAction(
-            "Validation failed: ${status.message}, fix question."
-          )
-        )
+        return Either.left(UnexpectedAction("Validation failed: ${status.message}, fix question."))
       StatusResponse.NotRegistered -> {}
     }
 
@@ -80,11 +70,11 @@ class QuestionValidator(
       }
 
       if (!failed) {
-        sqlLock.withLock {
+        questionPort.sqlAction {
           log.info("Question with id={}, successfully validated", id)
-          val entity = questionPort.findById(id).orElseThrow()
+          val entity = findById(id).orElseThrow()
           entity.validated = true
-          questionPort.save(entity)
+          save(entity)
           require(statuses.put(id, StatusResponse.Success) is StatusResponse.Submitted)
         }
       }
@@ -99,13 +89,13 @@ class QuestionValidator(
 
   /** if it's called while we validation some issue, we are cooked */
   fun onInvalidated(updated: QuestionEntity) {
-    sqlLock.withLock {
+    questionPort.sqlAction {
       when (status(updated.id())) {
         StatusResponse.NotRegistered -> {}
         else -> {
           val oldStatus = statuses.put(updated.id(), StatusResponse.NotRegistered)
           updated.validated = false
-          questionPort.save(updated)
+          save(updated)
           log.info("Invalidated question with id={}, oldStatus={}.", updated.id(), oldStatus)
         }
       }

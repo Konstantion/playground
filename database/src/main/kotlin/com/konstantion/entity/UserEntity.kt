@@ -34,5 +34,7 @@ open class UserEntity {
   @Enumerated(EnumType.STRING)
   open var permissions: MutableSet<Permission> = mutableSetOf()
 
+  @Column(name = "anonymous", nullable = false) open var anonymous: Boolean = false
+
   fun id(): UUID = nonNull(id)
 }

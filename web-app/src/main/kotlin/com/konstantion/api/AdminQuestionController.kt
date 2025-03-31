@@ -6,6 +6,7 @@ import com.konstantion.dto.response.QuestionResponse.Companion.asResponse
 import com.konstantion.entity.QuestionEntity
 import com.konstantion.model.User
 import com.konstantion.service.QuestionService
+import com.konstantion.service.ServiceIssue
 import com.konstantion.utils.Either
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -17,14 +18,14 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/admin/questions")
+@RequestMapping("/api/admin/questions")
 class AdminQuestionController(private val questionService: QuestionService<QuestionEntity>) {
   private val log: Logger = LoggerFactory.getLogger(AdminQuestionController::class.java)
 
   @GetMapping
   fun getAllQuestions(): ResponseEntity<*> {
     return when (
-      val result: Either<QuestionService.Issue, List<QuestionEntity>> =
+      val result: Either<ServiceIssue, List<QuestionEntity>> =
         questionService.getAllQuestion(User.admin())
     ) {
       is Either.Left -> result.value.asError()

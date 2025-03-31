@@ -17,6 +17,8 @@ interface User {
 
   fun isTeacher() = role() == Role.Teacher
 
+  fun isStudent() = role() == Role.Student
+
   fun hasPermission(permission: Permission) = permissions().contains(permission)
 
   companion object {

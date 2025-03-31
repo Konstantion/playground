@@ -5,7 +5,16 @@ import com.konstantion.utils.Either
 interface ServiceIssue {
   fun code(): Int
   fun message(): String
+}
 
+data class UnexpectedAction(val action: String) : ServiceIssue {
+  override fun code(): Int {
+    return 400
+  }
+
+  override fun message(): String {
+    return "Unexpected action: $action"
+  }
 }
 
 data class SqlError(val message: String) : ServiceIssue {
