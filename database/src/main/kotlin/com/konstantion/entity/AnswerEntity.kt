@@ -20,10 +20,6 @@ open class AnswerEntity {
   @JoinColumn(name = "question_id", nullable = false)
   open var question: QuestionEntity? = null
 
-  @ManyToOne
-  @JoinColumn(name = "question_metadata_id", nullable = false)
-  open var questionMetadata: QuestionMetadataEntity? = null
-
   @Column(name = "answer", nullable = false) open var answer: String? = null
 
   @Column(name = "task_id", nullable = false) open var taskId: Long? = null
@@ -31,8 +27,6 @@ open class AnswerEntity {
   fun id(): UUID = nonNull(id)
 
   fun question(): QuestionEntity = nonNull(question)
-
-  fun questionMetadataEntity(): QuestionMetadataEntity = nonNull(questionMetadata)
 
   fun answer(): String = nonNull(answer)
 }

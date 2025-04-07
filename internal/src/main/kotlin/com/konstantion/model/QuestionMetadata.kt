@@ -4,6 +4,7 @@ import java.util.UUID
 
 data class QuestionMetadata(
   val questionIdentifier: UUID,
+  val text: String,
   val formatAndCode: FormatAndCode,
   val correctAnswers: List<Answer>,
   val intersectAnswer: List<Answer>,

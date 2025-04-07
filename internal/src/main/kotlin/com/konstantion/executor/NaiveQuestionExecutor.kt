@@ -81,6 +81,7 @@ class NaiveQuestionExecutor<Id, L>(
       Either.right(
         QuestionMetadata(
           question.identifier.nonNull(),
+          text = question.body,
           formatAndCode = question.formatAndCode.reformated(placeholderValues),
           correctAnswers = correct,
           intersectAnswer = incorrect

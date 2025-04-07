@@ -40,4 +40,5 @@ open class QuestionMetadataEntity {
   fun formatAndCode(): String = nonNull(formatAndCode)
   fun correctAnswers(): MutableList<AnswerEntity> = correctAnswers
   fun incorrectAnswers(): MutableList<AnswerEntity> = incorrectAnswers
+  fun answers(): List<AnswerEntity> = correctAnswers + incorrectAnswers
 }

@@ -4,17 +4,16 @@ import com.konstantion.entity.CodeEntity
 import com.konstantion.entity.ImmutableTestEntity
 import com.konstantion.entity.QuestionEntity
 import com.konstantion.entity.TestModelEntity
-import com.konstantion.entity.UserTestEntity
 import com.konstantion.entity.VariantEntity
 import com.konstantion.executor.TestModelExecutor
-import com.konstantion.model.TestModel
-import com.konstantion.model.TestModelMetadata
 import com.konstantion.model.User
 import com.konstantion.repository.CodeRepository
 import com.konstantion.repository.ImmutableTestRepository
 import com.konstantion.repository.QuestionRepository
+import com.konstantion.repository.TestMetadataRepository
 import com.konstantion.repository.TestModelRepository
 import com.konstantion.repository.UserRepository
+import com.konstantion.repository.UserTestRepository
 import com.konstantion.repository.VariantRepository
 import com.konstantion.service.SqlHelper.sqlAction
 import com.konstantion.utils.Either
@@ -35,6 +34,8 @@ data class ImmutableTestService(
   private val variantRepository: VariantRepository,
   private val codeRepository: CodeRepository,
   private val userRepository: UserRepository,
+  private val testMetadataRepository: TestMetadataRepository,
+  private val userTestRepository: UserTestRepository,
   private val testModelExecutor: TestModelExecutor,
 ) {
   private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -78,6 +79,10 @@ data class ImmutableTestService(
 
     if (!testModel.questions.all { entity -> entity.validated() }) {
       return Either.left(UnexpectedAction("Test model is not validated: $testModelId"))
+    }
+
+    if (testModel.questions().isEmpty()) {
+      return Either.left(UnexpectedAction("Test model has no questions: $testModelId"))
     }
 
     val deepClone = deepCloneTestModel(testModel)
@@ -137,58 +142,6 @@ data class ImmutableTestService(
     immutableTest.expiresAfter = expiresAfter
     immutableTestRepository.saveAndFlush(immutableTest)
     return Either.right(Unit)
-  }
-
-  fun createUserTest(user: User, immutableTestModelId: UUID): Either<ServiceIssue, UserTestEntity> {
-    log.info(
-      "CreateUserTest[userId={}, username={}, immutableTestModelId={}]",
-      user.id(),
-      user.getUsername(),
-      immutableTestModelId
-    )
-
-    val maybeImmutableTest =
-      when (
-        val result: Either<ServiceIssue, Maybe<ImmutableTestEntity>> =
-          immutableTestRepository
-            .sqlAction { findById(immutableTestModelId) }
-            .map { maybeQuestion -> maybeQuestion.asMaybe() }
-      ) {
-        is Either.Left -> return Either.left(result.value)
-        is Either.Right -> result.value
-      }
-
-    val immutableTest: ImmutableTestEntity =
-      when (maybeImmutableTest) {
-        is Maybe.Just -> maybeImmutableTest.value
-        Maybe.None ->
-          return Either.left(UnexpectedAction("Immutable test not found: $immutableTestModelId"))
-      }
-
-    if (
-      immutableTest.expiresAfter != null &&
-        immutableTest.expiresAfter!!.isBefore(LocalDateTime.now())
-    ) {
-      return Either.left(UnexpectedAction("Immutable test is expired: $immutableTestModelId"))
-    }
-
-    if (immutableTest.userTests.any { test -> test.user().id() == user.id() }) {
-      return Either.left(UnexpectedAction("User test already exists for user: ${user.id()}"))
-    }
-
-    val testModel =
-      TestModel(
-        id = immutableTest.id(),
-        name = immutableTest.name(),
-        questions = immutableTest.questions().map { question -> question.toModel() }
-      )
-
-      val metadata: TestModelMetadata = when (val executorResult: Either<TestModelExecutor.Issue, TestModelMetadata> =
-          testModelExecutor.run(testModel)) {
-          is Either.Left -> return Either.left(UnexpectedAction("Test model execution failed: ${testModel.id}, ${executorResult.value}"))
-          is Either.Right -> executorResult.value
-      }
-
   }
 
   private fun deepCloneTestModel(original: TestModelEntity): TestModelEntity {

@@ -29,6 +29,7 @@ fun pythonTest() {
 
   val code =
     Code(
+      identifier = null,
       """
                     c = b * a
                     a *= 3

@@ -43,7 +43,7 @@ fun main() {
         listOf(
           Question.Variant.Correct(
             UUID.randomUUID(),
-            Code("asd", Lang.Python, Code.Output.Str::class.java)
+            Code(null, "asd", Lang.Python, Code.Output.Str::class.java)
           )
         ),
       incorrectVariants = listOf()

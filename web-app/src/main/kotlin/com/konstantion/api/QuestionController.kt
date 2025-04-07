@@ -15,6 +15,7 @@ import com.konstantion.service.ServiceIssue
 import com.konstantion.utils.Either
 import java.util.UUID
 import org.springframework.http.ResponseEntity
+import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -26,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/questions")
-data class QuestionController(private val questionService: QuestionService<QuestionEntity>) {
+data class QuestionController(private val questionService: QuestionService<QuestionEntity>, private val transactionTemplate: TransactionTemplate) {
 
   @GetMapping
   fun getAllQuestions(): ResponseEntity<*> {

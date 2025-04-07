@@ -97,7 +97,7 @@ fun sandboxTest(
           .trimIndent()
       }
 
-    val code = Code(rawCode, Lang.Python, Code.Output.Str::class.java)
+    val code = Code(null, rawCode, Lang.Python, Code.Output.Str::class.java)
 
     tasks +=
       sandbox.submit(

@@ -1,6 +1,7 @@
 package com.konstantion.utils;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public sealed interface Either<L, R> {
   <T, E extends Exception> T match(
