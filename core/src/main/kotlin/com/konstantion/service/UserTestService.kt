@@ -5,6 +5,7 @@ import com.konstantion.entity.ImmutableTestEntity
 import com.konstantion.entity.QuestionEntity
 import com.konstantion.entity.QuestionMetadataEntity
 import com.konstantion.entity.TestMetadataEntity
+import com.konstantion.entity.UserQuestionAnswerEntity
 import com.konstantion.entity.UserTestEntity
 import com.konstantion.executor.TestModelExecutor
 import com.konstantion.model.Answer
@@ -18,9 +19,11 @@ import com.konstantion.repository.QuestionMetadataRepository
 import com.konstantion.repository.QuestionRepository
 import com.konstantion.repository.TestMetadataRepository
 import com.konstantion.repository.TestModelRepository
+import com.konstantion.repository.UserQuestionAnswerRepository
 import com.konstantion.repository.UserRepository
 import com.konstantion.repository.UserTestRepository
 import com.konstantion.repository.VariantRepository
+import com.konstantion.service.SqlHelper.slqOptionalAction
 import com.konstantion.service.SqlHelper.sqlAction
 import com.konstantion.utils.Either
 import com.konstantion.utils.Maybe
@@ -43,6 +46,7 @@ data class UserTestService(
     private val userRepository: UserRepository,
     private val testMetadataRepository: TestMetadataRepository,
     private val userTestRepository: UserTestRepository,
+    private val userQuestionAnswerRepository: UserQuestionAnswerRepository,
     private val testModelExecutor: TestModelExecutor,
     private val questionMetadataRepository: QuestionMetadataRepository,
 ) {
@@ -59,23 +63,19 @@ data class UserTestService(
             testModelId
         )
 
-        val maybeImmutableTestDb =
+        val immutableTestEntityDb =
             when (
-                val result: Either<ServiceIssue, Maybe<ImmutableTestEntity>> =
+                val result: Either<ServiceIssue, ImmutableTestEntity> =
                     immutableTestRepository
-                        .sqlAction { findById(testModelId) }
-                        .map { maybeQuestion -> maybeQuestion.asMaybe() }
+                        .slqOptionalAction { findById(testModelId) }
             ) {
                 is Either.Left -> return Either.left(result.value)
                 is Either.Right -> result.value
             }
 
-        val immutableTestEntityDb: ImmutableTestEntity =
-            when (maybeImmutableTestDb) {
-                is Maybe.Just -> maybeImmutableTestDb.value
-                Maybe.None ->
-                    return Either.left(UnexpectedAction("Immutable test not found: $testModelId"))
-            }
+        if (!immutableTestEntityDb.active) {
+            return Either.left(UnexpectedAction("Immutable test is not active: $testModelId"))
+        }
 
         if (
             immutableTestEntityDb.expiresAfter != null &&
@@ -186,23 +186,37 @@ data class UserTestService(
     fun submitUserAnswer(
         targetUser: User,
         params: UserAnswerParams
-    ) : Either<ServiceIssue, UserTestEntity> {
-        val testDb = findTestForUser(targetUser, params.testId)
+    ): Either<ServiceIssue, UserTestEntity> {
+        log.info(
+            "SubmitUserAnswer[userId={}, username={}, testId={}]",
+            targetUser.id(),
+            targetUser.getUsername(),
+            params.testId
+        )
 
-        for ((questionMetadataId, answersId) in params.answers) {
-            val questionMetadataDb: QuestionMetadataEntity = when (val result: Either<ServiceIssue, Maybe<QuestionMetadataEntity>> =
-                questionMetadataRepository.sqlAction { findById(questionMetadataId).asMaybe() }) {
+        val testDb: UserTestEntity =
+            when (val result: Either<ServiceIssue, UserTestEntity> = findTestForUser(targetUser, params.testId)) {
                 is Either.Left -> return Either.left(result.value)
-                is Either.Right -> when (result.value) {
-                    is Maybe.Just -> result.value.orElseThrow()
-                    Maybe.None -> return Either.left(UnexpectedAction("Question not found: $questionMetadataId"))
-                }
+                is Either.Right -> result.value
             }
 
-            val questionMetadataAnswersDb = questionMetadataDb.answers()
-            val answersDb : MutableList<AnswerEntity> = mutableListOf()
+        if (!testDb.active) {
+            return Either.left(UnexpectedAction("Test is not active: ${params.testId}"))
+        }
 
-            for (answerId in answersId) {
+        val userAnswers: MutableList<UserQuestionAnswerEntity> = mutableListOf()
+        for ((questionMetadataId, answersIds) in params.answers) {
+            val questionMetadataDb: QuestionMetadataEntity =
+                when (val result: Either<ServiceIssue, QuestionMetadataEntity> =
+                    questionMetadataRepository.slqOptionalAction { findById(questionMetadataId) }) {
+                    is Either.Left -> return Either.left(result.value)
+                    is Either.Right -> result.value
+                }
+
+            val questionMetadataAnswersDb = questionMetadataDb.answers()
+            val answersDb: MutableList<AnswerEntity> = mutableListOf()
+
+            for (answerId in answersIds) {
                 val maybeAnswerDb = questionMetadataAnswersDb.find { answerDb -> answerDb.id() == answerId }
                 if (maybeAnswerDb == null) {
                     return Either.left(UnexpectedAction("Answer not found: $answerId"))
@@ -210,19 +224,66 @@ data class UserTestService(
                 answersDb.add(maybeAnswerDb)
             }
 
+            userAnswers += UserQuestionAnswerEntity().apply {
+                question = questionMetadataDb
+                answers = answersDb
+            }
         }
-    }
 
-    private fun findTestForUser(user: User, testId: UUID): Either<ServiceIssue, UserTestEntity> {
-        val maybeTest = when (val result: Either<ServiceIssue, Maybe<UserTestEntity>> =
-            userTestRepository.sqlAction { findById(testId).asMaybe() }) {
+        val userAnswersDb = when (val result: Either<ServiceIssue, MutableList<UserQuestionAnswerEntity>> =
+            userQuestionAnswerRepository.sqlAction { saveAll(userAnswers) }) {
             is Either.Left -> return Either.left(result.value)
             is Either.Right -> result.value
         }
 
-        val userTestEntityDb: UserTestEntity = when (maybeTest) {
-            is Maybe.Just -> maybeTest.value
-            Maybe.None -> return Either.left(UnexpectedAction("User test not found: $testId"))
+        testDb.questionAnswers = userAnswersDb
+        testDb.active = false
+        val toReturn = when (val result: Either<ServiceIssue, UserTestEntity> =
+            userTestRepository.sqlAction { saveAndFlush(testDb) }) {
+            is Either.Left -> return Either.left(result.value)
+            is Either.Right -> result.value
+        }
+
+        return Either.right(toReturn)
+    }
+
+    private fun deactivateExpired() {
+        val toCheck: List<ImmutableTestEntity> = when (val result: Either<ServiceIssue, List<ImmutableTestEntity>> =
+            immutableTestRepository.sqlAction { findAllByExpiresAfterNotNullAndActive(true) }) {
+            is Either.Left -> {
+                log.error("Failed to get expired tests: ${result.value}")
+                return
+            }
+
+            is Either.Right -> result.value
+        }
+
+        for (test in toCheck) {
+            if (test.expiresAfter != null && test.expiresAfter!!.isBefore(LocalDateTime.now())) {
+                test.active = false
+                when (val result: Either<ServiceIssue, ImmutableTestEntity> =
+                    immutableTestRepository.sqlAction { saveAndFlush(test) }) {
+                    is Either.Left -> log.error("Failed to deactivate expired test: ${result.value}")
+                    is Either.Right -> {}
+                }
+
+                test.userTests.forEach { userTest ->
+                    userTest.active = false
+                    when (val result: Either<ServiceIssue, UserTestEntity> =
+                        userTestRepository.sqlAction { saveAndFlush(userTest) }) {
+                        is Either.Left -> log.error("Failed to deactivate expired test for user: ${result.value}")
+                        is Either.Right -> {}
+                    }
+                }
+            }
+        }
+    }
+
+    private fun findTestForUser(user: User, testId: UUID): Either<ServiceIssue, UserTestEntity> {
+        val userTestEntityDb = when (val result: Either<ServiceIssue, UserTestEntity> =
+            userTestRepository.slqOptionalAction { findById(testId) }) {
+            is Either.Left -> return Either.left(result.value)
+            is Either.Right -> result.value
         }
 
         if (userTestEntityDb.user().id() != user.id()) {
