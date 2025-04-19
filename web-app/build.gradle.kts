@@ -6,7 +6,10 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":database"))
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-security")
     implementation(libs.swagger)
+    implementation(libs.swagger.common)
+    implementation(libs.swagger.api)
 }
 
 // exclude log4j-to-slf4j and log4j-slf4j2-impl

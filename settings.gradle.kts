@@ -50,11 +50,14 @@ dependencyResolutionManagement {
             }
 
 
+            library("jwt", "io.jsonwebtoken:jjwt:0.9.1")
             library("apache-commons-lang3", "org.apache.commons:commons-lang3:3.12.0")
             library("postgresql", "org.postgresql:postgresql:42.5.0")
             library("hikariCp", "com.zaxxer:HikariCP:5.0.1")
             library("flyway", "org.flywaydb:flyway-core:9.15.1")
             library("swagger", "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2")
+            library("swagger-api", "org.springdoc:springdoc-openapi-starter-webmvc-api:2.0.2")
+            library("swagger-common", "org.springdoc:springdoc-openapi-starter-common:2.0.2")
         }
     }
 }

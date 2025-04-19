@@ -22,7 +22,7 @@ import java.util.UUID
 open class UserEntity {
   @Id @GeneratedValue(strategy = GenerationType.UUID) open var id: UUID? = null
 
-  @Column(name = "username", nullable = false) open var username: String? = null
+  @Column(name = "username", nullable = false, unique = true) open var username: String? = null
 
   @Column(name = "password", nullable = false) open var password: String? = null
 
@@ -37,4 +37,10 @@ open class UserEntity {
   @Column(name = "anonymous", nullable = false) open var anonymous: Boolean = false
 
   fun id(): UUID = nonNull(id)
+
+  fun username(): String = nonNull(username)
+
+  fun password(): String = nonNull(password)
+
+  fun role(): Role = nonNull(role)
 }

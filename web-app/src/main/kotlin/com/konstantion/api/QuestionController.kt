@@ -27,7 +27,10 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/questions")
-data class QuestionController(private val questionService: QuestionService<QuestionEntity>, private val transactionTemplate: TransactionTemplate) {
+data class QuestionController(
+  private val questionService: QuestionService<QuestionEntity>,
+  private val transactionTemplate: TransactionTemplate
+) {
 
   @GetMapping
   fun getAllQuestions(): ResponseEntity<*> {

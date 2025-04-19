@@ -3,13 +3,12 @@ package com.konstantion.service
 import com.konstantion.port.Port
 import com.konstantion.utils.Either
 import java.util.Optional
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 object SqlHelper {
-  private val lock : Lock = ReentrantLock()
+  private val lock: Lock = ReentrantLock()
 
   fun <P : Port, T : Any> P.sqlAction(action: P.() -> T): Either<ServiceIssue, T> {
     return lock.withLock {
@@ -21,7 +20,9 @@ object SqlHelper {
     }
   }
 
-  fun <P: Port, T: Any>  P.slqOptionalAction(action: P.() -> Optional<T>) : Either<ServiceIssue, T> {
+  fun <P : Port, T : Any> P.sqlOptionalAction(
+    action: P.() -> Optional<T>
+  ): Either<ServiceIssue, T> {
     return lock.withLock {
       try {
         val result = action()

@@ -6,6 +6,7 @@ import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
-@Repository interface ImmutableTestRepository : JpaRepository<ImmutableTestEntity, UUID>, Port {
-    fun findAllByExpiresAfterNotNullAndActive(active: Boolean): List<ImmutableTestEntity>
+@Repository
+interface ImmutableTestRepository : JpaRepository<ImmutableTestEntity, UUID>, Port {
+  fun findAllByExpiresAfterNotNullAndActive(active: Boolean): List<ImmutableTestEntity>
 }
