@@ -49,8 +49,16 @@ dependencyResolutionManagement {
                 library("logback-classic", "$prefix:logback-classic:$version")
             }
 
+            run {
+                val version = "0.11.2"
+                val group = "io.jsonwebtoken"
+                library("jwt-api", "$group:jjwt-api:$version")
+                library("jwt-jackson", "$group:jjwt-jackson:$version")
+                library("jwt-impl", "$group:jjwt-impl:$version")
 
-            library("jwt", "io.jsonwebtoken:jjwt:0.9.1")
+                bundle("jwt", listOf("jwt-api", "jwt-jackson", "jwt-impl"))
+            }
+
             library("apache-commons-lang3", "org.apache.commons:commons-lang3:3.12.0")
             library("postgresql", "org.postgresql:postgresql:42.5.0")
             library("hikariCp", "com.zaxxer:HikariCP:5.0.1")

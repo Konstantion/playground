@@ -9,7 +9,7 @@ dependencies {
     api(project(":sandbox"))
     api(project(":database"))
     implementation(libs.slf4j)
-    implementation(libs.jwt)
+    implementation(libs.bundles.jwt)
     runtimeOnly(libs.logback.classic)
     api(libs.kotlinx.serialization.core)
     api(libs.kotlinx.serialization.json)

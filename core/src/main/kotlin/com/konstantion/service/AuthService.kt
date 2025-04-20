@@ -17,7 +17,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
-private const val SECRET = "secret"
+private val SECRET = "mylittlesecretisitlongenough".repeat(10)
 private const val EXPIRATION_TIME = 86400000
 
 @Service
