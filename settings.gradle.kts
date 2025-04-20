@@ -10,6 +10,7 @@ include("common")
 include("internal")
 include("sandbox")
 include("core")
+include("database")
 
 dependencyResolutionManagement {
     versionCatalogs {
@@ -41,6 +42,30 @@ dependencyResolutionManagement {
                 library("log4j-core", "$prefix:log4j-core:$version")
                 library("log4j-slf4j2-impl", "$prefix:log4j-slf4j2-impl:$version")
             }
+
+            run {
+                val version = "1.4.14"
+                val prefix = "ch.qos.logback"
+                library("logback-classic", "$prefix:logback-classic:$version")
+            }
+
+            run {
+                val version = "0.11.2"
+                val group = "io.jsonwebtoken"
+                library("jwt-api", "$group:jjwt-api:$version")
+                library("jwt-jackson", "$group:jjwt-jackson:$version")
+                library("jwt-impl", "$group:jjwt-impl:$version")
+
+                bundle("jwt", listOf("jwt-api", "jwt-jackson", "jwt-impl"))
+            }
+
+            library("apache-commons-lang3", "org.apache.commons:commons-lang3:3.12.0")
+            library("postgresql", "org.postgresql:postgresql:42.5.0")
+            library("hikariCp", "com.zaxxer:HikariCP:5.0.1")
+            library("flyway", "org.flywaydb:flyway-core:9.15.1")
+            library("swagger", "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2")
+            library("swagger-api", "org.springdoc:springdoc-openapi-starter-webmvc-api:2.0.2")
+            library("swagger-common", "org.springdoc:springdoc-openapi-starter-common:2.0.2")
         }
     }
 }

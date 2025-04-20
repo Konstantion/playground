@@ -10,11 +10,9 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
-import org.gradle.jvm.tasks.Jar
 import org.gradle.plugins.ide.eclipse.EclipsePlugin
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
-import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 class CommonPlugin : Plugin<Project> {
     override fun apply(target: Project): Unit = with(target) {
@@ -36,13 +34,8 @@ class SpringPlugin : Plugin<Project> {
             }
         }
 
-        tasks.named("jar", Jar::class.java) { task ->
-            task.enabled = false
-            task.dependsOn(tasks.named("bootJar", BootJar::class.java))
-        }
-
         dependencies.apply {
-            add("implementation", "org.springframework.boot:spring-boot-starter-web")
+            add("implementation", "org.springframework.boot:spring-boot-starter")
             add("testImplementation", "org.springframework.boot:spring-boot-starter-test")
         }
 

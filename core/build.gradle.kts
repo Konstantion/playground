@@ -1,15 +1,16 @@
 plugins {
     `java-library`
-    alias(libs.plugins.common)
+    alias(libs.plugins.common.spring)
     alias(libs.plugins.kotlin.serialization)
 }
 
 dependencies {
-    implementation(project(":common"))
-    implementation(project(":internal"))
-    implementation(project(":sandbox"))
+    api(project(":internal"))
+    api(project(":sandbox"))
+    api(project(":database"))
     implementation(libs.slf4j)
-    runtimeOnly(libs.log4j.slf4j2.impl)
-    implementation(libs.kotlinx.serialization.core)
-    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.bundles.jwt)
+    runtimeOnly(libs.logback.classic)
+    api(libs.kotlinx.serialization.core)
+    api(libs.kotlinx.serialization.json)
 }

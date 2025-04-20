@@ -13,8 +13,17 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 fun main() {
+  val lang: Lang = Lang.Python
+  println(Json.encodeToString(lang))
+  println(
+    Json.encodeToString(
+      PlaceholderDefinition.serializer(PlaceholderValue.serializer()),
+      PlaceholderDefinition.I32Range(10, 20) as PlaceholderDefinition<PlaceholderValue>
+    )
+  )
   val question: Question<Lang> =
     Question(
+      identifier = UUID.randomUUID(),
       lang = Lang.Python,
       body = "body",
       formatAndCode = FormatAndCode("java", "asd"),
@@ -34,7 +43,7 @@ fun main() {
         listOf(
           Question.Variant.Correct(
             UUID.randomUUID(),
-            Code("asd", Lang.Python, Code.Output.Str::class.java)
+            Code(null, "asd", Lang.Python, Code.Output.Str::class.java)
           )
         ),
       incorrectVariants = listOf()

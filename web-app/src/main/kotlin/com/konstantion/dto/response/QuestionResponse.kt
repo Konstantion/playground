@@ -1,0 +1,49 @@
+package com.konstantion.dto.response
+
+import com.fasterxml.jackson.annotation.JsonRawValue
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.konstantion.dto.response.CodeResponse.Companion.asResponse
+import com.konstantion.dto.response.VariantResponse.Companion.asResponse
+import com.konstantion.dto.serializers.ListRawSerializer
+import com.konstantion.dto.serializers.MapRawSerializer
+import com.konstantion.entity.QuestionEntity
+import java.util.UUID
+
+data class QuestionResponse(
+  val id: UUID,
+  @JsonRawValue val lang: String,
+  val body: String,
+  @JsonRawValue val formatAndCode: String,
+  @get:JsonSerialize(using = MapRawSerializer::class)
+  val placeholderDefinitions: Map<String, String>,
+  @get:JsonSerialize(using = ListRawSerializer::class) val callArgs: List<String>,
+  val additionalCheck: CodeResponse?,
+  val correctVariants: List<VariantResponse>,
+  val incorrectVariants: List<VariantResponse>,
+  val validated: Boolean,
+  val public: Boolean,
+  val creatorId: UUID? = null
+) {
+  companion object {
+    fun QuestionEntity.asResponse(): QuestionResponse {
+      return QuestionResponse(
+        id = id(),
+        lang = lang(),
+        body = body(),
+        formatAndCode = formatAndCode(),
+        placeholderDefinitions = placeholderDefinitions(),
+        callArgs = callArgs(),
+        additionalCheck = additionalCheck()?.asResponse(),
+        correctVariants = correctVariants().map { variant -> variant.asResponse() },
+        incorrectVariants = incorrectVariants().map { variant -> variant.asResponse() },
+        validated = validated(),
+        public = public(),
+        creatorId = creator()?.id()
+      )
+    }
+
+    fun List<QuestionEntity>.asResponse(): List<QuestionResponse> {
+      return map { question -> question.asResponse() }
+    }
+  }
+}

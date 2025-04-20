@@ -2,7 +2,6 @@ package com.konstantion.interpreter
 
 import com.konstantion.model.Code
 import com.konstantion.model.Lang
-import com.konstantion.model.PlaceholderDefinition
 import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
 import com.konstantion.model.PlaceholderValue
@@ -16,7 +15,7 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
   override fun <R : Code.Output> toExecutableCode(
     code: Code<Lang.Python, R>,
     callArgs: List<PlaceholderLabel>,
-    placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>
+    placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderValue>
   ): Either<InterpreterIssue, String> {
     val codeBuilder: StringBuilder = StringBuilder()
 
@@ -35,28 +34,26 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
 
   private fun StringBuilder.initVariables(
     callArgs: List<PlaceholderLabel>,
-    placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>
+    placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderValue>
   ): Maybe<InterpreterIssue.Variables> {
     if (callArgs.toSet().size != callArgs.size) {
       return Maybe.just(InterpreterIssue.Variables("variable names should be unique."))
     }
 
     for (placeholder in callArgs) {
-      val definition =
+      val placeholderValue =
         placeholderDefinitions[placeholder.identifier]
           ?: return Maybe.just(
             InterpreterIssue.Variables("variable definition missing for $placeholder")
           )
 
-      val value: PlaceholderValue = definition.value()
-
-      if (value.javaClass !in SUPPORTED_VALUE_TYPES) {
+      if (placeholderValue.javaClass !in SUPPORTED_VALUE_TYPES) {
         return Maybe.just(
-          InterpreterIssue.Variables("unsupported variable type ${value.javaClass}")
+          InterpreterIssue.Variables("unsupported variable type ${placeholderValue.javaClass}")
         )
       }
 
-      val parsedValue: String = value.asString()
+      val parsedValue: String = placeholderValue.asString()
 
       append("${placeholder.name} = $parsedValue$NL")
     }
@@ -88,12 +85,5 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
     append("${PYTHON_INDENT}${PYTHON_INDENT}print($USER_FUNCTION_NAME($argsLine))$NL")
     append("${PYTHON_INDENT}except MemoryError:$NL")
     append("${PYTHON_INDENT}${PYTHON_INDENT}sys.exit(139)$NL")
-  }
-
-  private fun PlaceholderValue.asString(): String {
-    return when (this) {
-      is PlaceholderValue.I32 -> this.value.toString()
-      is PlaceholderValue.Str -> "\"${this.value.replace("\"", "\\\"")}\""
-    }
   }
 }

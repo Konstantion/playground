@@ -10,6 +10,13 @@ sealed interface Maybe<out T> {
   data object None : Maybe<Nothing>
 
   companion object {
+    fun <T> Optional<T>.asMaybe(): Maybe<T> =
+      if (isPresent) {
+        Just(get())
+      } else {
+        None
+      }
+
     @JvmStatic fun <T> of(value: T): Maybe<T> = Just(value)
 
     @JvmStatic fun <T> empty(): Maybe<T> = None

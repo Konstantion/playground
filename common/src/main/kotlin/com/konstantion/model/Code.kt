@@ -2,10 +2,13 @@ package com.konstantion.model
 
 import com.konstantion.lang.Unreachable
 import com.konstantion.model.serializaers.OutputTypeSerializer
+import com.konstantion.model.serializaers.UUIDSerializer
+import java.util.UUID
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Code<L, O>(
+  val identifier: @Serializable(with = UUIDSerializer::class) UUID?,
   val code: String,
   val lang: L,
   @Serializable(with = OutputTypeSerializer::class) val outputType: Class<O>

@@ -1,26 +1,29 @@
-package com.konstantion.service
+package com.konstantion.executor
 
+import com.konstantion.executor.QuestionExecutor.Issue
+import com.konstantion.executor.QuestionExecutor.Task
 import com.konstantion.model.Answer
 import com.konstantion.model.Lang
+import com.konstantion.model.PlaceholderIdentifier
+import com.konstantion.model.PlaceholderValue
 import com.konstantion.model.Question
 import com.konstantion.model.QuestionMetadata
 import com.konstantion.model.TaskId
-import com.konstantion.service.QuestionService.Issue
-import com.konstantion.service.QuestionService.Task
 import com.konstantion.utils.Either
 import com.konstantion.utils.IdGenerator
 import com.konstantion.utils.closeForcefully
+import com.konstantion.utils.nonNull
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
-class NaiveQuestionService<Id, L>(
+class NaiveQuestionExecutor<Id, L>(
   private val codeExecutor: CodeExecutor<Id, L>,
   private val id: Id,
   private val executor: ExecutorService =
     Executors.newCachedThreadPool(Thread.ofPlatform().name("naive-question-service", 0).factory()),
-) : QuestionService<L> where L : Lang, Id : Any {
+) : QuestionExecutor<L> where L : Lang, Id : Any {
 
   private val taskIdGen: IdGenerator<TaskId> = IdGenerator.AtomicLong(0).andThen(::TaskId)
 
@@ -39,6 +42,9 @@ class NaiveQuestionService<Id, L>(
 
   @Throws(InterruptedException::class)
   override fun run(question: Question<L>): Either<Issue, QuestionMetadata> {
+    val placeholderValues: Map<PlaceholderIdentifier, PlaceholderValue> =
+      question.placeholderDefinitions.mapValues { (_, definition) -> definition.value() }
+
     val results =
       question
         .variants()
@@ -46,8 +52,8 @@ class NaiveQuestionService<Id, L>(
           codeExecutor.submit(
             groupId = id,
             code = variant.code,
-            callArgs = question.callArgs(),
-            placeholderDefinitions = question.placeholderDefinitions()
+            callArgs = question.callArgs,
+            placeholderValues = placeholderValues
           )
         }
         .mapValues { (_, task) -> task.id() to task.get() }
@@ -62,9 +68,9 @@ class NaiveQuestionService<Id, L>(
         is Either.Left -> issues += Issue.VariantExecution(variant, result.value)
         is Either.Right ->
           if (variant.isCorrect()) {
-            correct += Answer(variant.id, result.value.value, id)
+            correct += Answer(variant.identifier.nonNull(), result.value.value, id)
           } else {
-            incorrect += Answer(variant.id, result.value.value, id)
+            incorrect += Answer(variant.identifier.nonNull(), result.value.value, id)
           }
       }
     }
@@ -74,7 +80,9 @@ class NaiveQuestionService<Id, L>(
     } else {
       Either.right(
         QuestionMetadata(
-          formatAndCode = question.formatAndCode(),
+          question.identifier.nonNull(),
+          text = question.body,
+          formatAndCode = question.formatAndCode.reformated(placeholderValues),
           correctAnswers = correct,
           intersectAnswer = incorrect
         )

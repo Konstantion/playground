@@ -1,6 +1,6 @@
 package com.konstantion.sandbox
 
-import com.konstantion.service.CodeExecutor.Listener
+import com.konstantion.executor.CodeExecutor.Listener
 import java.util.concurrent.ConcurrentHashMap
 
 class ListenersHelper<Id> where Id : Any {

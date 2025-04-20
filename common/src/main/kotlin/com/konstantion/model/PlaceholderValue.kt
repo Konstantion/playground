@@ -9,7 +9,14 @@ import kotlinx.serialization.json.JsonClassDiscriminator
 @Serializable
 @JsonClassDiscriminator("type")
 sealed interface PlaceholderValue {
-  @Serializable @SerialName("str") data class Str(val value: String) : PlaceholderValue
+
+  fun asString(): String
+
+  @Serializable
+  @SerialName("str")
+  data class Str(val value: String) : PlaceholderValue {
+    override fun asString(): String = "\"${this.value.replace("\"", "\\\"")}\""
+  }
 
   @Serializable
   @SerialName("i32")
@@ -17,5 +24,7 @@ sealed interface PlaceholderValue {
     override fun compareTo(other: I32): Int {
       return this.value.compareTo(other.value)
     }
+
+    override fun asString(): String = this.value.toString()
   }
 }

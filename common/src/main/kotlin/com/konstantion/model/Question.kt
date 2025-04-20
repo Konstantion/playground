@@ -7,43 +7,37 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Question<L>(
-  private val lang: L,
-  private val body: String,
-  private val formatAndCode: FormatAndCode,
-  private val placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>,
-  private val callArgs: List<PlaceholderLabel>,
-  private val additionalCheck:
+  @Serializable(with = UUIDSerializer::class) val identifier: UUID?,
+  val lang: L,
+  val body: String,
+  val formatAndCode: FormatAndCode,
+  val placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>,
+  val callArgs: List<PlaceholderLabel>,
+  val additionalCheck:
     Code<L, @Serializable(with = OutputTypeSerializer::class) Code.Output.Bool>? =
     null,
-  private val correctVariants: List<Variant.Correct<L>>,
-  private val incorrectVariants: List<Variant.Incorrect<L>>,
+  val correctVariants: List<Variant.Correct<L>>,
+  val incorrectVariants: List<Variant.Incorrect<L>>,
 ) where L : Lang {
-
-  fun formatAndCode(): FormatAndCode = formatAndCode
-
-  fun callArgs(): List<PlaceholderLabel> = callArgs
-
-  fun placeholderDefinitions(): Map<PlaceholderIdentifier, PlaceholderDefinition<*>> =
-    placeholderDefinitions
 
   fun variants(): List<Variant<L>> = incorrectVariants + correctVariants
 
   @Serializable
   sealed interface Variant<L> where L : Lang {
-    val id: UUID
+    val identifier: UUID?
     val code: Code<L, Code.Output.Str>
 
     fun isCorrect(): Boolean = this is Correct
 
     @Serializable
     data class Correct<L>(
-      @Serializable(with = UUIDSerializer::class) override val id: UUID = UUID.randomUUID(),
+      @Serializable(with = UUIDSerializer::class) override val identifier: UUID?,
       override val code: Code<L, @Serializable(with = OutputTypeSerializer::class) Code.Output.Str>
     ) : Variant<L> where L : Lang
 
     @Serializable
     data class Incorrect<L>(
-      @Serializable(with = UUIDSerializer::class) override val id: UUID = UUID.randomUUID(),
+      @Serializable(with = UUIDSerializer::class) override val identifier: UUID?,
       override val code: Code<L, @Serializable(with = OutputTypeSerializer::class) Code.Output.Str>
     ) : Variant<L> where L : Lang
   }

@@ -1,0 +1,17 @@
+version: '3.9'
+
+services:
+  postgres:
+    container_name: playground_db
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: playground
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+networks:
+  postgres:
+    driver: bridge

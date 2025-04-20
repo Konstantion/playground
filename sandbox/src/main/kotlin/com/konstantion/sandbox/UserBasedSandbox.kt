@@ -1,19 +1,19 @@
 package com.konstantion.sandbox
 
 import com.konstantion.Logs
+import com.konstantion.executor.CodeExecutor
+import com.konstantion.executor.CodeExecutor.Issue
+import com.konstantion.executor.CodeExecutor.Listener
+import com.konstantion.executor.CodeExecutor.Task
 import com.konstantion.interpreter.CodeInterpreter
 import com.konstantion.lang.Unreachable
 import com.konstantion.model.Code
 import com.konstantion.model.Code.Output
 import com.konstantion.model.Lang
-import com.konstantion.model.PlaceholderDefinition
 import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
+import com.konstantion.model.PlaceholderValue
 import com.konstantion.model.TaskId
-import com.konstantion.service.CodeExecutor
-import com.konstantion.service.CodeExecutor.Issue
-import com.konstantion.service.CodeExecutor.Listener
-import com.konstantion.service.CodeExecutor.Task
 import com.konstantion.storage.FileType
 import com.konstantion.storage.TempFileStorage
 import com.konstantion.utils.CmdHelper
@@ -83,15 +83,13 @@ class UserBasedSandbox<L>(
     groupId: GroupId,
     code: Code<L, O>,
     callArgs: List<PlaceholderLabel>,
-    placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>
+    placeholderValues: Map<PlaceholderIdentifier, PlaceholderValue>
   ): Task<O> {
     val taskId: TaskId = taskIdGen.nextId()
 
     log.debug("Processing groupId={}, taskId={}, code={}.", groupId, taskId, code.code.shrink())
 
-    return when (
-      val result = interpreter.toExecutableCode(code, callArgs, placeholderDefinitions)
-    ) {
+    return when (val result = interpreter.toExecutableCode(code, callArgs, placeholderValues)) {
       is Either.Left -> {
         val issue = Issue.Interpretation(result.value)
         log.debug("Failed to interpret taskId={}, issue={}. Notifying listeners.", taskId, issue)
