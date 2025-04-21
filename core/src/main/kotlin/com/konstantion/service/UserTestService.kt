@@ -25,12 +25,11 @@ import com.konstantion.repository.UserTestRepository
 import com.konstantion.repository.VariantRepository
 import com.konstantion.service.SqlHelper.sqlAction
 import com.konstantion.service.SqlHelper.sqlOptionalAction
+import com.konstantion.utils.CommonScheduler
 import com.konstantion.utils.Either
+import java.time.Duration
 import java.time.LocalDateTime
 import java.util.UUID
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.slf4j.Logger
@@ -52,17 +51,13 @@ data class UserTestService(
   private val questionMetadataRepository: QuestionMetadataRepository,
 ) {
   private val log: Logger = LoggerFactory.getLogger(javaClass)
-  private val service: ScheduledExecutorService =
-    Executors.newSingleThreadScheduledExecutor().also { scheduledExecutorService ->
-      scheduledExecutorService.scheduleAtFixedRate(::deactivateExpired, 0L, 5, TimeUnit.MINUTES)
-      Runtime.getRuntime()
-        .addShutdownHook(
-          Thread {
-            log.info("Shutting down scheduled executor service")
-            scheduledExecutorService.shutdown()
-          }
-        )
-    }
+
+  init {
+    CommonScheduler.loopWithDelay(
+      delay = Duration.ofMinutes(5),
+      block = ::deactivateExpired,
+    )
+  }
 
   fun createTestForUser(targetUser: User, testModelId: UUID): Either<ServiceIssue, UserTestEntity> {
     log.info(

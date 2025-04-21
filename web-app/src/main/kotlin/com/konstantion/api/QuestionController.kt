@@ -7,7 +7,7 @@ import com.konstantion.dto.response.QuestionResponse.Companion.asResponse
 import com.konstantion.dto.response.QuestionStatusResponse.Companion.asResponse
 import com.konstantion.dto.response.UpdateQuestionResponse
 import com.konstantion.entity.QuestionEntity
-import com.konstantion.model.User
+import com.konstantion.entity.UserEntity
 import com.konstantion.service.QuestionService
 import com.konstantion.service.QuestionService.StatusResponse
 import com.konstantion.service.QuestionService.UpdateResult
@@ -15,6 +15,7 @@ import com.konstantion.service.ServiceIssue
 import com.konstantion.utils.Either
 import java.util.UUID
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -33,10 +34,10 @@ data class QuestionController(
 ) {
 
   @GetMapping
-  fun getAllQuestions(): ResponseEntity<*> {
+  fun getAllQuestions(@AuthenticationPrincipal userEntity: UserEntity): ResponseEntity<*> {
     return when (
       val result: Either<ServiceIssue, List<QuestionEntity>> =
-        questionService.getQuestions(User.admin())
+        questionService.getQuestions(userEntity.asUser())
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
@@ -44,10 +45,10 @@ data class QuestionController(
   }
 
   @GetMapping("/public")
-  fun getPublicQuestions(): ResponseEntity<*> {
+  fun getPublicQuestions(@AuthenticationPrincipal userEntity: UserEntity): ResponseEntity<*> {
     return when (
       val result: Either<ServiceIssue, List<QuestionEntity>> =
-        questionService.getPublicQuestions(User.admin())
+        questionService.getPublicQuestions(userEntity.asUser())
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
@@ -55,10 +56,13 @@ data class QuestionController(
   }
 
   @GetMapping("/{id}")
-  fun getQuestionById(@PathVariable("id") id: UUID): ResponseEntity<*> {
+  fun getQuestionById(
+    @AuthenticationPrincipal userEntity: UserEntity,
+    @PathVariable("id") id: UUID
+  ): ResponseEntity<*> {
     return when (
       val result: Either<ServiceIssue, QuestionEntity> =
-        questionService.getQuestion(User.admin(), id)
+        questionService.getQuestion(userEntity.asUser(), id)
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> {
@@ -68,10 +72,13 @@ data class QuestionController(
   }
 
   @PutMapping("/{id}/validate")
-  fun validateQuestionById(@PathVariable("id") id: UUID): ResponseEntity<*> {
+  fun validateQuestionById(
+    @AuthenticationPrincipal userEntity: UserEntity,
+    @PathVariable("id") id: UUID
+  ): ResponseEntity<*> {
     return when (
       val result: Either<ServiceIssue, QuestionService.ValidationId> =
-        questionService.validateQuestion(User.admin(), id)
+        questionService.validateQuestion(userEntity.asUser(), id)
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.taskId)
@@ -79,10 +86,13 @@ data class QuestionController(
   }
 
   @GetMapping("/{id}/status")
-  fun getValidationStatusById(@PathVariable("id") id: UUID): ResponseEntity<*> {
+  fun getValidationStatusById(
+    @AuthenticationPrincipal userEntity: UserEntity,
+    @PathVariable("id") id: UUID
+  ): ResponseEntity<*> {
     return when (
       val result: Either<ServiceIssue, StatusResponse> =
-        questionService.validationStatus(User.admin(), id)
+        questionService.validationStatus(userEntity.asUser(), id)
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
@@ -90,10 +100,13 @@ data class QuestionController(
   }
 
   @PostMapping
-  fun createQuestion(@RequestBody request: CreateQuestionRequest): ResponseEntity<*> {
+  fun createQuestion(
+    @AuthenticationPrincipal userEntity: UserEntity,
+    @RequestBody request: CreateQuestionRequest
+  ): ResponseEntity<*> {
     return when (
       val result: Either<ServiceIssue, QuestionEntity> =
-        questionService.createQuestion(User.admin(), request.asParams())
+        questionService.createQuestion(userEntity.asUser(), request.asParams())
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
@@ -102,12 +115,13 @@ data class QuestionController(
 
   @PatchMapping("/{id}")
   fun updateQuestion(
+    @AuthenticationPrincipal userEntity: UserEntity,
     @PathVariable("id") id: UUID,
     @RequestBody request: UpdateQuestionRequest
   ): ResponseEntity<*> {
     return when (
       val result: Either<ServiceIssue, UpdateResult<QuestionEntity>> =
-        questionService.updateQuestion(User.admin(), id, request.asParams())
+        questionService.updateQuestion(userEntity.asUser(), id, request.asParams())
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> {

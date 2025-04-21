@@ -1,7 +1,6 @@
 package com.konstantion.entity
 
 import com.konstantion.utils.FieldUtils
-import com.konstantion.utils.nonNull
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

@@ -2,6 +2,7 @@ package com.konstantion.entity
 
 import com.konstantion.model.Permission
 import com.konstantion.model.Role
+import com.konstantion.model.User
 import com.konstantion.utils.FieldUtils.nonNull
 import jakarta.persistence.CollectionTable
 import jakarta.persistence.Column
@@ -43,4 +44,18 @@ open class UserEntity {
   fun password(): String = nonNull(password)
 
   fun role(): Role = nonNull(role)
+
+  fun asUser(): User {
+    return object : User {
+      override fun id(): UUID = nonNull(id)
+
+      override fun getUsername(): String = username()
+
+      override fun getPassword(): String = password()
+
+      override fun role(): Role = role()
+
+      override fun permissions(): List<Permission> = permissions.toList()
+    }
+  }
 }
