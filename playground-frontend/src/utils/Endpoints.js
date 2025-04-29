@@ -1,0 +1,11 @@
+import { deepFreeze } from './ObjectUtils';
+
+const BACKEND_URL = 'http://localhost:8079';
+const BACKEND_API_URL = `${BACKEND_URL}/api`;
+
+export const Endpoints = deepFreeze({
+    Auth: {
+        Login: `${BACKEND_API_URL}/auth/login`,
+        Register: `${BACKEND_API_URL}/auth/register`,
+    },
+});
