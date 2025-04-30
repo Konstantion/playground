@@ -2,14 +2,14 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import {
     HomeRedirectIfAuthenticated,
     LoginRedirectIfUnauthenticated,
-} from './LoginRedirectIfUnauthenticated';
-import { Routes as RRoutes } from './Routes';
+} from './LoginRedirectIfUnauthenticated.jsx';
+import { Routes as RRoutes } from './Routes.jsx';
 
 export const AppRouter = () => {
     return (
         <BrowserRouter>
             <Routes>
-                {Object.values(RRoutes).map((route) => {
+                {Object.values(RRoutes).map(route => {
                     if (route.public) {
                         return (
                             <Route

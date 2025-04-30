@@ -10,7 +10,43 @@ export const TypeofObject = Object.freeze({
     Unknown: 'unknown',
 });
 
-export const typeOf = (obj) => {
+export const sCp = obj => {
+    return { ...obj };
+};
+
+export const dCp = obj => {
+    structuredClone(obj);
+};
+
+export const sEq = (obj1, obj2) => {
+    if (obj1 === obj2) {
+        return true;
+    }
+
+    if (typeOf(obj1) !== typeOf(obj2)) {
+        return false;
+    }
+
+    if (typeOf(obj1) === TypeofObject.Object) {
+        const keys1 = Object.keys(obj1);
+        const keys2 = Object.keys(obj2);
+
+        if (keys1.length !== keys2.length) {
+            return false;
+        }
+
+        for (const key of keys1) {
+            if (!sEq(obj1[key], obj2[key])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    return false;
+};
+
+export const typeOf = obj => {
     if (obj === null) {
         return TypeofObject.Null;
     }
@@ -40,9 +76,9 @@ export const typeOf = (obj) => {
     }
 };
 
-export const deepFreeze = (obj) => {
+export const deepFreeze = obj => {
     Object.freeze(obj);
-    Object.keys(obj).forEach((key) => {
+    Object.keys(obj).forEach(key => {
         if (typeOf(obj[key]) === TypeofObject.Object) {
             deepFreeze(obj[key]);
         }

@@ -1,6 +1,6 @@
 import Login from '../pages/Login';
-import Home from '../pages/Home';
-import Dashboard from '../pages/Dashboard';
+import Home from '../pages/Home.jsx';
+import Dashboard from '../pages/Dashboard.jsx';
 
 export const Routes = Object.freeze({
     Login: { path: '/login', element: <Login />, public: true },

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/hello")
+@RequestMapping("/api/hello")
 class HelloController(private val questionService: QuestionService<QuestionEntity>) {
   @GetMapping
   fun hello(@AuthenticationPrincipal userEntity: UserEntity): ResponseEntity<String> {

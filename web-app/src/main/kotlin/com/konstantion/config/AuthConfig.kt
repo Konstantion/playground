@@ -36,7 +36,6 @@ class AuthConfig {
       }
       .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)
       .csrf { csrf -> csrf.disable() }
-      .cors { cors -> cors.disable() }
       .build()
   }
 }

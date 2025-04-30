@@ -6,7 +6,7 @@ export const ErrorType = Object.freeze({
     Server: 'server',
 });
 
-export const errorTypeOf = (statusCode) => {
+export const errorTypeOf = statusCode => {
     switch (statusCode) {
         case 403:
             return ErrorType.Forbidden;
