@@ -17,6 +17,16 @@ data class UnexpectedAction(val action: String) : ServiceIssue {
   }
 }
 
+data class TokenExpired(val message: String) : ServiceIssue {
+  override fun code(): Int {
+    return 498
+  }
+
+  override fun message(): String {
+    return message
+  }
+}
+
 data class SqlError(val message: String) : ServiceIssue {
   override fun code(): Int {
     return 500

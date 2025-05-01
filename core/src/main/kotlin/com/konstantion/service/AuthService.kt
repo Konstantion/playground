@@ -24,7 +24,7 @@ private const val EXPIRATION_TIME = 86400000
 data class AuthService(private val userRepository: UserRepository) {
   private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-  fun login(params: LoginParams): Either<ServiceIssue, String> {
+  fun login(params: LoginParams): Either<ServiceIssue, UserAndToken> {
     log.info("Login[params={}]", params)
 
     val user: UserEntity =
@@ -45,7 +45,7 @@ data class AuthService(private val userRepository: UserRepository) {
       return Either.left(UnexpectedAction("Invalid password"))
     }
 
-    return Either.right(generateToken(user))
+    return Either.right(UserAndToken(user, generateToken(user)))
   }
 
   fun register(user: User?, params: RegisterParams): Either<ServiceIssue, UserEntity> {
@@ -92,7 +92,7 @@ data class AuthService(private val userRepository: UserRepository) {
   fun extractUser(token: String): Either<ServiceIssue, UserEntity> {
     log.info("ExtractUser[token={}]", token)
     if (isExpired(token)) {
-      return Either.left(UnexpectedAction("Token is expired"))
+      return Either.left(TokenExpired("Token is expired"))
     }
 
     val username = getClaims(token).subject
@@ -101,7 +101,7 @@ data class AuthService(private val userRepository: UserRepository) {
         val result: Either<ServiceIssue, UserEntity> =
           userRepository.sqlOptionalAction { findByUsername(username) }
       ) {
-        is Either.Left -> return Either.left(result.value)
+        is Either.Left -> return Either.left(TokenExpired(result.value.message()))
         is Either.Right -> result.value
       }
 
@@ -126,6 +126,11 @@ data class AuthService(private val userRepository: UserRepository) {
   }
 
   data class LoginParams(val username: String, val password: String)
+
+  data class UserAndToken(
+    val user: UserEntity,
+    val token: String,
+  )
 
   data class RegisterParams(
     val username: String,
