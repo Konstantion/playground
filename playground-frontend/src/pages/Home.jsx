@@ -10,13 +10,16 @@ export default function Home() {
         console.log('User:', auth);
         const response = await fetch(Endpoints.Hello, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth}` },
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${auth.accessToken}`,
+            },
         });
         if (!response.ok) {
             console.error('Error:', response.statusText);
             return;
         }
-        const data = await response.json();
+        const data = await response.body;
         console.log('Response data:', data);
     };
     return (

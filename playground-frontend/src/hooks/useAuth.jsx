@@ -4,11 +4,11 @@ const AuthKey = 'token';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-    const [auth, setAuth] = useState(sessionStorage.getItem(AuthKey));
+    const [auth, setAuth] = useState(JSON.parse(sessionStorage.getItem(AuthKey)));
 
-    const login = token => {
-        setAuth(token);
-        sessionStorage.setItem(AuthKey, token);
+    const login = userAndToken => {
+        setAuth(userAndToken);
+        sessionStorage.setItem(AuthKey, JSON.stringify(userAndToken));
     };
 
     const logout = () => {

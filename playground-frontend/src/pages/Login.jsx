@@ -18,6 +18,7 @@ import { between, contains, substrs } from '@/utils/Strings.js';
 import { fetchJwt, register } from '@/utils/AuthUtils.js';
 import { Routes } from '@/rout/Routes.jsx';
 import { toast } from 'sonner';
+import { ErrorType } from '@/utils/ErrorType.js';
 
 const Mode = Object.freeze({
     Login: 'login',
@@ -88,7 +89,7 @@ export default function Login() {
     const [input, setInput] = useState(sCp(IInput));
     const [error, setError] = useState(sCp(Errors));
 
-    const { login } = useAuth();
+    const { login, logout } = useAuth();
     const navigate = useNavigate();
 
     const setter = key => e => {
@@ -104,6 +105,7 @@ export default function Login() {
         setError(errors);
 
         if (!valid) {
+            toast.error('Please fix the errors in the form', { closeButton: true });
             return;
         }
 
@@ -111,11 +113,15 @@ export default function Login() {
             await fetchJwt(
                 input.username,
                 input.password,
-                token => {
-                    login(token);
+                userAndToken => {
+                    console.debug('Login successful:', userAndToken);
+                    login(userAndToken);
                     navigate(Routes.Home.path);
                 },
                 (type, message) => {
+                    if (type === ErrorType.TokenExpired) {
+                        logout();
+                    }
                     toast.error(`${type}: ${substrs(message, 150)}`, { closeButton: true });
                     setInput(sCp(IInput));
                     setError(sCp(Errors));

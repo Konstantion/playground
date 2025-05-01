@@ -1,7 +1,7 @@
 import { Endpoints } from './Endpoints';
 import { ErrorType, errorTypeOf } from './ErrorType';
 
-export const fetchJwt = async (username, password, onToken, onError) => {
+export const fetchJwt = async (username, password, onUserAndToken, onError) => {
     let response;
     try {
         response = await fetch(Endpoints.Auth.Login, {
@@ -20,9 +20,9 @@ export const fetchJwt = async (username, password, onToken, onError) => {
         if (!response.ok) {
             onError(errorTypeOf(response.status), data.message);
         } else {
-            const token = data.accessToken;
-            if (token) {
-                onToken(token);
+            const userAndToken = data;
+            if (userAndToken && userAndToken.accessToken && userAndToken.user) {
+                onUserAndToken(userAndToken);
             } else {
                 console.log('Token not found in response:', data);
                 onError(ErrorType.Parse, 'No token received');
