@@ -1,4 +1,4 @@
-import {ErrorType, errorTypeOf} from '@/utils/ErrorType.js';
+import { ErrorType, errorTypeOf } from '@/utils/ErrorType.js';
 
 export const authenticatedReq = async (url, method, body, token, onError, onData) => {
     const headers = {
