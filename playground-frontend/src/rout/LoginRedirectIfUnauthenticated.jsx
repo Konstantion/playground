@@ -1,6 +1,7 @@
-import { useAuth } from '../hooks/useAuth.jsx';
-import { Navigate } from 'react-router-dom';
-import { Routes } from './Routes.jsx';
+import {useAuth} from '../hooks/useAuth.jsx';
+import {Navigate} from 'react-router-dom';
+import {RHome, Routes} from './Routes.jsx';
+import {TestsPage} from "@/pages/Pages.js";
 
 export const LoginRedirectIfUnauthenticated = ({ children }) => {
     const { auth } = useAuth();
@@ -20,7 +21,7 @@ export const HomeRedirectIfAuthenticated = ({ children }) => {
     console.log('HomeRedirectIfAuthenticated', auth);
 
     if (auth) {
-        return <Navigate to={Routes.Home.path} replace />;
+        return <Navigate to={`${RHome}/${TestsPage}`} replace />;
     } else {
         return children;
     }

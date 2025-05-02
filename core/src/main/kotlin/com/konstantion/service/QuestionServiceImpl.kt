@@ -1,12 +1,13 @@
 package com.konstantion.service
 
 import com.konstantion.entity.QuestionEntity
+import com.konstantion.entity.UserEntity
 import com.konstantion.executor.QuestionExecutor
+import com.konstantion.model.FormatAndCode
 import com.konstantion.model.Lang
 import com.konstantion.model.Permission
 import com.konstantion.model.Question
 import com.konstantion.model.Role
-import com.konstantion.model.User
 import com.konstantion.port.QuestionPort
 import com.konstantion.service.QuestionService.ValidationId
 import com.konstantion.service.SqlHelper.sqlAction
@@ -14,7 +15,7 @@ import com.konstantion.utils.Either
 import com.konstantion.utils.Maybe
 import com.konstantion.utils.Maybe.Companion.asMaybe
 import java.util.UUID
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.Json.Default.encodeToString
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -24,19 +25,22 @@ data class QuestionServiceImpl(
   private val questionPort: QuestionPort<QuestionEntity>,
   private val pythonExecutor: QuestionExecutor<Lang.Python>,
   private val updateHelper: QuestionUpdateHelper,
-) : QuestionService<QuestionEntity> {
+) : QuestionService {
   private val log: Logger = LoggerFactory.getLogger(QuestionServiceImpl::class.java)
   private val questionValidator: QuestionValidator = QuestionValidator(questionPort, pythonExecutor)
 
-  override fun save(user: User, question: Question<Lang>): Either<ServiceIssue, QuestionEntity> {
-    log.info("Save[userId={}, username={}, question={}]", user.id(), user.getUsername(), question)
+  override fun save(
+    user: UserEntity,
+    question: Question<Lang>
+  ): Either<ServiceIssue, QuestionEntity> {
+    log.info("Save[userId={}, username={}, question={}]", user.id(), user.username(), question)
 
     return if (user.isAdmin() || user.hasPermission(Permission.SaveQuestion)) {
       val saveResult = questionPort.sqlAction { save(QuestionEntity.fromModel(question)) }
       log.info(
         "SaveResult[userId={}, username={}, result={}]",
         user.id(),
-        user.getUsername(),
+        user.username(),
         saveResult
       )
       return saveResult
@@ -45,8 +49,8 @@ data class QuestionServiceImpl(
     }
   }
 
-  override fun getQuestions(user: User): Either<ServiceIssue, List<QuestionEntity>> {
-    log.info("GetQuestions[userId={}, username={}]", user.id(), user.getUsername())
+  override fun getQuestions(user: UserEntity): Either<ServiceIssue, List<QuestionEntity>> {
+    log.info("GetQuestions[userId={}, username={}]", user.id(), user.username())
     return when (user.role()) {
       Role.Admin,
       Role.Teacher -> questionPort.sqlAction { findAllByCreatorId(user.id()) }
@@ -54,8 +58,8 @@ data class QuestionServiceImpl(
     }
   }
 
-  override fun getAllQuestion(user: User): Either<ServiceIssue, List<QuestionEntity>> {
-    log.info("GetAllQuestion[userId={}, username={}]", user.id(), user.getUsername())
+  override fun getAllQuestion(user: UserEntity): Either<ServiceIssue, List<QuestionEntity>> {
+    log.info("GetAllQuestion[userId={}, username={}]", user.id(), user.username())
     return when (user.role()) {
       Role.Admin -> questionPort.sqlAction { findAll() }
       Role.Student,
@@ -63,8 +67,8 @@ data class QuestionServiceImpl(
     }
   }
 
-  override fun getPublicQuestions(user: User): Either<ServiceIssue, List<QuestionEntity>> {
-    log.info("GetPublicQuestions[userId={}, username={}]", user.id(), user.getUsername())
+  override fun getPublicQuestions(user: UserEntity): Either<ServiceIssue, List<QuestionEntity>> {
+    log.info("GetPublicQuestions[userId={}, username={}]", user.id(), user.username())
     return when (user.role()) {
       Role.Admin,
       Role.Teacher -> questionPort.sqlAction { findAllByPublic(true) }
@@ -72,8 +76,8 @@ data class QuestionServiceImpl(
     }
   }
 
-  override fun getQuestion(user: User, id: UUID): Either<ServiceIssue, QuestionEntity> {
-    log.info("GetQuestion[userId={}, username={}, id={}]", user.id(), user.getUsername(), id)
+  override fun getQuestion(user: UserEntity, id: UUID): Either<ServiceIssue, QuestionEntity> {
+    log.info("GetQuestion[userId={}, username={}, id={}]", user.id(), user.username(), id)
     return when (user.role()) {
       Role.Admin ->
         questionPort.sqlAction {
@@ -103,27 +107,28 @@ data class QuestionServiceImpl(
   }
 
   override fun createQuestion(
-    user: User,
+    user: UserEntity,
     params: QuestionService.CreateQuestionParams
   ): Either<ServiceIssue, QuestionEntity> {
     log.info(
       "CreateQuestion[userId={}, username={}, params={}]",
       user.id(),
-      user.getUsername(),
+      user.username(),
       params
     )
     return if (user.isAdmin() || user.hasPermission(Permission.CreateQuestion)) {
       val entity: QuestionEntity =
         QuestionEntity().apply {
-          lang = Json.encodeToString(Lang.serializer(), params.lang)
+          lang = encodeToString(Lang.serializer(), params.lang)
           body = params.body
-          // TODO: add creator
+          creator = user
+          formatAndCode = FormatAndCode.emptyJson()
         }
       val toReturn = questionPort.save(entity)
       log.info(
         "CreateQuestionSuccess[userId={}, username={}, result={}]",
         user.id(),
-        user.getUsername(),
+        user.username(),
         toReturn
       )
       Either.right(toReturn)
@@ -133,14 +138,14 @@ data class QuestionServiceImpl(
   }
 
   override fun updateQuestion(
-    user: User,
+    user: UserEntity,
     id: UUID,
     params: QuestionService.UpdateQuestionParams
   ): Either<ServiceIssue, QuestionService.UpdateResult<QuestionEntity>> {
     log.info(
       "UpdateQuestion[userId={}, username={}, id={}, params={}]",
       user.id(),
-      user.getUsername(),
+      user.username(),
       id,
       params
     )
@@ -163,7 +168,7 @@ data class QuestionServiceImpl(
           log.info(
             "UpdateQuestion[userId={}, username={}, entity={}]",
             user.id(),
-            user.getUsername(),
+            user.username(),
             entity
           )
           val violations: Map<String, List<String>> = updateHelper.update(entity, params)
@@ -173,7 +178,7 @@ data class QuestionServiceImpl(
           log.info(
             "UpdateQuestionSuccess[userId={}, username={}, entity={}, violations={}]",
             user.id(),
-            user.getUsername(),
+            user.username(),
             entity,
             violations
           )
@@ -185,8 +190,8 @@ data class QuestionServiceImpl(
     }
   }
 
-  override fun deleteQuestion(user: User, id: UUID): Either<ServiceIssue, QuestionEntity> {
-    log.info("DeleteQuestion[userId={}, username={}, id={}]", user.id(), user.getUsername(), id)
+  override fun deleteQuestion(user: UserEntity, id: UUID): Either<ServiceIssue, QuestionEntity> {
+    log.info("DeleteQuestion[userId={}, username={}, id={}]", user.id(), user.username(), id)
     return when (user.role()) {
       Role.Admin ->
         questionPort
@@ -225,16 +230,16 @@ data class QuestionServiceImpl(
     }
   }
 
-  override fun validateQuestion(user: User, id: UUID): Either<ServiceIssue, ValidationId> {
-    log.info("ValidateQuestion[userId={}, username={}, id={}]", user.id(), user.getUsername(), id)
+  override fun validateQuestion(user: UserEntity, id: UUID): Either<ServiceIssue, ValidationId> {
+    log.info("ValidateQuestion[userId={}, username={}, id={}]", user.id(), user.username(), id)
     return getQuestion(user, id).flatMap(questionValidator::validate).map(::ValidationId)
   }
 
   override fun validationStatus(
-    user: User,
+    user: UserEntity,
     id: UUID
   ): Either<ServiceIssue, QuestionService.StatusResponse> {
-    log.info("ValidationStatus[userId={}, username={}, id={}]", user.id(), user.getUsername(), id)
+    log.info("ValidationStatus[userId={}, username={}, id={}]", user.id(), user.username(), id)
     return getQuestion(user, id).map { question -> questionValidator.status(question.id()) }
   }
 }

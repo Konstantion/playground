@@ -18,7 +18,6 @@ data class UpdateQuestionRequest(
   val additionalCheck: UUID? = null,
   val correctVariant: UUID? = null,
   val incorrectVariant: UUID? = null,
-  val public: Boolean? = null
 ) {
   fun asParams(): UpdateQuestionParams {
     return UpdateQuestionParams(
@@ -36,7 +35,6 @@ data class UpdateQuestionRequest(
       additionalCheckId = additionalCheck,
       correctVariantId = correctVariant,
       incorrectVariantId = incorrectVariant,
-      public = public
     )
   }
 }

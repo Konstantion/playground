@@ -1,60 +1,50 @@
-import { Endpoints } from './Endpoints';
-import { ErrorType, errorTypeOf } from './ErrorType';
+import {Endpoints} from './Endpoints';
+import {ErrorType, errorTypeOf} from './ErrorType';
 
 export const fetchJwt = async (username, password, onUserAndToken, onError) => {
-    let response;
     try {
-        response = await fetch(Endpoints.Auth.Login, {
+        const response = await fetch(Endpoints.Auth.Login, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
         });
-    } catch (error) {
-        onError(ErrorType.Fetch, error);
-        return;
-    }
 
-    try {
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            onError(errorTypeOf(response.status), data.message);
+            const message = data.message || response.statusText;
+            onError(errorTypeOf(response.status), message);
+            return;
+        }
+
+        if (data?.accessToken && data?.user) {
+            onUserAndToken(data);
         } else {
-            const userAndToken = data;
-            if (userAndToken && userAndToken.accessToken && userAndToken.user) {
-                onUserAndToken(userAndToken);
-            } else {
-                console.log('Token not found in response:', data);
-                onError(ErrorType.Parse, 'No token received');
-            }
+            onError(ErrorType.Parse, 'No token received');
         }
     } catch (error) {
-        onError(ErrorType.Parse, error);
+        onError(ErrorType.Fetch, error.message || error.toString());
     }
 };
 
 export const register = async (username, password, role, onRegistered, onError) => {
-    let response;
     try {
-        response = await fetch(Endpoints.Auth.Register, {
+        const response = await fetch(Endpoints.Auth.Register, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password, role }),
         });
-    } catch (error) {
-        onError(ErrorType.Fetch, error);
-        return;
-    }
 
-    try {
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            onError(errorTypeOf(response.status), data.message);
-        } else {
-            onRegistered(data);
+            const message = data.message || response.statusText;
+            onError(errorTypeOf(response.status), message);
+            return;
         }
+
+        onRegistered(data);
     } catch (error) {
-        onError(ErrorType.Parse, error);
+        onError(ErrorType.Fetch, error.message || error.toString());
     }
 };

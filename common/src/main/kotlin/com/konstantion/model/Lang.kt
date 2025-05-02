@@ -11,7 +11,7 @@ sealed interface Lang {
 
   companion object {
     fun fromString(lang: String): Lang {
-      return when (lang) {
+      return when (lang.lowercase()) {
         "javascript" -> JavaScript
         "python" -> Python
         else -> error("Unknown lang: $lang")

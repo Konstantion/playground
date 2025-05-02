@@ -1,5 +1,7 @@
 package com.konstantion.service
 
+import com.konstantion.entity.QuestionEntity
+import com.konstantion.entity.UserEntity
 import com.konstantion.model.FormatAndCode
 import com.konstantion.model.Lang
 import com.konstantion.model.PlaceholderDefinition
@@ -7,34 +9,36 @@ import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
 import com.konstantion.model.Question
 import com.konstantion.model.TaskId
-import com.konstantion.model.User
 import com.konstantion.utils.Either
 import java.util.UUID
 
-interface QuestionService<Entity> {
-  fun save(user: User, question: Question<Lang>): Either<ServiceIssue, Entity>
+interface QuestionService {
+  fun save(user: UserEntity, question: Question<Lang>): Either<ServiceIssue, QuestionEntity>
 
-  fun getQuestions(user: User): Either<ServiceIssue, List<Entity>>
+  fun getQuestions(user: UserEntity): Either<ServiceIssue, List<QuestionEntity>>
 
-  fun getAllQuestion(user: User): Either<ServiceIssue, List<Entity>>
+  fun getAllQuestion(user: UserEntity): Either<ServiceIssue, List<QuestionEntity>>
 
-  fun getPublicQuestions(user: User): Either<ServiceIssue, List<Entity>>
+  fun getPublicQuestions(user: UserEntity): Either<ServiceIssue, List<QuestionEntity>>
 
-  fun getQuestion(user: User, id: UUID): Either<ServiceIssue, Entity>
+  fun getQuestion(user: UserEntity, id: UUID): Either<ServiceIssue, QuestionEntity>
 
-  fun createQuestion(user: User, params: CreateQuestionParams): Either<ServiceIssue, Entity>
+  fun createQuestion(
+    user: UserEntity,
+    params: CreateQuestionParams
+  ): Either<ServiceIssue, QuestionEntity>
 
   fun updateQuestion(
-    user: User,
+    user: UserEntity,
     id: UUID,
     params: UpdateQuestionParams
-  ): Either<ServiceIssue, UpdateResult<Entity>>
+  ): Either<ServiceIssue, UpdateResult<QuestionEntity>>
 
-  fun deleteQuestion(user: User, id: UUID): Either<ServiceIssue, Entity>
+  fun deleteQuestion(user: UserEntity, id: UUID): Either<ServiceIssue, QuestionEntity>
 
-  fun validateQuestion(user: User, id: UUID): Either<ServiceIssue, ValidationId>
+  fun validateQuestion(user: UserEntity, id: UUID): Either<ServiceIssue, ValidationId>
 
-  fun validationStatus(user: User, id: UUID): Either<ServiceIssue, StatusResponse>
+  fun validationStatus(user: UserEntity, id: UUID): Either<ServiceIssue, StatusResponse>
 
   data class ValidationId(val taskId: TaskId)
 
@@ -49,7 +53,6 @@ interface QuestionService<Entity> {
     val additionalCheckId: UUID? = null,
     val correctVariantId: UUID? = null,
     val incorrectVariantId: UUID? = null,
-    val public: Boolean? = null
   ) {
 
     enum class Action {

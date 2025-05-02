@@ -1,6 +1,8 @@
 package com.konstantion.model
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 @Serializable
 data class FormatAndCode(val format: String, val code: String) {
@@ -15,5 +17,11 @@ data class FormatAndCode(val format: String, val code: String) {
       code = code.replace(identifier.toString(), value.asString())
     }
     return FormatAndCode(this.format, code)
+  }
+
+  companion object {
+    private val EMPTY = FormatAndCode("python", "print('Hello, world!')")
+
+    fun emptyJson() = Json.encodeToString(EMPTY)
   }
 }

@@ -50,10 +50,6 @@ data class QuestionUpdateHelper(
       entity.formatAndCode = Json.encodeToString(FormatAndCode.serializer(), params.formatAndCode!!)
     }
 
-    if (params.public != null) {
-      entity.public = params.public!!
-    }
-
     if (params.placeholderDefinitions != null) {
       val newDefinitions = modelView.placeholderDefinitions.toMutableMap()
       for ((identifier, definition) in params.placeholderDefinitions!!) {

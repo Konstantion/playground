@@ -1,9 +1,9 @@
-import Login from '../pages/Login';
-import Home from '../pages/Home.jsx';
-import Dashboard from '../pages/Dashboard.jsx';
+import LoginPage from '../pages/LoginPage.jsx';
+import HomePage from '../pages/HomePage.jsx';
+
+export const RHome = '/home';
 
 export const Routes = Object.freeze({
-    Login: { path: '/login', element: <Login />, public: true },
-    Home: { path: '/', element: <Home />, public: false },
-    Dashboard: { path: '/dashboard', element: <Dashboard />, public: false },
+    Login: { path: '/login', element: <LoginPage />, public: true },
+    Home: { path: `${RHome}/:section`, element: <HomePage />, public: false }, // updated path
 });

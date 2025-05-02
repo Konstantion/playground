@@ -165,7 +165,7 @@ data class ImmutableTestService(
               placeholderDefinitions = HashMap(question.placeholderDefinitions)
               callArgs = ArrayList(question.callArgs)
               validated = question.validated
-              public = question.public
+              public = false
               createdAt = LocalDateTime.now()
               creator = question.creator
             }

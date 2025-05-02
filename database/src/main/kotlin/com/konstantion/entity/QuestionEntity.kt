@@ -83,7 +83,7 @@ open class QuestionEntity {
 
   @Column(name = "is_validated", nullable = false) open var validated: Boolean = false
 
-  @Column(name = "is_public", nullable = false) open var public: Boolean = false
+  @Column(name = "is_public", nullable = false) open var public: Boolean = true
 
   @ManyToOne(fetch = FetchType.LAZY, optional = true)
   @JoinColumn(name = "creator_id", nullable = true)
@@ -116,6 +116,8 @@ open class QuestionEntity {
   fun public(): Boolean = public
 
   fun creator(): UserEntity? = creator
+
+  fun createdAt(): LocalDateTime = nonNull(createdAt)
 
   override fun toString(): String {
     return "QuestionEntity(id=$id, lang=$lang, body=$body, formatAndCode=$formatAndCode, placeholderDefinitions=$placeholderDefinitions, callArgs=$callArgs, additionalCheck=$additionalCheck, correctVariants=$correctVariants, incorrectVariants=$incorrectVariants)"

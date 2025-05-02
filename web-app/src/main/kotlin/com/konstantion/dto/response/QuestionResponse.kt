@@ -7,6 +7,7 @@ import com.konstantion.dto.response.VariantResponse.Companion.asResponse
 import com.konstantion.dto.serializers.ListRawSerializer
 import com.konstantion.dto.serializers.MapRawSerializer
 import com.konstantion.entity.QuestionEntity
+import java.time.ZoneId
 import java.util.UUID
 
 data class QuestionResponse(
@@ -22,7 +23,8 @@ data class QuestionResponse(
   val incorrectVariants: List<VariantResponse>,
   val validated: Boolean,
   val public: Boolean,
-  val creatorId: UUID? = null
+  val creatorId: UUID? = null,
+  val createdAt: Long,
 ) {
   companion object {
     fun QuestionEntity.asResponse(): QuestionResponse {
@@ -38,7 +40,8 @@ data class QuestionResponse(
         incorrectVariants = incorrectVariants().map { variant -> variant.asResponse() },
         validated = validated(),
         public = public(),
-        creatorId = creator()?.id()
+        creatorId = creator()?.id(),
+        createdAt = createdAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
       )
     }
 

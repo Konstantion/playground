@@ -23,14 +23,15 @@ data class AuthController(
 
   @PostMapping("/login")
   fun login(@RequestBody request: LoginRequest): ResponseEntity<*> {
-    return when (val result: Either<ServiceIssue, AuthService.UserAndToken> = authService.login(request.asParams())) {
+    return when (
+      val result: Either<ServiceIssue, AuthService.UserAndToken> =
+        authService.login(request.asParams())
+    ) {
       is Either.Left -> result.value.asError()
-      is Either.Right -> ResponseEntity.ok(
-        LoginResponse(
-          result.value.token,
-          UserResponse.fromEntity(result.value.user)
+      is Either.Right ->
+        ResponseEntity.ok(
+          LoginResponse(result.value.token, UserResponse.fromEntity(result.value.user))
         )
-      )
     }
   }
 

@@ -29,7 +29,7 @@ open class UserEntity {
 
   @Column(name = "role") @Enumerated(EnumType.STRING) open var role: Role? = null
 
-  @ElementCollection(targetClass = Permission::class, fetch = FetchType.LAZY)
+  @ElementCollection(targetClass = Permission::class, fetch = FetchType.EAGER)
   @CollectionTable(name = "user_permissions", joinColumns = [JoinColumn(name = "user_id")])
   @Column(name = "permission")
   @Enumerated(EnumType.STRING)
@@ -45,6 +45,10 @@ open class UserEntity {
 
   fun role(): Role = nonNull(role)
 
+  fun isAdmin() = role() == Role.Admin
+
+  fun hasPermission(permission: Permission) = permissions.contains(permission)
+
   fun asUser(): User {
     return object : User {
       override fun id(): UUID = nonNull(id)
@@ -53,7 +57,7 @@ open class UserEntity {
 
       override fun getPassword(): String = password()
 
-      override fun role(): Role = role()
+      override fun role(): Role = nonNull(role)
 
       override fun permissions(): List<Permission> = permissions.toList()
     }
