@@ -35,7 +35,7 @@ data class QuestionServiceImpl(
   ): Either<ServiceIssue, QuestionEntity> {
     log.info("Save[userId={}, username={}, question={}]", user.id(), user.username(), question)
 
-    return if (user.isAdmin() || user.hasPermission(Permission.SaveQuestion)) {
+    return if (user.isAdmin() || user.isTeacher() || user.hasPermission(Permission.SaveQuestion)) {
       val saveResult = questionPort.sqlAction { save(QuestionEntity.fromModel(question)) }
       log.info(
         "SaveResult[userId={}, username={}, result={}]",

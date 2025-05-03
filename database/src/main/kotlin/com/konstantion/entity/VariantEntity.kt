@@ -16,6 +16,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.UUID
 
 @Entity
@@ -24,7 +25,7 @@ open class VariantEntity {
 
   @Id @GeneratedValue(strategy = GenerationType.UUID) open var id: UUID? = null
 
-  @OneToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+  @OneToOne(cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
   @JoinColumn(name = "code_id")
   open var code: CodeEntity? = null
 
@@ -46,6 +47,9 @@ open class VariantEntity {
   fun id(): UUID = nonNull(id)
 
   fun code(): CodeEntity = nonNull(code)
+
+  fun createdAt(): Long =
+    nonNull(createdAt).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
   override fun toString(): String {
     return "VariantEntity(id=$id, code=$code)"

@@ -47,6 +47,8 @@ open class UserEntity {
 
   fun isAdmin() = role() == Role.Admin
 
+  fun isTeacher(): Boolean = role() == Role.Teacher
+
   fun hasPermission(permission: Permission) = permissions.contains(permission)
 
   fun asUser(): User {
