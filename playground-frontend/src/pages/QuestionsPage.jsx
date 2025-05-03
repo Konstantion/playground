@@ -18,7 +18,8 @@ import { useAuth } from '@/hooks/useAuth.jsx';
 import { ErrorType } from '@/utils/ErrorType.js';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { Routes as RRoutes } from '@/rout/Routes.jsx';
+import { Routes as RRoutes, RQuestions } from '@/rout/Routes.jsx';
+import Loading from '@/components/Loading.jsx';
 
 const QuestionsPage = () => {
     const { auth, logout } = useAuth();
@@ -137,7 +138,11 @@ const QuestionsPage = () => {
                         <ScrollArea className="h-[600px] w-full rounded-md border p-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {filteredItems.map((item, idx) => (
-                                    <Card key={idx} className="w-full">
+                                    <Card
+                                        key={idx}
+                                        className="w-full"
+                                        onClick={() => navigate(`${RQuestions}/${item.id}`)}
+                                    >
                                         <CardHeader>
                                             <h3 className="text-sm font-medium">Name</h3>
                                             <p className="text-muted-foreground">{item.name}</p>
