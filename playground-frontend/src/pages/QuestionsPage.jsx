@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import { useEffect, useState } from 'react';
 import { Lang } from '@/entities/Lang';
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle } from 'lucide-react';
 import { authenticatedReq } from '@/utils/Requester.js';
 import { Endpoints } from '@/utils/Endpoints.js';
 import { useAuth } from '@/hooks/useAuth.jsx';
@@ -125,9 +125,7 @@ const QuestionsPage = () => {
 
             <div className="lg:col-span-2 space-y-4">
                 {loading ? (
-                    <div className="flex items-center justify-center h-[600px]">
-                        <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
-                    </div>
+                    <Loading />
                 ) : (
                     <>
                         <Input
