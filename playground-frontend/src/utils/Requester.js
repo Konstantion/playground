@@ -1,4 +1,5 @@
-import { ErrorType, errorTypeOf } from '@/utils/ErrorType.js';
+import { ErrorType, errorTypeOf, toReadableMsg } from '@/utils/ErrorType.js';
+import { blank } from '@/utils/Strings.js';
 
 export const authenticatedReq = async (url, method, body, token, onError, onData) => {
     const headers = {
@@ -17,12 +18,20 @@ export const authenticatedReq = async (url, method, body, token, onError, onData
         const json = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            const message = json.message || response.statusText;
-            onError(errorTypeOf(response.status), message);
+            let type = errorTypeOf(response.status);
+            let message = json.message || response.statusText;
+            if (blank(message)) {
+                message = toReadableMsg(type);
+            }
+            onError(type, message);
         } else {
             onData(json);
         }
     } catch (error) {
-        onError(ErrorType.Fetch, error.message || error.toString());
+        let message = error.message || error.toString();
+        if (blank(message)) {
+            message = toReadableMsg(ErrorType.Fetch);
+        }
+        onError(ErrorType.Fetch, message);
     }
 };

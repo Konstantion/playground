@@ -18,6 +18,10 @@ export const dCp = obj => {
     structuredClone(obj);
 };
 
+export const sNotEmpty = obj => {
+    return obj && !sEq(obj, {});
+};
+
 export const sEq = (obj1, obj2) => {
     if (obj1 === obj2) {
         return true;

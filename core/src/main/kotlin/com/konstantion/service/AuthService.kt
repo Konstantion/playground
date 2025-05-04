@@ -10,12 +10,13 @@ import com.konstantion.utils.Either
 import com.konstantion.utils.Maybe
 import com.konstantion.utils.Maybe.Companion.asMaybe
 import io.jsonwebtoken.Claims
+import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
-import java.util.Date
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.Date
 
 private val SECRET = "mylittlesecretisitlongenough".repeat(10)
 private const val EXPIRATION_TIME = 86400000
@@ -109,7 +110,11 @@ data class AuthService(private val userRepository: UserRepository) {
   }
 
   private fun isExpired(token: String): Boolean {
-    return getClaims(token).expiration.before(Date())
+    return try {
+      getClaims(token).expiration.before(Date())
+    } catch (expiredException: ExpiredJwtException) {
+      true
+    }
   }
 
   private fun getClaims(token: String): Claims {

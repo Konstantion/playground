@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.security.authentication.AuthenticationServiceException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource
@@ -31,7 +32,13 @@ data class JwtAuthFilter(
     if (StringUtils.isNotBlank(authHeader) && authHeader!!.startsWith("Bearer ")) {
       val token: String = authHeader.substring(7)
       when (val result = authService.extractUser(token)) {
-        is Either.Left -> log.error("Error extracting user from token: ${result.value}")
+        is Either.Left -> {
+          log.error(
+            "Error extracting user from token, code=${result.value.code()} message=${result.value.message()}"
+          )
+          SecurityContextHolder.clearContext()
+          throw AuthenticationServiceException(result.value.message())
+        }
         is Either.Right -> {
           val user: UserEntity = result.value
           val authentication = UsernamePasswordAuthenticationToken(user, null, mutableSetOf())

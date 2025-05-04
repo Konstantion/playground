@@ -17,9 +17,9 @@ import com.konstantion.utils.CastHelper.refine
 import com.konstantion.utils.Either
 import com.konstantion.utils.Maybe
 import com.konstantion.utils.Maybe.Companion.asMaybe
-import java.util.UUID
 import kotlinx.serialization.json.Json
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 data class QuestionUpdateHelper(
@@ -37,7 +37,7 @@ data class QuestionUpdateHelper(
     val modelView = entity.toModel()
 
     if (params.body != null) {
-      val newBody = params.body!!
+      val newBody = params.body
       if (newBody.isBlank()) {
         putViolation("body", "Body cannot be blank")
       } else if (newBody.length >= 400) putViolation("body", "Body is too long")
@@ -47,12 +47,12 @@ data class QuestionUpdateHelper(
     }
 
     if (params.formatAndCode != null) {
-      entity.formatAndCode = Json.encodeToString(FormatAndCode.serializer(), params.formatAndCode!!)
+      entity.formatAndCode = Json.encodeToString(FormatAndCode.serializer(), params.formatAndCode)
     }
 
-    if (params.placeholderDefinitions != null) {
+    if (params.placeholderDefinitions != null || params.placeholders != null) {
       val newDefinitions = modelView.placeholderDefinitions.toMutableMap()
-      for ((identifier, definition) in params.placeholderDefinitions!!) {
+      for ((identifier, definition) in params.placeholderDefinitions ?: emptyMap()) {
         when (params.action) {
           UpdateQuestionParams.Action.ADD -> {
             newDefinitions[identifier] = definition
@@ -68,6 +68,15 @@ data class QuestionUpdateHelper(
         }
       }
 
+      for (identifier in params.placeholders ?: emptyList()) {
+        if (newDefinitions.remove(identifier) == null) {
+          putViolation(
+            "placeholderDefinitions",
+            "Placeholder definition with identifier $identifier not found"
+          )
+        }
+      }
+
       entity.placeholderDefinitions =
         newDefinitions
           .mapKeys { (identifier, _) -> identifier.toString() }
@@ -80,18 +89,28 @@ data class QuestionUpdateHelper(
           .toMutableMap()
     }
 
-    if (params.callArgs != null) {
+    if (params.callArgs != null || params.args != null) {
       val newCallArgs = modelView.callArgs.toMutableList()
-      for (callArg in params.callArgs!!) {
+      for (callArg in params.callArgs ?: emptyList()) {
         when (params.action) {
           UpdateQuestionParams.Action.ADD -> {
-            newCallArgs.add(callArg)
+            if (newCallArgs.any { arg -> arg.name == callArg.name }) {
+              putViolation("callArgs", "Call argument with name ${callArg.name} already exists")
+            } else {
+              newCallArgs.add(callArg)
+            }
           }
           UpdateQuestionParams.Action.REMOVE -> {
             if (!newCallArgs.remove(callArg)) {
               putViolation("callArgs", "Call argument $callArg not found")
             }
           }
+        }
+      }
+
+      for (arg in params.args ?: emptyList()) {
+        if (newCallArgs.removeIf { callArg -> callArg.name == arg.name }) {
+          putViolation("callArgs", "Call argument with name ${arg.name} not found")
         }
       }
 
@@ -104,7 +123,7 @@ data class QuestionUpdateHelper(
     if (params.additionalCheckId != null) {
       when (
         val result: Either<ServiceIssue, Maybe<CodeEntity>> =
-          codePort.sqlAction { findById(params.additionalCheckId!!).asMaybe() }
+          codePort.sqlAction { findById(params.additionalCheckId).asMaybe() }
       ) {
         is Either.Left -> putViolation("additionalCheck", result.value.message())
         is Either.Right ->
@@ -133,7 +152,7 @@ data class QuestionUpdateHelper(
       when (
         val newIncorrect: Maybe<List<Question.Variant.Incorrect<Lang>>> =
           handleVariant(
-            params.incorrectVariantId!!,
+            params.incorrectVariantId,
             params.action,
             modelView,
             false,
@@ -154,7 +173,7 @@ data class QuestionUpdateHelper(
       when (
         val newCorrect: Maybe<List<Question.Variant.Correct<Lang>>> =
           handleVariant(
-            params.correctVariantId!!,
+            params.correctVariantId,
             params.action,
             modelView,
             true,

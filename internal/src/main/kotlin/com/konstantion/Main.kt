@@ -18,7 +18,8 @@ fun main() {
   println(
     Json.encodeToString(
       PlaceholderDefinition.serializer(PlaceholderValue.serializer()),
-      PlaceholderDefinition.I32Range(10, 20) as PlaceholderDefinition<PlaceholderValue>
+      PlaceholderDefinition.Value.of(PlaceholderValue.Str("asd"))
+        as PlaceholderDefinition<PlaceholderValue>
     )
   )
   val question: Question<Lang> =

@@ -14,7 +14,9 @@ data class UpdateQuestionRequest(
   val body: String? = null,
   val formatAndCodeDto: FormatAndCodeDto? = null,
   val placeholderDefinition: Map<PlaceholderIdentifier, JsonNode>? = null,
-  val callArg: List<JsonNode>? = null,
+  val placeholders: List<PlaceholderIdentifier>? = null,
+  val callArgs: List<JsonNode>? = null,
+  val args: List<PlaceholderIdentifier>? = null,
   val additionalCheck: UUID? = null,
   val correctVariant: UUID? = null,
   val incorrectVariant: UUID? = null,
@@ -31,7 +33,9 @@ data class UpdateQuestionRequest(
             definition.toString()
           )
         },
-      callArgs = callArg?.map { callArg -> Json.decodeFromString(callArg.toString()) },
+      placeholders = placeholders,
+      callArgs = callArgs?.map { callArg -> Json.decodeFromString(callArg.toString()) },
+      args = args,
       additionalCheckId = additionalCheck,
       correctVariantId = correctVariant,
       incorrectVariantId = incorrectVariant,

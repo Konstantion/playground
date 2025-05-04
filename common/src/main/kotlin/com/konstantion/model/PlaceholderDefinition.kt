@@ -13,36 +13,43 @@ sealed interface PlaceholderDefinition<T> where T : PlaceholderValue {
   fun value(): T
 
   sealed interface RandomOneOf<T> : PlaceholderDefinition<T> where T : PlaceholderValue {
-    val options: List<T>
+    fun options(): List<T>
 
-    override fun value(): T = options.random()
+    override fun value(): T = options().random()
 
     @Serializable
     @SerialName("i32_random_one_of")
-    private data class I32(override val options: List<PlaceholderValue.I32>) :
-      RandomOneOf<PlaceholderValue.I32> {
+    private data class I32(val options: List<Int>) : RandomOneOf<PlaceholderValue.I32> {
       init {
         check(options.isNotEmpty()) { "Options couldn't be empty." }
+      }
+
+      override fun options(): List<PlaceholderValue.I32> {
+        return options.map(PlaceholderValue::I32)
       }
     }
 
     @Serializable
     @SerialName("str_random_one_of")
-    private data class Str(override val options: List<PlaceholderValue.Str>) :
-      RandomOneOf<PlaceholderValue.Str> {
+    private data class Str(val options: List<String>) : RandomOneOf<PlaceholderValue.Str> {
       init {
         check(options.isNotEmpty()) { "Options couldn't be empty." }
+      }
+
+      override fun options(): List<PlaceholderValue.Str> {
+        return options.map(PlaceholderValue::Str)
       }
     }
 
     companion object {
       @Suppress("UNCHECKED_CAST")
-      fun <T> of(options: List<T>): RandomOneOf<T> where T : PlaceholderValue {
-        return when (options.first() as PlaceholderValue) {
-          is PlaceholderValue.I32 -> I32(options as List<PlaceholderValue.I32>)
-          is PlaceholderValue.Str -> Str(options as List<PlaceholderValue.Str>)
+      fun <T> of(options: List<T>): RandomOneOf<PlaceholderValue> {
+        return when (options.first()) {
+          is Int -> I32(options as List<Int>)
+          is String -> Str(options as List<String>)
+          else -> throw Unreachable("unhandled placeholder value")
         }
-          as RandomOneOf<T>
+          as RandomOneOf<PlaceholderValue>
       }
     }
   }
@@ -64,25 +71,25 @@ sealed interface PlaceholderDefinition<T> where T : PlaceholderValue {
 
     @Serializable
     @SerialName("i32_value")
-    private data class I32(private val value: PlaceholderValue.I32) : Value<PlaceholderValue.I32> {
-      override fun value(): PlaceholderValue.I32 = value
+    private data class I32(private val value: Int) : Value<PlaceholderValue.I32> {
+      override fun value(): PlaceholderValue.I32 = PlaceholderValue.I32(value)
     }
 
     @Serializable
     @SerialName("str_value")
-    private data class Str(private val value: PlaceholderValue.Str) : Value<PlaceholderValue.Str> {
-      override fun value(): PlaceholderValue.Str = value
+    private data class Str(private val value: String) : Value<PlaceholderValue.Str> {
+      override fun value(): PlaceholderValue.Str = PlaceholderValue.Str(value)
     }
 
     companion object {
       @Suppress("UNCHECKED_CAST")
-      fun <T> of(value: T): Value<T> where T : PlaceholderValue {
+      fun <T> of(value: T): Value<PlaceholderValue> {
         return when (value) {
-          is PlaceholderValue.Str -> Str(value)
-          is PlaceholderValue.I32 -> I32(value)
+          is Int -> I32(value as Int)
+          is String -> Str(value as String)
           else -> throw Unreachable("unhandled placeholder value")
         }
-          as Value<T>
+          as Value<PlaceholderValue>
       }
     }
   }

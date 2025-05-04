@@ -17,7 +17,7 @@ export default function HomePage() {
             case QQuestionsPage:
                 return <QuestionsPage />;
             case StatisticsPage:
-                return <div>Statistics</div>;
+                return <StatisticsPage />;
             default:
                 return <NotFound />;
         }

@@ -19,7 +19,7 @@ data class UnexpectedAction(val action: String) : ServiceIssue {
 
 data class TokenExpired(val message: String) : ServiceIssue {
   override fun code(): Int {
-    return 498
+    return 401
   }
 
   override fun message(): String {

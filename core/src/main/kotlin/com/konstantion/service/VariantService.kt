@@ -11,12 +11,12 @@ import com.konstantion.repository.VariantRepository
 import com.konstantion.service.SqlHelper.sqlAction
 import com.konstantion.service.SqlHelper.sqlOptionalAction
 import com.konstantion.utils.Either
-import java.time.LocalDateTime
-import java.util.UUID
 import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
+import java.util.UUID
 
 @Service
 data class VariantService(
