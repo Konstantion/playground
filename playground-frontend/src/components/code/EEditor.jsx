@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react';
-import { Editor } from '@monaco-editor/react';
+import {useRef, useState} from 'react';
+import {Editor} from '@monaco-editor/react';
 
-export default function EEditor({ initialCode, onChange, language, editable }) {
+export default function EEditor({initialCode, onChange, language, editable}) {
     const editorRef = useRef(null);
     const [code, setCode] = useState(initialCode);
 
@@ -24,7 +24,7 @@ export default function EEditor({ initialCode, onChange, language, editable }) {
             onMount={handleMount}
             onChange={handleChange}
             options={{
-                minimap: { enabled: false },
+                minimap: {enabled: false},
                 scrollBeyondLastLine: false,
                 readOnly: !editable,
             }}

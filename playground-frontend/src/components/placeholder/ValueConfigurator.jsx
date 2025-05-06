@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import React, {useEffect, useState} from 'react';
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
+import {Input} from '@/components/ui/input';
 
-export function ValueConfigurator({ type = 'number', initialValue = '', onChange }) {
+export function ValueConfigurator({type = 'number', initialValue = '', onChange}) {
     const [value, setValue] = useState(initialValue);
     const [error, setError] = useState('');
 
@@ -25,7 +25,7 @@ export function ValueConfigurator({ type = 'number', initialValue = '', onChange
                 <CardTitle>Single Value</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-                <Input type="text" value={value} onChange={e => setValue(e.target.value)} />{' '}
+                <Input type="text" value={value} onChange={e => setValue(e.target.value)}/>{' '}
                 {error && <p className="text-red-500 text-sm">{error}</p>}
             </CardContent>
         </Card>

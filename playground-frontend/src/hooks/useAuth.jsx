@@ -1,9 +1,9 @@
-import { createContext, useContext, useState } from 'react';
+import {createContext, useContext, useState} from 'react';
 
 const AuthKey = 'token';
 const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
+export const AuthProvider = ({children}) => {
     const [auth, setAuth] = useState(JSON.parse(sessionStorage.getItem(AuthKey)));
 
     const login = userAndToken => {
@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
         sessionStorage.removeItem(AuthKey);
     };
 
-    return <AuthContext.Provider value={{ auth, login, logout }}>{children}</AuthContext.Provider>;
+    return <AuthContext.Provider value={{auth, login, logout}}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => useContext(AuthContext);

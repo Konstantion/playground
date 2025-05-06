@@ -1,29 +1,29 @@
-import { useState } from 'react';
-import { cn } from '@/lib/utils';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Editor } from '@monaco-editor/react';
-import { Check, ChevronLeft, ChevronRight, Edit, Trash2, X } from 'lucide-react';
-import { authenticatedReq } from '@/utils/Requester.js';
-import { Endpoints } from '@/utils/Endpoints.js';
-import { Action, actionStr } from '@/entities/Action.js';
-import { useAuth } from '@/hooks/useAuth.jsx';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { ErrorType } from '@/utils/ErrorType.js';
-import { Routes as RRoutes } from '@/rout/Routes.jsx';
-import { sNotEmpty } from '@/utils/ObjectUtils.js';
+import {useState} from 'react';
+import {cn} from '@/lib/utils';
+import {Card, CardHeader, CardTitle} from '@/components/ui/card';
+import {Button} from '@/components/ui/button';
+import {Editor} from '@monaco-editor/react';
+import {Check, ChevronLeft, ChevronRight, Edit, Trash2, X} from 'lucide-react';
+import {authenticatedReq} from '@/utils/Requester.js';
+import {Endpoints} from '@/utils/Endpoints.js';
+import {Action, actionStr} from '@/entities/Action.js';
+import {useAuth} from '@/hooks/useAuth.jsx';
+import {useNavigate} from 'react-router-dom';
+import {toast} from 'sonner';
+import {ErrorType} from '@/utils/ErrorType.js';
+import {Routes as RRoutes} from '@/rout/Routes.jsx';
+import {sNotEmpty} from '@/utils/ObjectUtils.js';
 
 export function VariantsCarousel({
-    className,
-    question,
-    correct,
-    title,
-    variants,
-    language,
-    setQuestion,
-}) {
-    const { auth, logout } = useAuth();
+                                     className,
+                                     question,
+                                     correct,
+                                     title,
+                                     variants,
+                                     language,
+                                     setQuestion,
+                                 }) {
+    const {auth, logout} = useAuth();
     const navigate = useNavigate();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [editingId, setEditingId] = useState(null);
@@ -70,7 +70,7 @@ export function VariantsCarousel({
             patchBody,
             auth.accessToken,
             (type, message) => {
-                toast.error(message, { closeButton: true, duration: 10_000 });
+                toast.error(message, {closeButton: true, duration: 10_000});
                 if (type === ErrorType.TokenExpired) {
                     logout();
                     navigate(RRoutes.Login.path);
@@ -87,7 +87,7 @@ export function VariantsCarousel({
                     Object.entries(response.violations).forEach(([key, value]) => {
                         toast.error(
                             `Violation error for ${key}, ${value.join('and ').toLowerCase()}.`,
-                            { closeButton: true }
+                            {closeButton: true}
                         );
                     });
                 }
@@ -101,13 +101,14 @@ export function VariantsCarousel({
                 null,
                 auth.accessToken,
                 (type, message) => {
-                    toast.error(message, { closeButton: true, duration: 10_000 });
+                    toast.error(message, {closeButton: true, duration: 10_000});
                     if (type === ErrorType.TokenExpired) {
                         logout();
                         navigate(RRoutes.Login.path);
                     }
                 },
-                response => {}
+                response => {
+                }
             );
         }
     };
@@ -123,7 +124,7 @@ export function VariantsCarousel({
             patchBody,
             auth.accessToken,
             (type, message) => {
-                toast.error(message, { closeButton: true, duration: 10_000 });
+                toast.error(message, {closeButton: true, duration: 10_000});
                 if (type === ErrorType.TokenExpired) {
                     logout();
                     navigate(RRoutes.Login.path);
@@ -137,7 +138,7 @@ export function VariantsCarousel({
                         updated[index] = response;
 
                         setQuestion(prev => {
-                            const toReturn = { ...prev };
+                            const toReturn = {...prev};
                             if (correct) {
                                 toReturn.correctVariants = updated;
                             } else {
@@ -146,10 +147,10 @@ export function VariantsCarousel({
                             return toReturn;
                         });
                     } else {
-                        toast.error('Variant not found', { closeButton: true });
+                        toast.error('Variant not found', {closeButton: true});
                     }
                 } else {
-                    toast.error('Failed to update variant', { closeButton: true });
+                    toast.error('Failed to update variant', {closeButton: true});
                 }
             }
         );
@@ -177,7 +178,7 @@ export function VariantsCarousel({
                                 onMount={editor => isEditing && editor.focus()}
                                 onChange={val => isEditing && setDraftCode(val)}
                                 options={{
-                                    minimap: { enabled: false },
+                                    minimap: {enabled: false},
                                     scrollBeyondLastLine: false,
                                     readOnly: !isEditing,
                                 }}
@@ -193,28 +194,28 @@ export function VariantsCarousel({
                                     setEditingId(current.id);
                                 }}
                             >
-                                <Edit size={16} />
+                                <Edit size={16}/>
                             </Button>
                             <Button
                                 size="icon"
                                 variant="ghost"
                                 onClick={() => deleteVariant(current.id)}
                             >
-                                <Trash2 size={16} />
+                                <Trash2 size={16}/>
                             </Button>
                         </div>
 
                         {isEditing && (
                             <div className="mt-2 flex justify-end space-x-2">
                                 <Button variant="outline" onClick={() => setEditingId(null)}>
-                                    <X className="inline mr-1" /> Cancel
+                                    <X className="inline mr-1"/> Cancel
                                 </Button>
                                 <Button
                                     onClick={() => {
                                         updateVariant(current.id, draftCode);
                                     }}
                                 >
-                                    <Check className="inline mr-1" /> Save
+                                    <Check className="inline mr-1"/> Save
                                 </Button>
                             </div>
                         )}
@@ -241,7 +242,7 @@ export function VariantsCarousel({
                                 className="absolute left-2 top-1/2 transform -translate-y-1/2 p-2 bg-white rounded-full shadow"
                                 aria-label="Previous"
                             >
-                                <ChevronLeft size={20} />
+                                <ChevronLeft size={20}/>
                             </button>
 
                             <button
@@ -249,7 +250,7 @@ export function VariantsCarousel({
                                 className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-white rounded-full shadow"
                                 aria-label="Next"
                             >
-                                <ChevronRight size={20} />
+                                <ChevronRight size={20}/>
                             </button>
                         </>
                     )}

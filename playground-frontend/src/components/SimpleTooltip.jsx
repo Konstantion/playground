@@ -1,3 +1,3 @@
-export function SimpleTooltip({ text, children }) {
+export function SimpleTooltip({text, children}) {
     return children;
 }

@@ -17,8 +17,8 @@ export const PlaceholderDefinition = Object.freeze({
         desc: 'One of random Integer in range',
         return: `i32`,
     },
-    Int32Value: { name: 'i32_value', type: 'number', desc: 'Integer value', return: `i32` },
-    StrValue: { name: 'str_value', type: 'string', desc: 'String value', return: `str` },
+    Int32Value: {name: 'i32_value', type: 'number', desc: 'Integer value', return: `i32`},
+    StrValue: {name: 'str_value', type: 'string', desc: 'String value', return: `str`},
 });
 
 export const PlaceholderIdentifier = Object.freeze({

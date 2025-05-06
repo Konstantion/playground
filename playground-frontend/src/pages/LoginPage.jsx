@@ -1,25 +1,19 @@
-import { useAuth } from '../hooks/useAuth.jsx';
-import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button.js';
-import { Input } from '@/components/ui/input.js';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs.js';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select.js';
-import { preventAndAsync } from '@/utils/Misc.js';
-import { sCp, sEq } from '@/utils/ObjectUtils.js';
-import { between, contains, substrs } from '@/utils/Strings.js';
-import { fetchJwt, register } from '@/utils/AuthUtils.js';
-import { RHome } from '@/rout/Routes.jsx';
-import { toast } from 'sonner';
-import { ErrorType } from '@/utils/ErrorType.js';
-import { TestsPage } from '@/pages/Pages.js';
+import {useAuth} from '../hooks/useAuth.jsx';
+import {useNavigate} from 'react-router-dom';
+import {useState} from 'react';
+import {Card, CardContent} from '@/components/ui/card';
+import {Button} from '@/components/ui/button.js';
+import {Input} from '@/components/ui/input.js';
+import {Tabs, TabsList, TabsTrigger} from '@/components/ui/tabs.js';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from '@/components/ui/select.js';
+import {preventAndAsync} from '@/utils/Misc.js';
+import {sCp, sEq} from '@/utils/ObjectUtils.js';
+import {between, contains, substrs} from '@/utils/Strings.js';
+import {fetchJwt, register} from '@/utils/AuthUtils.js';
+import {RHome} from '@/rout/Routes.jsx';
+import {toast} from 'sonner';
+import {ErrorType} from '@/utils/ErrorType.js';
+import {TestsPage} from '@/pages/Pages.js';
 
 const Mode = Object.freeze({
     Login: 'login',
@@ -82,7 +76,7 @@ const validate = (input, mode) => {
         }
     }
 
-    return { errors: errors, valid: sEq(errors, Errors) };
+    return {errors: errors, valid: sEq(errors, Errors)};
 };
 
 export default function LoginPage() {
@@ -90,7 +84,7 @@ export default function LoginPage() {
     const [input, setInput] = useState(sCp(IInput));
     const [error, setError] = useState(sCp(Errors));
 
-    const { login, logout } = useAuth();
+    const {login, logout} = useAuth();
     const navigate = useNavigate();
 
     const setter = key => e => {
@@ -101,11 +95,11 @@ export default function LoginPage() {
     };
 
     const handleSubmit = preventAndAsync(async () => {
-        const { errors, valid } = validate(input, mode);
+        const {errors, valid} = validate(input, mode);
         setError(errors);
 
         if (!valid) {
-            toast.error('Please fix the errors in the form', { closeButton: true });
+            toast.error('Please fix the errors in the form', {closeButton: true});
             return;
         }
 
@@ -121,7 +115,7 @@ export default function LoginPage() {
                     if (type === ErrorType.TokenExpired) {
                         logout();
                     }
-                    toast.error(`${substrs(message, 150)}`, { closeButton: true });
+                    toast.error(`${substrs(message, 150)}`, {closeButton: true});
                     setInput(sCp(IInput));
                     setError(sCp(Errors));
                 }
@@ -140,7 +134,7 @@ export default function LoginPage() {
                     setError(sCp(Errors));
                 },
                 (type, message) => {
-                    toast.error(`${substrs(message, 150)}`, { closeButton: true });
+                    toast.error(`${substrs(message, 150)}`, {closeButton: true});
                 }
             );
         }
@@ -179,7 +173,7 @@ export default function LoginPage() {
                                         </label>
                                         <Select
                                             onValueChange={value => {
-                                                setInput({ ...input, role: value });
+                                                setInput({...input, role: value});
                                             }}
                                         >
                                             <SelectTrigger className="w-full">

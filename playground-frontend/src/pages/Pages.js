@@ -1,4 +1,4 @@
-import { Role } from '@/entities/Role.js';
+import {Role} from '@/entities/Role.js';
 
 export const TestsPage = 'Tests';
 export const QuestionsPage = 'Questions';

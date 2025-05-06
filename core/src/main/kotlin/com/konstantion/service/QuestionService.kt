@@ -11,6 +11,7 @@ import com.konstantion.model.Question
 import com.konstantion.model.TaskId
 import com.konstantion.utils.Either
 import java.util.UUID
+import java.util.concurrent.Future
 
 interface QuestionService {
   fun save(user: UserEntity, question: Question<Lang>): Either<ServiceIssue, QuestionEntity>
@@ -67,7 +68,7 @@ interface QuestionService {
 
   sealed interface StatusResponse {
     data object NotRegistered : StatusResponse
-    data class Submitted(val taskId: TaskId) : StatusResponse
+    data class Submitted(val taskId: TaskId, val task: Future<*>) : StatusResponse
     data object Success : StatusResponse
     data class Error(val message: String) : StatusResponse
   }

@@ -1,22 +1,26 @@
 {
-    "compilerOptions": {
-        "strict": false,
-        "noEmit": true,
-        "allowJs": true,
-        "jsx": "react-jsx",
-        "baseUrl": ".",
-        "paths": {
-            "@/*": ["./src/*"]
-        }
+  "compilerOptions": {
+    "strict": false,
+    "noEmit": true,
+    "allowJs": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ],
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
     },
-    "include": ["src"],
-    "files": [],
-    "references": [
-        {
-            "path": "./tsconfig.app.json"
-        },
-        {
-            "path": "./tsconfig.node.json"
-        }
-    ]
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
 }
