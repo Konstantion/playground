@@ -16,7 +16,7 @@ data class UpdateQuestionRequest(
   val placeholderDefinition: Map<PlaceholderIdentifier, JsonNode>? = null,
   val placeholders: List<PlaceholderIdentifier>? = null,
   val callArgs: List<JsonNode>? = null,
-  val args: List<PlaceholderIdentifier>? = null,
+  val args: List<String>? = null,
   val additionalCheck: UUID? = null,
   val correctVariant: UUID? = null,
   val incorrectVariant: UUID? = null,

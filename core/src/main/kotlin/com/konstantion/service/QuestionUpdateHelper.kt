@@ -4,11 +4,9 @@ import com.konstantion.entity.CodeEntity
 import com.konstantion.entity.QuestionEntity
 import com.konstantion.entity.VariantEntity
 import com.konstantion.model.FormatAndCode
-import com.konstantion.model.Lang
 import com.konstantion.model.PlaceholderDefinition
 import com.konstantion.model.PlaceholderLabel
 import com.konstantion.model.PlaceholderValue
-import com.konstantion.model.Question
 import com.konstantion.port.CodePort
 import com.konstantion.port.VariantPort
 import com.konstantion.service.QuestionService.UpdateQuestionParams
@@ -17,16 +15,15 @@ import com.konstantion.utils.CastHelper.refine
 import com.konstantion.utils.Either
 import com.konstantion.utils.Maybe
 import com.konstantion.utils.Maybe.Companion.asMaybe
+import java.util.UUID
 import kotlinx.serialization.json.Json
 import org.springframework.stereotype.Service
-import java.util.UUID
 
 @Service
 data class QuestionUpdateHelper(
   private val codePort: CodePort<CodeEntity>,
   private val variantPort: VariantPort<VariantEntity>
 ) {
-  @Suppress("UNCHECKED_CAST")
   fun update(entity: QuestionEntity, params: UpdateQuestionParams): Map<String, List<String>> {
     val validationErrors: MutableMap<String, MutableList<String>> = mutableMapOf()
 
@@ -109,8 +106,8 @@ data class QuestionUpdateHelper(
       }
 
       for (arg in params.args ?: emptyList()) {
-        if (newCallArgs.removeIf { callArg -> callArg.name == arg.name }) {
-          putViolation("callArgs", "Call argument with name ${arg.name} not found")
+        if (!newCallArgs.removeIf { callArg -> callArg.name == arg }) {
+          putViolation("callArgs", "Call argument with name $arg not found")
         }
       }
 
@@ -149,43 +146,24 @@ data class QuestionUpdateHelper(
     }
 
     if (params.incorrectVariantId != null) {
-      when (
-        val newIncorrect: Maybe<List<Question.Variant.Incorrect<Lang>>> =
-          handleVariant(
-            params.incorrectVariantId,
-            params.action,
-            modelView,
-            false,
-          ) { message ->
-            putViolation("incorrectVariant", message)
-          }
-            as Maybe<List<Question.Variant.Incorrect<Lang>>>
-      ) {
-        is Maybe.Just -> {
-          entity.incorrectVariants =
-            newIncorrect.value.map(VariantEntity::fromIncorrect).toMutableList()
-        }
-        Maybe.None -> {}
+      handleVariant(
+        params.incorrectVariantId,
+        params.action,
+        entity,
+        false,
+      ) { message ->
+        putViolation("incorrectVariant", message)
       }
     }
 
     if (params.correctVariantId != null) {
-      when (
-        val newCorrect: Maybe<List<Question.Variant.Correct<Lang>>> =
-          handleVariant(
-            params.correctVariantId,
-            params.action,
-            modelView,
-            true,
-          ) { message ->
-            putViolation("correctVariant", message)
-          }
-            as Maybe<List<Question.Variant.Correct<Lang>>>
-      ) {
-        is Maybe.Just -> {
-          entity.correctVariants = newCorrect.value.map(VariantEntity::fromCorrect).toMutableList()
-        }
-        Maybe.None -> {}
+      handleVariant(
+        params.correctVariantId,
+        params.action,
+        entity,
+        true,
+      ) { message ->
+        putViolation("correctVariant", message)
       }
     }
 
@@ -195,10 +173,10 @@ data class QuestionUpdateHelper(
   private fun handleVariant(
     variantId: UUID,
     action: UpdateQuestionParams.Action,
-    modelView: Question<Lang>,
+    entity: QuestionEntity,
     isCorrect: Boolean,
     putViolation: (String) -> Unit,
-  ): Maybe<List<Question.Variant<Lang>>> {
+  ) {
     when (
       val result: Either<ServiceIssue, Maybe<VariantEntity>> =
         variantPort.sqlAction { findById(variantId).asMaybe() }
@@ -208,37 +186,36 @@ data class QuestionUpdateHelper(
         when (val maybeVariant = result.value) {
           is Maybe.Just -> {
             val variant = maybeVariant.value
-            val questionVariants: MutableList<Question.Variant<Lang>> =
+            val questionVariants: MutableList<VariantEntity> =
               if (isCorrect) {
-                modelView.correctVariants.toMutableList()
+                entity.correctVariants
               } else {
-                modelView.incorrectVariants.toMutableList()
+                entity.incorrectVariants
               }
-
+            val contains = questionVariants.any { other -> other.id() == variant.id() }
             when (action) {
               UpdateQuestionParams.Action.ADD -> {
-                if (isCorrect) {
-                  questionVariants += variant.toCorrect(modelView.lang)
+                if (!contains) {
+                  questionVariants += variant
                 } else {
-                  questionVariants += variant.toIncorrect(modelView.lang)
+                  putViolation("Variant with id ${variant.id()} already exists in the question")
                 }
               }
               UpdateQuestionParams.Action.REMOVE -> {
-                if (isCorrect) {
-                  questionVariants -= variant.toCorrect(modelView.lang)
+                if (contains) {
+                  val removed = questionVariants.removeIf { other -> other.id() == variant.id() }
+                  if (!removed) {
+                    putViolation("Variant with id $variantId not found")
+                  }
                 } else {
-                  questionVariants -= variant.toIncorrect(modelView.lang)
+                  putViolation("Variant with id $variantId not found in the question")
                 }
               }
             }
-
-            return Maybe.Just(questionVariants)
           }
           Maybe.None -> putViolation("Variant with id $variantId not found")
         }
       }
     }
-
-    return Maybe.None
   }
 }

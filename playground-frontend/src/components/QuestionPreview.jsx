@@ -1,12 +1,12 @@
 import React from 'react';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {ScrollArea} from '@/components/ui/scroll-area';
-import {CheckCircle, XCircle} from 'lucide-react';
-import {CodeBlock} from '@/components/code/CodeBlock.jsx';
-import {Badge} from '@/components/ui/badge';
-import {prettierStr} from "@/entities/Placeholder.js";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { CheckCircle, XCircle } from 'lucide-react';
+import { CodeBlock } from '@/components/code/CodeBlock.jsx';
+import { Badge } from '@/components/ui/badge';
+import { prettierStr } from '@/entities/Placeholder.js';
 
-export default function QuestionPreview({question, className}) {
+export default function QuestionPreview({ question, className }) {
     return (
         <Card className={`${className} flex flex-col min-h-0`}>
             <CardHeader>
@@ -38,9 +38,9 @@ export default function QuestionPreview({question, className}) {
                         <section>
                             <h4 className="font-medium">Validated</h4>
                             {question.validated ? (
-                                <CheckCircle className="text-green-500 w-4 h-4"/>
+                                <CheckCircle className="text-green-500 w-4 h-4" />
                             ) : (
-                                <XCircle className="text-red-500 w-4 h-4"/>
+                                <XCircle className="text-red-500 w-4 h-4" />
                             )}
                         </section>
 
@@ -48,7 +48,7 @@ export default function QuestionPreview({question, className}) {
                             <h4 className="font-medium">Placeholders</h4>
                             {Object.entries(question.placeholderDefinitions).map(([key, value]) => {
                                 return (
-                                    <Badge key={key} variant={"outline"} className="text-md">
+                                    <Badge key={key} variant={'outline'} className="text-md">
                                         {`${key} → ${prettierStr(value)}`}
                                     </Badge>
                                 );
@@ -59,7 +59,7 @@ export default function QuestionPreview({question, className}) {
                             <h4 className="font-medium">Call Args</h4>
                             {Object.entries(question.callArgs).map(([key, value]) => {
                                 return (
-                                    <Badge key={key} variant={"outline"} className="text-md">
+                                    <Badge key={key} variant={'outline'} className="text-md">
                                         {`${value.identifier} → ${JSON.stringify(value.name)}`}
                                     </Badge>
                                 );

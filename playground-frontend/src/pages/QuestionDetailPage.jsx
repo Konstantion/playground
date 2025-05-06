@@ -16,6 +16,7 @@ import QuestionPreview from '@/components/QuestionPreview.jsx';
 import PlaceholderConfigurator from '@/components/PlaceholderConfigurator.jsx';
 import CallArgsConfigurator from '@/components/CallArgsConfigurator.jsx';
 import AddVariant from '@/components/AddVariant.jsx';
+import { VariantsCarousel } from '@/components/VariantsCarousel.jsx';
 
 const State = Object.freeze({
     Loading: 'Loading',
@@ -30,10 +31,6 @@ export default function QuestionDetailPage() {
 
     const [status, setStatus] = useState(State.Loading);
     const [question, setQuestion] = useState(null);
-
-    useEffect(() => {
-        console.log('Question ', question);
-    }, [question]);
 
     useEffect(() => {
         if (!id) {
@@ -57,7 +54,6 @@ export default function QuestionDetailPage() {
                     }
                 },
                 question => {
-                    console.log(question);
                     setQuestion(question);
                     setStatus(State.Loaded);
                 }
@@ -78,13 +74,23 @@ export default function QuestionDetailPage() {
                 <div className="grid grid-cols-[2fr_2fr_3fr_3fr] grid-rows-2 gap-4 w-full h-screen p-4">
                     <QuestionPreview className="col-span-2" question={question} />
 
-                    <Card>
-                        <CardHeader>Correct Variants</CardHeader>
-                    </Card>
+                    <VariantsCarousel
+                        language={question.lang}
+                        variants={question.correctVariants}
+                        title={'Correct Variants'}
+                        question={question}
+                        setQuestion={setQuestion}
+                        correct={true}
+                    />
 
-                    <Card>
-                        <CardHeader>Incorrect Variants</CardHeader>
-                    </Card>
+                    <VariantsCarousel
+                        language={question.lang}
+                        variants={question.incorrectVariants}
+                        title={'Incorrect Variants'}
+                        question={question}
+                        setQuestion={setQuestion}
+                        correct={false}
+                    />
 
                     <PlaceholderConfigurator
                         id={id}
@@ -94,7 +100,7 @@ export default function QuestionDetailPage() {
 
                     <CallArgsConfigurator id={id} question={question} setQuestion={setQuestion} />
 
-                    <AddVariant language={question.lang} question={question} onChange={console.log} />
+                    <AddVariant question={question} setQuestion={setQuestion} />
 
                     <Card>
                         <CardHeader>Validate</CardHeader>

@@ -1,7 +1,22 @@
 export const PlaceholderDefinition = Object.freeze({
-    Int32RandomOneOf: { name: 'i32_random_one_of', type: 'number', desc: 'One of random Integer', return: `i32` },
-    StrRandomOneOf: { name: 'str_random_one_of', type: 'string', desc: 'One of random String', return: `str` },
-    Int32Range: { name: 'i32_range', type: 'number', desc: 'One of random Integer in range', return: `i32` },
+    Int32RandomOneOf: {
+        name: 'i32_random_one_of',
+        type: 'number',
+        desc: 'One of random Integer',
+        return: `i32`,
+    },
+    StrRandomOneOf: {
+        name: 'str_random_one_of',
+        type: 'string',
+        desc: 'One of random String',
+        return: `str`,
+    },
+    Int32Range: {
+        name: 'i32_range',
+        type: 'number',
+        desc: 'One of random Integer in range',
+        return: `i32`,
+    },
     Int32Value: { name: 'i32_value', type: 'number', desc: 'Integer value', return: `i32` },
     StrValue: { name: 'str_value', type: 'string', desc: 'String value', return: `str` },
 });
@@ -47,7 +62,7 @@ export const parse = definition => {
         default:
             return undefined;
     }
-}
+};
 
 export const prettierStr = definition => {
     switch (definition.type) {

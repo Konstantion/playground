@@ -14,13 +14,21 @@ export function CodeBlock({ code, language = 'javascript', className }) {
                         className={cn(inherited, 'p-4 overflow-auto text-sm')}
                         style={{ ...style, background: 'none' }}
                     >
-                        {tokens.map((line, i) => (
-                            <div key={i} {...getLineProps({ line, key: i })}>
-                                {line.map((token, key) => (
-                                    <span key={key} {...getTokenProps({ token, key })} />
-                                ))}
-                            </div>
-                        ))}
+                        {tokens.map((line, i) => {
+                            const { key: _ignoreLineKey, ...lineProps } = getLineProps({
+                                line,
+                                key: i,
+                            });
+                            return (
+                                <div key={i} {...lineProps}>
+                                    {line.map((token, j) => {
+                                        const { key: _ignoreTokenKey, ...tokenProps } =
+                                            getTokenProps({ token, key: j });
+                                        return <span key={j} {...tokenProps} />;
+                                    })}
+                                </div>
+                            );
+                        })}{' '}
                     </pre>
                 )}
             </Highlight>

@@ -78,7 +78,7 @@ export default function CallArgsConfigurator({ id, question, setQuestion }) {
         };
 
         if (action === Action.REMOVE) {
-            body.args = [identifier];
+            body.args = [callArg];
         } else {
             body.callArgs = [
                 {
@@ -87,8 +87,6 @@ export default function CallArgsConfigurator({ id, question, setQuestion }) {
                 },
             ];
         }
-
-        console.log(JSON.stringify(body));
 
         await authenticatedReq(
             Endpoints.Questions.Base + `/${id}`,

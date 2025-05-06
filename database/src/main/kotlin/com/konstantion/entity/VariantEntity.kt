@@ -58,14 +58,14 @@ open class VariantEntity {
   companion object {
     fun fromCorrect(variant: Question.Variant.Correct<*>): VariantEntity {
       return VariantEntity().apply {
-        id = id
+        id = id()
         code = CodeEntity.fromModel(variant.code)
       }
     }
 
     fun fromIncorrect(variant: Question.Variant.Incorrect<*>): VariantEntity {
       return VariantEntity().apply {
-        id = id
+        id = id()
         code = CodeEntity.fromModel(variant.code)
       }
     }

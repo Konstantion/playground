@@ -11,12 +11,12 @@ import com.konstantion.repository.VariantRepository
 import com.konstantion.service.SqlHelper.sqlAction
 import com.konstantion.service.SqlHelper.sqlOptionalAction
 import com.konstantion.utils.Either
+import java.time.LocalDateTime
+import java.util.UUID
 import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
-import java.util.UUID
 
 @Service
 data class VariantService(
@@ -123,6 +123,30 @@ data class VariantService(
         Either.right(updatedVariant)
       }
       Role.Student -> Forbidden.asEither("You are not allowed to update a variant")
+    }
+  }
+
+  fun delete(user: UserEntity, id: UUID): Either<ServiceIssue, VariantEntity> {
+    log.info("Deleting variant for user: {} with ID: {}", user, id)
+    return when (user.role()) {
+      Role.Admin,
+      Role.Teacher -> {
+        val variantDb: VariantEntity =
+          when (
+            val result: Either<ServiceIssue, VariantEntity> =
+              variantRepository.sqlOptionalAction { findById(id) }
+          ) {
+            is Either.Left -> return Either.left(result.value)
+            is Either.Right -> result.value
+          }
+
+        variantRepository.sqlAction { delete(variantDb) }
+
+        log.info("Variant deleted successfully")
+
+        Either.right(variantDb)
+      }
+      Role.Student -> Forbidden.asEither("You are not allowed to delete a variant")
     }
   }
 

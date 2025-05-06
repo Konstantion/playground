@@ -13,4 +13,7 @@ export const Endpoints = deepFreeze({
         Base: `${BACKEND_API_URL}/questions`,
         GetAll: `${BACKEND_API_URL}/questions/all`,
     },
+    Variant: {
+        Base: `${BACKEND_API_URL}/variant`,
+    },
 });

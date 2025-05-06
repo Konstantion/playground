@@ -11,6 +11,8 @@ dependencies {
     implementation(libs.swagger)
     implementation(libs.swagger.common)
     implementation(libs.swagger.api)
+    implementation(libs.kotlin.reflect)
+    implementation(libs.jackson.module.kotlin)
 }
 
 // exclude log4j-to-slf4j and log4j-slf4j2-impl

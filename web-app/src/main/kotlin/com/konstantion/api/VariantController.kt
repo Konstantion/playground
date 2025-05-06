@@ -14,6 +14,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -61,6 +62,20 @@ data class VariantController(private val variantService: VariantService) {
     return when (
       val result: Either<ServiceIssue, VariantEntity> =
         variantService.update(userEntity, request.asParams(id))
+    ) {
+      is Either.Left -> result.value.asError()
+      is Either.Right -> ResponseEntity.ok(result.value.asResponse())
+    }
+  }
+
+  @DeleteMapping("/{id}")
+  fun deleteVariantById(
+    @AuthenticationPrincipal userEntity: UserEntity,
+    @PathVariable("id") id: UUID
+  ): ResponseEntity<*> {
+    log.info("Deleting variant with ID: {}", id)
+    return when (
+      val result: Either<ServiceIssue, VariantEntity> = variantService.delete(userEntity, id)
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())

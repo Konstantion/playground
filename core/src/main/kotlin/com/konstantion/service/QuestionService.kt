@@ -51,7 +51,7 @@ interface QuestionService {
     val placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>? = null,
     val placeholders: List<PlaceholderIdentifier>? = null,
     val callArgs: List<PlaceholderLabel>? = null,
-    val args: List<PlaceholderIdentifier>? = null,
+    val args: List<String>? = null,
     val additionalCheckId: UUID? = null,
     val correctVariantId: UUID? = null,
     val incorrectVariantId: UUID? = null,

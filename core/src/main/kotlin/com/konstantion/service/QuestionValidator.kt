@@ -12,13 +12,13 @@ import com.konstantion.utils.Either
 import com.konstantion.utils.IdGenerator
 import com.konstantion.utils.closeForcefully
 import jakarta.annotation.PreDestroy
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 private const val VALIDATION_ATTEMPTS: Int = 5
 private const val THREAD_NAME: String = "question-validator-"

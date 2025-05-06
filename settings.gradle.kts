@@ -66,6 +66,8 @@ dependencyResolutionManagement {
             library("swagger", "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2")
             library("swagger-api", "org.springdoc:springdoc-openapi-starter-webmvc-api:2.0.2")
             library("swagger-common", "org.springdoc:springdoc-openapi-starter-common:2.0.2")
+            library("kotlin-reflect", "org.jetbrains.kotlin:kotlin-reflect:2.0.20-RC")
+            library("jackson-module-kotlin", "com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2")
         }
     }
 }
