@@ -1,7 +1,10 @@
-import {BrowserRouter, Navigate, Route, Routes} from 'react-router-dom';
-import {HomeRedirectIfAuthenticated, LoginRedirectIfUnauthenticated,} from './LoginRedirectIfUnauthenticated.jsx';
-import {RHome, Routes as RRoutes} from './Routes.jsx';
-import {TestsPage} from '@/pages/Pages.js';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import {
+    HomeRedirectIfAuthenticated,
+    LoginRedirectIfUnauthenticated,
+} from './LoginRedirectIfUnauthenticated.jsx';
+import { RHome, Routes as RRoutes } from './Routes.jsx';
+import { TestsPage } from '@/pages/Pages.js';
 
 export const AppRouter = () => {
     return (
@@ -34,7 +37,7 @@ export const AppRouter = () => {
                         );
                     }
                 })}
-                <Route path={'*'} element={<Navigate to={`${RHome}/${TestsPage}`} replace/>}/>
+                <Route path={'*'} element={<Navigate to={`${RHome}/${TestsPage}`} replace />} />
             </Routes>
         </BrowserRouter>
     );

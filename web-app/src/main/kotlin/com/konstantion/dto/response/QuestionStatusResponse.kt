@@ -7,10 +7,10 @@ data class QuestionStatusResponse(val status: String) {
     fun QuestionService.StatusResponse.asResponse(): QuestionStatusResponse {
       val status: String =
         when (this) {
-          is QuestionService.StatusResponse.Error -> "error: ${this.message}"
-          QuestionService.StatusResponse.NotRegistered -> "not registered"
-          is QuestionService.StatusResponse.Submitted -> "submitted: ${this.taskId}"
-          QuestionService.StatusResponse.Success -> "success"
+          is QuestionService.StatusResponse.Error -> "Error: ${this.message}"
+          QuestionService.StatusResponse.NotRegistered -> "NotRegistered"
+          is QuestionService.StatusResponse.Submitted -> "Submitted: ${this.taskId}"
+          QuestionService.StatusResponse.Success -> "Success"
         }
       return QuestionStatusResponse(status)
     }

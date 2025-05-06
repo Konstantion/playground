@@ -1,13 +1,13 @@
 import Header from '@/components/Header.jsx';
-import {QuestionsPage as QQuestionsPage, StatisticsPage, TestsPage} from '@/pages/Pages.js';
+import { QuestionsPage as QQuestionsPage, StatisticsPage, TestsPage } from '@/pages/Pages.js';
 import QuestionsPage from '@/pages/QuestionsPage.jsx';
 
-import {useNavigate, useParams} from 'react-router-dom';
-import {RHome} from '@/rout/Routes.jsx';
+import { useNavigate, useParams } from 'react-router-dom';
+import { RHome } from '@/rout/Routes.jsx';
 import NotFound from '@/components/NotFound.jsx';
 
 export default function HomePage() {
-    const {section} = useParams();
+    const { section } = useParams();
     const navigate = useNavigate();
 
     const renderPage = page => {
@@ -15,11 +15,11 @@ export default function HomePage() {
             case TestsPage:
                 return <div>Tests</div>;
             case QQuestionsPage:
-                return <QuestionsPage/>;
+                return <QuestionsPage />;
             case StatisticsPage:
-                return <StatisticsPage/>;
+                return <StatisticsPage />;
             default:
-                return <NotFound/>;
+                return <NotFound />;
         }
     };
 
@@ -29,7 +29,7 @@ export default function HomePage() {
 
     return (
         <div className="min-h-screen bg-gray-100 flex flex-col">
-            <Header page={section} setPage={setPage}/>
+            <Header page={section} setPage={setPage} />
             <main className="flex-1 p-6 max-w-6xl mx-auto w-full">{renderPage(section)}</main>
         </div>
     );

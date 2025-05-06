@@ -1,12 +1,14 @@
 package com.konstantion.service
 
 import com.konstantion.entity.CodeEntity
+import com.konstantion.entity.QuestionEntity
 import com.konstantion.entity.UserEntity
 import com.konstantion.entity.VariantEntity
 import com.konstantion.model.Code
 import com.konstantion.model.Role
 import com.konstantion.model.serializaers.OutputTypeSerializer
 import com.konstantion.repository.CodeRepository
+import com.konstantion.repository.QuestionRepository
 import com.konstantion.repository.VariantRepository
 import com.konstantion.service.SqlHelper.sqlAction
 import com.konstantion.service.SqlHelper.sqlOptionalAction
@@ -22,6 +24,8 @@ import org.springframework.stereotype.Service
 data class VariantService(
   private val variantRepository: VariantRepository,
   private val codeRepository: CodeRepository,
+  private val questionRepository: QuestionRepository,
+  private val questionValidator: QuestionValidator,
 ) {
   private val log: Logger = LoggerFactory.getLogger(javaClass)
 
@@ -109,7 +113,7 @@ data class VariantService(
             is Either.Right -> result.value
           }
 
-        val updatedVariant =
+        val updatedVariant: VariantEntity =
           when (
             val result: Either<ServiceIssue, VariantEntity> =
               variantRepository.sqlAction { saveAndFlush(variantDb) }
@@ -117,6 +121,20 @@ data class VariantService(
             is Either.Left -> return Either.left(result.value)
             is Either.Right -> result.value
           }
+
+        when (
+          val result: Either<ServiceIssue, List<QuestionEntity>> =
+            questionRepository.sqlAction { findAllByVariantId(updatedVariant.id()) }
+        ) {
+          is Either.Left -> {
+            log.warn("Failed to find questions for variant: {}", result.value)
+          }
+          is Either.Right -> {
+            for (question in result.value) {
+              questionValidator.onInvalidated(question)
+            }
+          }
+        }
 
         log.info("Variant updated successfully: {}", updatedVariant)
 

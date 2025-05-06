@@ -1,26 +1,26 @@
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import EEditor from '@/components/code/EEditor.jsx';
-import {Checkbox} from '@/components/ui/checkbox.js';
-import {Label} from '@/components/ui/label.js';
-import {parse} from '@/entities/Placeholder.js';
-import {InlineCode} from '@/components/code/InlineCode.jsx';
-import {useMemo, useState} from 'react';
-import {useAuth} from '@/hooks/useAuth.jsx';
-import {useNavigate} from 'react-router-dom';
-import {authenticatedReq} from '@/utils/Requester.js';
-import {Endpoints} from '@/utils/Endpoints.js';
-import {ErrorType} from '@/utils/ErrorType.js';
-import {Routes as RRoutes} from '@/rout/Routes.jsx';
-import {toast} from 'sonner';
-import {Action, actionStr} from '@/entities/Action.js';
-import {Button} from '@/components/ui/button.js';
-import {sNotEmpty} from '@/utils/ObjectUtils.js';
+import { Checkbox } from '@/components/ui/checkbox.js';
+import { Label } from '@/components/ui/label.js';
+import { parse } from '@/entities/Placeholder.js';
+import { InlineCode } from '@/components/code/InlineCode.jsx';
+import { useMemo, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth.jsx';
+import { useNavigate } from 'react-router-dom';
+import { authenticatedReq } from '@/utils/Requester.js';
+import { Endpoints } from '@/utils/Endpoints.js';
+import { ErrorType } from '@/utils/ErrorType.js';
+import { Routes as RRoutes } from '@/rout/Routes.jsx';
+import { toast } from 'sonner';
+import { Action, actionStr } from '@/entities/Action.js';
+import { Button } from '@/components/ui/button.js';
+import { sNotEmpty } from '@/utils/ObjectUtils.js';
 
 const buildSignature = question => {
     if (question.lang === 'python') {
         let signature = 'def signature_helper(';
         question.callArgs.forEach(arg => {
-            const {name, identifier} = arg;
+            const { name, identifier } = arg;
             const definition = question.placeholderDefinitions[identifier];
             let desc;
             if (!definition) {
@@ -56,8 +56,8 @@ const buildComment = question => {
     }
 };
 
-export default function AddVariant({question, setQuestion}) {
-    const {auth, logout} = useAuth();
+export default function AddVariant({ question, setQuestion }) {
+    const { auth, logout } = useAuth();
     const navigate = useNavigate();
     const [code, setCode] = useState(buildComment(question));
     const [isCorrect, setIsCorrect] = useState(false);
@@ -76,7 +76,7 @@ export default function AddVariant({question, setQuestion}) {
             variantBody,
             auth.accessToken,
             (type, message) => {
-                toast.error(message, {closeButton: true, duration: 10_000});
+                toast.error(message, { closeButton: true, duration: 10_000 });
                 if (type === ErrorType.TokenExpired) {
                     logout();
                     navigate(RRoutes.Login.path);
@@ -104,7 +104,7 @@ export default function AddVariant({question, setQuestion}) {
                 patchBody,
                 auth.accessToken,
                 (type, message) => {
-                    toast.error(message, {closeButton: true, duration: 10_000});
+                    toast.error(message, { closeButton: true, duration: 10_000 });
                     if (type === ErrorType.TokenExpired) {
                         logout();
                         navigate(RRoutes.Login.path);
@@ -123,14 +123,14 @@ export default function AddVariant({question, setQuestion}) {
                         Object.entries(response.violations).forEach(([key, value]) => {
                             toast.error(
                                 `Violation error for ${key}, ${value.join('and ').toLowerCase()}.`,
-                                {closeButton: true}
+                                { closeButton: true }
                             );
                         });
                     }
                 }
             );
         } else {
-            toast.error('Failed to create variant', {closeButton: true, duration: 10_000});
+            toast.error('Failed to create variant', { closeButton: true, duration: 10_000 });
         }
     };
 
@@ -141,7 +141,7 @@ export default function AddVariant({question, setQuestion}) {
             </CardHeader>
 
             <CardContent className="flex-1 flex flex-col gap-2 p-4">
-                <InlineCode code={signature} language={question.lang}/>
+                <InlineCode code={signature} language={question.lang} />
                 <div className="rounded-lg border bg-card p-4 shadow-sm">
                     <EEditor
                         language={question.lang}

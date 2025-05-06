@@ -1,22 +1,23 @@
-import React, {useEffect, useState} from 'react';
-import {useNavigate, useParams} from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import Header from '@/components/Header.jsx';
 import Loading from '@/components/Loading.jsx';
 import NotFound from '@/components/NotFound.jsx';
 
-import {useAuth} from '@/hooks/useAuth.jsx';
-import {authenticatedReq} from '@/utils/Requester.js';
-import {Endpoints} from '@/utils/Endpoints.js';
-import {toast} from 'sonner';
-import {ErrorType} from '@/utils/ErrorType.js';
-import {RHome, Routes} from '@/rout/Routes.jsx';
-import {Card, CardHeader} from '@/components/ui/card.js';
+import { useAuth } from '@/hooks/useAuth.jsx';
+import { authenticatedReq } from '@/utils/Requester.js';
+import { Endpoints } from '@/utils/Endpoints.js';
+import { toast } from 'sonner';
+import { ErrorType } from '@/utils/ErrorType.js';
+import { RHome, Routes } from '@/rout/Routes.jsx';
+import { Card, CardHeader } from '@/components/ui/card.js';
 import QuestionPreview from '@/components/QuestionPreview.jsx';
 import PlaceholderConfigurator from '@/components/PlaceholderConfigurator.jsx';
 import CallArgsConfigurator from '@/components/CallArgsConfigurator.jsx';
 import AddVariant from '@/components/AddVariant.jsx';
-import {VariantsCarousel} from '@/components/VariantsCarousel.jsx';
+import { VariantsCarousel } from '@/components/VariantsCarousel.jsx';
+import ValidateCard from '@/components/ValidateVard.jsx';
 
 const State = Object.freeze({
     Loading: 'Loading',
@@ -25,8 +26,8 @@ const State = Object.freeze({
 });
 
 export default function QuestionDetailPage() {
-    const {id} = useParams();
-    const {auth, logout} = useAuth();
+    const { id } = useParams();
+    const { auth, logout } = useAuth();
     const navigate = useNavigate();
 
     const [status, setStatus] = useState(State.Loading);
@@ -47,7 +48,7 @@ export default function QuestionDetailPage() {
                 auth.accessToken,
                 (type, message) => {
                     setStatus(State.NotFound);
-                    toast.error(message, {closeButton: true});
+                    toast.error(message, { closeButton: true });
                     if (type === ErrorType.TokenExpired) {
                         logout();
                         navigate(Routes.Login.path);
@@ -65,10 +66,10 @@ export default function QuestionDetailPage() {
 
     return (
         <div className="min-h-screen bg-gray-100 flex flex-col">
-            <Header page={null} setPage={page => navigate(`${RHome}/${page}`)}/>
+            <Header page={null} setPage={page => navigate(`${RHome}/${page}`)} />
 
-            {status === State.Loading && <Loading/>}
-            {status === State.NotFound && <NotFound/>}
+            {status === State.Loading && <Loading />}
+            {status === State.NotFound && <NotFound />}
 
             {status === State.Loaded && question && (
                 <div className="grid grid-cols-[2fr_2fr_3fr_3fr] grid-rows-2 gap-4 w-full h-screen p-4">
@@ -102,13 +103,11 @@ export default function QuestionDetailPage() {
                         setQuestion={setQuestion}
                     />
 
-                    <CallArgsConfigurator id={id} question={question} setQuestion={setQuestion}/>
+                    <CallArgsConfigurator id={id} question={question} setQuestion={setQuestion} />
 
-                    <AddVariant question={question} setQuestion={setQuestion}/>
+                    <AddVariant question={question} setQuestion={setQuestion} />
 
-                    <Card>
-                        <CardHeader>Validate</CardHeader>
-                    </Card>
+                    <ValidateCard question={question} setQuestion={setQuestion} />
                 </div>
             )}
         </div>

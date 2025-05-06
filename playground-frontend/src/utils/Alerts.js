@@ -6,5 +6,5 @@ export const AlertType = Object.freeze({
 });
 
 export const defaultAlert = () => {
-    return {type: AlertType.Success, message: '', show: false};
+    return { type: AlertType.Success, message: '', show: false };
 };

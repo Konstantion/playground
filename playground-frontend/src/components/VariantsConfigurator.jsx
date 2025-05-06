@@ -1,8 +1,8 @@
 import React from 'react';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {CheckCircle, XCircle} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CheckCircle, XCircle } from 'lucide-react';
 
-export default function VariantsConfigurator({correct, incorrect}) {
+export default function VariantsConfigurator({ correct, incorrect }) {
     return (
         <Card className="h-full flex flex-col">
             <CardHeader>
@@ -16,7 +16,7 @@ export default function VariantsConfigurator({correct, incorrect}) {
                     ) : (
                         correct.map(v => (
                             <div key={v.id} className="flex items-start gap-2 mb-2">
-                                <CheckCircle className="text-green-500 w-5 h-5 mt-1"/>
+                                <CheckCircle className="text-green-500 w-5 h-5 mt-1" />
                                 <pre className="whitespace-pre-wrap text-sm bg-green-50 p-2 rounded flex-1">
                                     {v.code.code}
                                 </pre>
@@ -32,7 +32,7 @@ export default function VariantsConfigurator({correct, incorrect}) {
                     ) : (
                         incorrect.map(v => (
                             <div key={v.id} className="flex items-start gap-2 mb-2">
-                                <XCircle className="text-red-500 w-5 h-5 mt-1"/>
+                                <XCircle className="text-red-500 w-5 h-5 mt-1" />
                                 <pre className="whitespace-pre-wrap text-sm bg-red-50 p-2 rounded flex-1">
                                     {v.code.code}
                                 </pre>

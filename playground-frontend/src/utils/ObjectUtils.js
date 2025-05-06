@@ -11,7 +11,7 @@ export const TypeofObject = Object.freeze({
 });
 
 export const sCp = obj => {
-    return {...obj};
+    return { ...obj };
 };
 
 export const dCp = obj => {

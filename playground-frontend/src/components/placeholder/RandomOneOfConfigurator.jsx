@@ -1,10 +1,10 @@
-import React, {useState} from 'react';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
-import {Separator} from '@/components/ui/separator';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 
-export function RandomOneOfConfigurator({type = 'number', initialOptions = [], onChange}) {
+export function RandomOneOfConfigurator({ type = 'number', initialOptions = [], onChange }) {
     const [options, setOptions] = useState(initialOptions);
     const [error, setError] = useState('');
     const [draft, setDraft] = useState('');
@@ -63,7 +63,7 @@ export function RandomOneOfConfigurator({type = 'number', initialOptions = [], o
                     <Button onClick={addOption}>Add</Button>
                 </div>
                 {error && <p className="text-red-500 text-sm">{error}</p>}
-                <Separator/>
+                <Separator />
                 {options.length === 0 ? (
                     <p className="text-gray-500">No options yet</p>
                 ) : (

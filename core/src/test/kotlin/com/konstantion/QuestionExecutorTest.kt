@@ -75,8 +75,8 @@ class QuestionExecutorTest {
     ) {
       is Either.Left -> fail("Expected success, got error ${result.value}.")
       is Either.Right -> {
-        if (result.value.intersectAnswer.size != 1) {
-          fail("Only one incorrect answer should be present, got ${result.value.intersectAnswer}.")
+        if (result.value.incorrectAnswers.size != 1) {
+          fail("Only one incorrect answer should be present, got ${result.value.incorrectAnswers}.")
         }
 
         if (result.value.correctAnswers.size != 2) {

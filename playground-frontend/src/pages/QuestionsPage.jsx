@@ -1,22 +1,28 @@
-import {Input} from '@/components/ui/input';
-import {Button} from '@/components/ui/button';
-import {Card, CardContent, CardHeader} from '@/components/ui/card';
-import {ScrollArea} from '@/components/ui/scroll-area';
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from '@/components/ui/select';
-import {useEffect, useState} from 'react';
-import {Lang} from '@/entities/Lang';
-import {CheckCircle, XCircle} from 'lucide-react';
-import {authenticatedReq} from '@/utils/Requester.js';
-import {Endpoints} from '@/utils/Endpoints.js';
-import {useAuth} from '@/hooks/useAuth.jsx';
-import {ErrorType} from '@/utils/ErrorType.js';
-import {toast} from 'sonner';
-import {useNavigate} from 'react-router-dom';
-import {Routes as RRoutes, RQuestions} from '@/rout/Routes.jsx';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { useEffect, useState } from 'react';
+import { Lang } from '@/entities/Lang';
+import { CheckCircle, XCircle } from 'lucide-react';
+import { authenticatedReq } from '@/utils/Requester.js';
+import { Endpoints } from '@/utils/Endpoints.js';
+import { useAuth } from '@/hooks/useAuth.jsx';
+import { ErrorType } from '@/utils/ErrorType.js';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { Routes as RRoutes, RQuestions } from '@/rout/Routes.jsx';
 import Loading from '@/components/Loading.jsx';
 
 const QuestionsPage = () => {
-    const {auth, logout} = useAuth();
+    const { auth, logout } = useAuth();
     const [questionName, setQuestionName] = useState('');
     const [questionLang, setQuestionLang] = useState(Object.values(Lang)[0]);
     const [search, setSearch] = useState('');
@@ -34,7 +40,7 @@ const QuestionsPage = () => {
                 auth.accessToken,
                 (type, message) => {
                     setLoading(false);
-                    toast.error(message, {closeButton: true});
+                    toast.error(message, { closeButton: true });
                     if (type === ErrorType.TokenExpired) {
                         logout();
                         navigate(RRoutes.Login.path);
@@ -55,17 +61,17 @@ const QuestionsPage = () => {
         await authenticatedReq(
             Endpoints.Questions.Base,
             'POST',
-            {body: questionName, lang: questionLang},
+            { body: questionName, lang: questionLang },
             auth.accessToken,
             (type, message) => {
-                toast.error(message, {closeButton: true});
+                toast.error(message, { closeButton: true });
                 if (type === ErrorType.TokenExpired) {
                     logout();
                     navigate(RRoutes.Login.path);
                 }
             },
             question => {
-                toast.success('Question created successfully!', {closeButton: true});
+                toast.success('Question created successfully!', { closeButton: true });
                 setQuestionName('');
                 setDataItems(prev => [...prev, convert(question)]);
             }
@@ -103,7 +109,7 @@ const QuestionsPage = () => {
                         <label className="text-sm font-medium">Language</label>
                         <Select value={questionLang} onValueChange={setQuestionLang}>
                             <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select language"/>
+                                <SelectValue placeholder="Select language" />
                             </SelectTrigger>
                             <SelectContent>
                                 {Object.values(Lang).map(lang => (
@@ -120,7 +126,7 @@ const QuestionsPage = () => {
 
             <div className="lg:col-span-2 space-y-4">
                 {loading ? (
-                    <Loading/>
+                    <Loading />
                 ) : (
                     <>
                         <Input
@@ -149,9 +155,9 @@ const QuestionsPage = () => {
                                             <div className="flex items-center gap-2">
                                                 <p className="text-sm font-medium">Validated</p>
                                                 {item.validated ? (
-                                                    <CheckCircle className="text-green-500 w-4 h-4"/>
+                                                    <CheckCircle className="text-green-500 w-4 h-4" />
                                                 ) : (
-                                                    <XCircle className="text-red-500 w-4 h-4"/>
+                                                    <XCircle className="text-red-500 w-4 h-4" />
                                                 )}
                                             </div>
                                         </CardContent>

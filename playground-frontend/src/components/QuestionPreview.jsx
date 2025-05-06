@@ -1,34 +1,34 @@
-import React, {useMemo, useState} from 'react';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {ScrollArea} from '@/components/ui/scroll-area';
-import {CheckCircle, Edit, XCircle} from 'lucide-react';
-import {CodeBlock} from '@/components/code/CodeBlock.jsx';
-import {Badge} from '@/components/ui/badge';
-import {prettierStr} from '@/entities/Placeholder.js';
-import {Input} from '@/components/ui/input.js';
-import {Editor} from '@monaco-editor/react';
+import React, { useMemo, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { CheckCircle, Edit, Trash2, XCircle } from 'lucide-react';
+import { CodeBlock } from '@/components/code/CodeBlock.jsx';
+import { Badge } from '@/components/ui/badge';
+import { prettierStr } from '@/entities/Placeholder.js';
+import { Input } from '@/components/ui/input.js';
+import { Editor } from '@monaco-editor/react';
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog.js';
-import {Button} from '@/components/ui/button.js';
-import {DialogDescription} from '@radix-ui/react-dialog';
-import {Action, actionStr} from '@/entities/Action.js';
-import {authenticatedReq} from '@/utils/Requester.js';
-import {Endpoints} from '@/utils/Endpoints.js';
-import {useAuth} from '@/hooks/useAuth.jsx';
-import {useNavigate} from 'react-router-dom';
-import {toast} from 'sonner';
-import {ErrorType} from '@/utils/ErrorType.js';
-import {Routes as RRoutes} from '@/rout/Routes.jsx';
-import {sNotEmpty} from '@/utils/ObjectUtils.js';
+import { Button } from '@/components/ui/button.js';
+import { authenticatedReq } from '@/utils/Requester.js';
+import { Endpoints } from '@/utils/Endpoints.js';
+import { useAuth } from '@/hooks/useAuth.jsx';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { ErrorType } from '@/utils/ErrorType.js';
+import { RHome, Routes as RRoutes } from '@/rout/Routes.jsx';
+import { sNotEmpty } from '@/utils/ObjectUtils.js';
+import { QuestionsPage } from '@/pages/Pages.js';
 
-export default function QuestionPreview({question, className, setQuestion}) {
-    const {auth, logout} = useAuth();
+export default function QuestionPreview({ question, className, setQuestion }) {
+    const { auth, logout } = useAuth();
     const navigate = useNavigate();
     const [isNameOpen, setIsNameOpen] = useState(false);
     const [draftName, setDraftName] = useState(question.body);
@@ -37,35 +37,12 @@ export default function QuestionPreview({question, className, setQuestion}) {
     const [draftFormat, setDraftFormat] = useState(question.formatAndCode.format);
     const [draftCode, setDraftCode] = useState(question.formatAndCode.code);
 
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
     const placeholderRegex = useMemo(() => {
         const keys = Object.keys(question.placeholderDefinitions).join('|');
         return new RegExp(`\\b(${keys})\\b`, 'g');
     }, [question.placeholderDefinitions]);
-
-    const onNameSave = async newName => {
-        const patchBody = {
-            action: actionStr(Action.ADD),
-            body: newName,
-        };
-
-        await doUpdateReq(patchBody);
-
-        setIsNameOpen(false);
-    };
-
-    const onFormatAndCodeSave = async (format, code) => {
-        const patchBody = {
-            action: actionStr(Action.ADD),
-            formatAndCodeDto: {
-                format: format,
-                code: code,
-            },
-        };
-
-        await doUpdateReq(patchBody);
-
-        setIsFCOpen(false);
-    };
 
     const doUpdateReq = async body => {
         await authenticatedReq(
@@ -74,22 +51,19 @@ export default function QuestionPreview({question, className, setQuestion}) {
             body,
             auth.accessToken,
             (type, message) => {
-                toast.error(message, {closeButton: true, duration: 10_000});
+                toast.error(message, { closeButton: true, duration: 10000 });
                 if (type === ErrorType.TokenExpired) {
                     logout();
                     navigate(RRoutes.Login.path);
                 }
             },
             response => {
-                if (sNotEmpty(response?.updated)) {
-                    setQuestion(response.updated);
-                }
-
+                if (sNotEmpty(response?.updated)) setQuestion(response.updated);
                 if (sNotEmpty(response?.violations)) {
                     Object.entries(response.violations).forEach(([key, value]) => {
                         toast.error(
-                            `Violation error for ${key}, ${value.join('and ').toLowerCase()}.`,
-                            {closeButton: true}
+                            `Violation error for ${key}, ${value.join(' and ').toLowerCase()}.`,
+                            { closeButton: true }
                         );
                     });
                 }
@@ -97,10 +71,58 @@ export default function QuestionPreview({question, className, setQuestion}) {
         );
     };
 
+    const onNameSave = async newName => {
+        await doUpdateReq({ action: 'ADD', body: newName });
+        setIsNameOpen(false);
+    };
+
+    const onFormatAndCodeSave = async (format, code) => {
+        await doUpdateReq({ action: 'ADD', formatAndCodeDto: { format, code } });
+        setIsFCOpen(false);
+    };
+
+    const onDeleteConfirm = async () => {
+        await authenticatedReq(
+            Endpoints.Questions.Base + `/${question.id}`,
+            'DELETE',
+            {},
+            auth.accessToken,
+            (type, message) => toast.error(message),
+            () => {
+                toast.success('Question deleted');
+                navigate(`${RHome}/${QuestionsPage}`);
+            }
+        );
+    };
+
     return (
         <Card className={`${className} flex flex-col min-h-0`}>
-            <CardHeader>
+            <CardHeader className="flex items-center justify-between">
                 <CardTitle>Question #{question.id}</CardTitle>
+                <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="destructive" size="icon" aria-label="Delete question">
+                            <Trash2 />
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Confirm Delete</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to delete this question? This action cannot be
+                                undone.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button variant="destructive" onClick={onDeleteConfirm}>
+                                Delete
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </CardHeader>
 
             <CardContent className="flex-1 flex flex-col p-4 min-h-0">
@@ -119,7 +141,7 @@ export default function QuestionPreview({question, className, setQuestion}) {
                             <Dialog open={isNameOpen} onOpenChange={setIsNameOpen}>
                                 <DialogTrigger asChild>
                                     <Button variant="outline" size="sm">
-                                        <Edit size={16}/>
+                                        <Edit size={16} />
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent>
@@ -152,7 +174,7 @@ export default function QuestionPreview({question, className, setQuestion}) {
                                 <Dialog open={isFCOpen} onOpenChange={setIsFCOpen}>
                                     <DialogTrigger asChild>
                                         <Button variant="outline" size="sm">
-                                            <Edit size={16}/>
+                                            <Edit size={16} />
                                         </Button>
                                     </DialogTrigger>
                                     <DialogContent className="max-w-3xl w-full">
@@ -192,7 +214,7 @@ export default function QuestionPreview({question, className, setQuestion}) {
                                                                 (match =
                                                                     placeholderRegex.exec(text)) !==
                                                                 null
-                                                                ) {
+                                                            ) {
                                                                 const startPos =
                                                                     model.getPositionAt(
                                                                         match.index
@@ -222,7 +244,7 @@ export default function QuestionPreview({question, className, setQuestion}) {
                                                         editor.onDidChangeModelContent(highlight);
                                                     }}
                                                     onChange={val => setDraftCode(val ?? '')}
-                                                    options={{minimap: {enabled: false}}}
+                                                    options={{ minimap: { enabled: false } }}
                                                 />
                                             </div>
                                         </div>
@@ -257,9 +279,9 @@ export default function QuestionPreview({question, className, setQuestion}) {
                         <section className={'rounded-lg border bg-card p-4 shadow-sm'}>
                             <h4 className="font-medium">Validated</h4>
                             {question.validated ? (
-                                <CheckCircle className="text-green-500 w-4 h-4"/>
+                                <CheckCircle className="text-green-500 w-4 h-4" />
                             ) : (
-                                <XCircle className="text-red-500 w-4 h-4"/>
+                                <XCircle className="text-red-500 w-4 h-4" />
                             )}
                         </section>
 
@@ -279,7 +301,7 @@ export default function QuestionPreview({question, className, setQuestion}) {
                             {Object.entries(question.callArgs).map(([key, value]) => {
                                 return (
                                     <Badge key={key} variant={'outline'} className="text-md">
-                                        {`${value.identifier} → ${JSON.stringify(value.name)}`}
+                                        {`${JSON.stringify(value.name)} → ${value.identifier}`}
                                     </Badge>
                                 );
                             })}

@@ -84,7 +84,7 @@ class NaiveQuestionExecutor<Id, L>(
           text = question.body,
           formatAndCode = question.formatAndCode.reformated(placeholderValues),
           correctAnswers = correct,
-          intersectAnswer = incorrect
+          incorrectAnswers = incorrect
         )
       )
     }

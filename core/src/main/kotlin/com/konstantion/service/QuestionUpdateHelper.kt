@@ -24,7 +24,14 @@ data class QuestionUpdateHelper(
   private val codePort: CodePort<CodeEntity>,
   private val variantPort: VariantPort<VariantEntity>
 ) {
-  fun update(entity: QuestionEntity, params: UpdateQuestionParams): Map<String, List<String>> {
+  fun update(entity: QuestionEntity, params: UpdateQuestionParams): UpdateResult {
+    val shouldInvalidate =
+      params.placeholders != null ||
+        params.placeholderDefinitions != null ||
+        params.callArgs != null ||
+        params.args != null ||
+        params.correctVariantId != null ||
+        params.incorrectVariantId != null
     val validationErrors: MutableMap<String, MutableList<String>> = mutableMapOf()
 
     fun putViolation(field: String, message: String) {
@@ -167,7 +174,7 @@ data class QuestionUpdateHelper(
       }
     }
 
-    return validationErrors
+    return UpdateResult(validationErrors, shouldInvalidate)
   }
 
   private fun handleVariant(
@@ -219,3 +226,5 @@ data class QuestionUpdateHelper(
     }
   }
 }
+
+data class UpdateResult(val violations: Map<String, List<String>>, val invalidate: Boolean)

@@ -132,7 +132,7 @@ data class UserTestService(
                     .map { answer: Answer -> toAnswerEntity(answer, questionEntity) }
                     .toMutableList()
                 incorrectAnswers =
-                  questionMetadata.intersectAnswer
+                  questionMetadata.incorrectAnswers
                     .map { answer: Answer -> toAnswerEntity(answer, questionEntity) }
                     .toMutableList()
               }

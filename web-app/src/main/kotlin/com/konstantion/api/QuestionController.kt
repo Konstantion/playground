@@ -17,6 +17,7 @@ import java.util.UUID
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.transaction.support.TransactionTemplate
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -129,6 +130,20 @@ data class QuestionController(
           UpdateQuestionResponse(updateResult.violations, updateResult.entity.asResponse())
         )
       }
+    }
+  }
+
+  @DeleteMapping("/{id}")
+  fun deleteQuestion(
+    @AuthenticationPrincipal userEntity: UserEntity,
+    @PathVariable("id") id: UUID
+  ): ResponseEntity<*> {
+    return when (
+      val result: Either<ServiceIssue, QuestionEntity> =
+        questionService.deleteQuestion(userEntity, id)
+    ) {
+      is Either.Left -> result.value.asError()
+      is Either.Right -> ResponseEntity.ok(result.value.id())
     }
   }
 }

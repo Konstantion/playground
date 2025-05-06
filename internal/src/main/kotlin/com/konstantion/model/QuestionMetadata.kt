@@ -7,7 +7,9 @@ data class QuestionMetadata(
   val text: String,
   val formatAndCode: FormatAndCode,
   val correctAnswers: List<Answer>,
-  val intersectAnswer: List<Answer>,
-)
+  val incorrectAnswers: List<Answer>,
+) {
+  fun answers(): List<Answer> = correctAnswers + incorrectAnswers
+}
 
 data class Answer(val variantIdentifier: UUID, val text: String, val executorTaskId: TaskId)

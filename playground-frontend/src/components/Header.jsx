@@ -1,9 +1,9 @@
-import {useAuth} from '@/hooks/useAuth.jsx';
-import {Button} from '@/components/ui/button.js';
-import {pagesFor} from '@/pages/Pages.js';
+import { useAuth } from '@/hooks/useAuth.jsx';
+import { Button } from '@/components/ui/button.js';
+import { pagesFor } from '@/pages/Pages.js';
 
-const Header = ({page, setPage}) => {
-    const {logout, auth} = useAuth();
+const Header = ({ page, setPage }) => {
+    const { logout, auth } = useAuth();
 
     return (
         <header className="w-full bg-white shadow-sm px-4 py-2 flex justify-between items-center">

@@ -25,9 +25,9 @@ data class QuestionServiceImpl(
   private val questionPort: QuestionPort<QuestionEntity>,
   private val pythonExecutor: QuestionExecutor<Lang.Python>,
   private val updateHelper: QuestionUpdateHelper,
+  private val questionValidator: QuestionValidator,
 ) : QuestionService {
   private val log: Logger = LoggerFactory.getLogger(QuestionServiceImpl::class.java)
-  private val questionValidator: QuestionValidator = QuestionValidator(questionPort, pythonExecutor)
 
   override fun save(
     user: UserEntity,
@@ -171,18 +171,21 @@ data class QuestionServiceImpl(
             user.username(),
             entity
           )
-          val violations: Map<String, List<String>> = updateHelper.update(entity, params)
+          val updateResult: UpdateResult = updateHelper.update(entity, params)
+          if (updateResult.invalidate) {
+            questionValidator.onInvalidated(entity)
+          }
+
           val saved = questionPort.save(entity)
-          questionValidator.onInvalidated(saved)
 
           log.info(
             "UpdateQuestionSuccess[userId={}, username={}, entity={}, violations={}]",
             user.id(),
             user.username(),
-            entity,
-            violations
+            saved,
+            updateResult
           )
-          Either.right(QuestionService.UpdateResult(entity, violations))
+          Either.right(QuestionService.UpdateResult(saved, updateResult.violations))
         }
       }
     } else {
@@ -240,6 +243,6 @@ data class QuestionServiceImpl(
     id: UUID
   ): Either<ServiceIssue, QuestionService.StatusResponse> {
     log.info("ValidationStatus[userId={}, username={}, id={}]", user.id(), user.username(), id)
-    return getQuestion(user, id).map { question -> questionValidator.status(question.id()) }
+    return getQuestion(user, id).map { question -> questionValidator.setOrGetStatus(question) }
   }
 }
