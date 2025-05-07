@@ -1,3 +1,4 @@
+// playground-frontend/src/components/VariantsCarousel.jsx
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,7 +13,9 @@ import {
     X,
     FileText,
     AlertCircle,
+    Lock, // Import Lock icon
 } from 'lucide-react';
+// ... other imports ...
 import { authenticatedReq } from '@/utils/Requester.js';
 import { Endpoints } from '@/utils/Endpoints.js';
 import { Action, actionStr } from '@/entities/Action.js';
@@ -34,15 +37,18 @@ import {
     DialogClose,
 } from '@/components/ui/dialog.js';
 
+// Added isEditable prop
 export function VariantsCarousel({
-    className,
-    question,
-    correct,
-    title,
-    variants,
-    language,
-    setQuestion,
-}) {
+                                     className,
+                                     question,
+                                     correct,
+                                     title,
+                                     variants,
+                                     language,
+                                     setQuestion,
+                                     isEditable, // Accept prop
+                                 }) {
+    // ... (existing state and hooks remain the same) ...
     const { auth, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -63,6 +69,7 @@ export function VariantsCarousel({
     }, [variants, currentIndex]);
 
     if (!variants || variants.length === 0) {
+        // ... (empty state rendering remains the same) ...
         return (
             <Card
                 className={cn(
@@ -93,6 +100,7 @@ export function VariantsCarousel({
     const goNext = () => setCurrentIndex(i => (i === variants.length - 1 ? 0 : i + 1));
 
     const confirmDeleteVariant = async () => {
+        // ... (delete logic remains the same) ...
         if (!variantToDelete) return;
         const variantId = variantToDelete.id;
         setIsDeleteDialogOpen(false);
@@ -179,6 +187,7 @@ export function VariantsCarousel({
     };
 
     const updateVariant = async (variantId, newCode) => {
+        // ... (update logic remains the same) ...
         if (!newCode || newCode.trim() === '') {
             toast.warning('Code cannot be empty.', { duration: 3000 });
             return;
@@ -252,29 +261,32 @@ export function VariantsCarousel({
                                 ({currentIndex + 1} of {variants.length})
                             </CardDescription>
                         </div>
+                        {/* Disable Edit/Delete buttons if not editable */}
                         <div className="flex space-x-1.5">
                             <Button
                                 size="icon"
                                 variant="ghost"
-                                className="text-slate-500 hover:text-sky-600 dark:hover:text-sky-500 h-8 w-8 rounded-full"
+                                className="text-slate-500 hover:text-sky-600 dark:hover:text-sky-500 h-8 w-8 rounded-full disabled:text-slate-400 disabled:dark:text-slate-600 disabled:hover:bg-transparent disabled:cursor-not-allowed"
                                 onClick={() => {
                                     setDraftCode(currentVariant.code.code);
                                     setEditingId(currentVariant.id);
                                 }}
-                                disabled={isEditing}
+                                disabled={isEditing || !isEditable} // Disable if editing or not editable
                                 aria-label="Edit variant"
+                                title={!isEditable ? "Cannot edit variants for an immutable question" : "Edit variant"}
                             >
-                                <Edit size={16} />
+                                {isEditable ? <Edit size={16} /> : <Lock size={16} />}
                             </Button>
                             <Button
                                 size="icon"
                                 variant="ghost"
-                                className="text-slate-500 hover:text-red-600 dark:hover:text-red-500 h-8 w-8 rounded-full"
+                                className="text-slate-500 hover:text-red-600 dark:hover:text-red-500 h-8 w-8 rounded-full disabled:text-slate-400 disabled:dark:text-slate-600 disabled:hover:bg-transparent disabled:cursor-not-allowed"
                                 onClick={() => openDeleteDialog(currentVariant)}
-                                disabled={isEditing}
+                                disabled={isEditing || !isEditable} // Disable if editing or not editable
                                 aria-label="Delete variant"
+                                title={!isEditable ? "Cannot delete variants for an immutable question" : "Delete variant"}
                             >
-                                <Trash2 size={16} />
+                                {isEditable ? <Trash2 size={16} /> : <Lock size={16} />}
                             </Button>
                         </div>
                     </div>
@@ -300,7 +312,7 @@ export function VariantsCarousel({
                             options={{
                                 minimap: { enabled: false },
                                 scrollBeyondLastLine: false,
-                                readOnly: !isEditing,
+                                readOnly: !isEditing, // Readonly state depends on isEditing flag
                                 fontSize: 13,
                                 letterSpacing: 0.5,
                                 wordWrap: 'on',
@@ -310,6 +322,7 @@ export function VariantsCarousel({
                         />
                     </div>
 
+                    {/* Save/Cancel buttons only appear if isEditing is true */}
                     {isEditing && (
                         <div className="mt-3 flex justify-end space-x-2">
                             <Button
@@ -333,6 +346,7 @@ export function VariantsCarousel({
                     {/* Carousel Navigation */}
                     {variants.length > 1 && (
                         <div className="flex justify-center items-center mt-3 space-x-4">
+                            {/* ... (Navigation buttons remain the same) ... */}
                             <Button
                                 onClick={goPrev}
                                 variant="outline"
@@ -375,6 +389,7 @@ export function VariantsCarousel({
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                {/* ... (Dialog content remains the same) ... */}
                 <DialogContent className="dark:bg-slate-800">
                     <DialogHeader>
                         <DialogTitle className="flex items-center">

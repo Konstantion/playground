@@ -1,8 +1,9 @@
+// playground-frontend/src/components/ValidateCard.jsx
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.js';
 import { Button } from '@/components/ui/button.js';
-import { AlertTriangle, CheckCircle, Info, Loader2, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info, Loader2, ShieldCheck, Lock } from 'lucide-react'; // Added Lock
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth.jsx';
 import { authenticatedReq } from '@/utils/Requester.js';
@@ -14,11 +15,14 @@ import { Label } from '@/components/ui/label.js';
 
 const intervalMs = 2500;
 
+// Added isEditable prop
 export default function ValidateCard({
-    question: initialQuestion,
-    setQuestion: setParentQuestion,
-    className,
-}) {
+                                         question: initialQuestion,
+                                         setQuestion: setParentQuestion,
+                                         className,
+                                         isEditable, // Accept prop
+                                     }) {
+    // ... (existing state and hooks remain the same) ...
     const [question, setQuestion] = useState(initialQuestion);
     const { auth, logout } = useAuth();
     const navigate = useNavigate();
@@ -29,6 +33,7 @@ export default function ValidateCard({
     const intervalRef = useRef(null);
 
     useEffect(() => {
+        // ... (useEffect logic remains the same) ...
         setQuestion(initialQuestion);
         setValidated(initialQuestion.validated);
 
@@ -47,6 +52,7 @@ export default function ValidateCard({
 
     const fetchStatus = useCallback(
         async (silent = false) => {
+            // ... (fetchStatus logic remains the same) ...
             if (!question || !question.id) {
                 if (!silent)
                     toast.error('Question ID is missing. Cannot fetch status.', { duration: 3000 });
@@ -103,6 +109,7 @@ export default function ValidateCard({
     );
 
     const handleValidate = async () => {
+        // ... (handleValidate logic remains the same) ...
         if (!question || !question.id) {
             toast.error('Question ID is missing. Cannot start validation.', { duration: 3000 });
             return;
@@ -145,6 +152,7 @@ export default function ValidateCard({
     };
 
     useEffect(() => {
+        // ... (cleanup logic remains the same) ...
         return () => {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
@@ -153,6 +161,7 @@ export default function ValidateCard({
     }, []);
 
     const getStatusDisplayProperties = () => {
+        // ... (status display logic remains the same) ...
         if (validated || status === 'Success') {
             return {
                 icon: <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />,
@@ -205,6 +214,7 @@ export default function ValidateCard({
                 className
             )}
         >
+            {/* ... (CardHeader remains the same) ... */}
             <CardHeader className="pb-3 pt-4 px-4 sm:px-5">
                 <div className="flex items-center">
                     <ShieldCheck size={20} className="mr-2.5 text-sky-600 dark:text-sky-500" />
@@ -220,6 +230,7 @@ export default function ValidateCard({
             </CardHeader>
             <CardContent className="p-3 sm:p-4 space-y-4">
                 {validated && status === 'Success' ? (
+                    // ... (Success display remains the same) ...
                     <div
                         className={`flex flex-col items-center space-y-3 text-center p-4 sm:p-5 rounded-lg border ${statusDisplay.bgClass}`}
                     >
@@ -253,14 +264,17 @@ export default function ValidateCard({
                             </div>
                         </div>
 
+                        {/* Disable Button if not editable */}
                         <Button
                             onClick={handleValidate}
-                            disabled={isValidating || validated}
+                            disabled={isValidating || validated || !isEditable} // Disable if validating, already validated, or not editable
                             className="w-full py-2.5 text-sm font-medium flex items-center justify-center space-x-2 rounded-lg
                                        bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white
                                        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 dark:focus:ring-offset-slate-800
                                        disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
+                            title={!isEditable ? "Cannot validate an immutable question" : ""}
                         >
+                            {/* ... (loading/validated indicator logic remains the same) ... */}
                             {isValidating ? (
                                 <>
                                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -275,6 +289,12 @@ export default function ValidateCard({
                                 <span>Start Validation</span>
                             )}
                         </Button>
+                        {/* Add message if disabled due to immutability */}
+                        {!isEditable && !validated && (
+                            <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-2">
+                                Validation is disabled for immutable questions.
+                            </p>
+                        )}
                     </>
                 )}
             </CardContent>

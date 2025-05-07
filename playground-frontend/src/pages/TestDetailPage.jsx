@@ -237,7 +237,7 @@ export default function TestDetailPage() {
                                                             className="text-xs dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
                                                         >
                                                             <LinkIcon size={12} className="mr-1" />{' '}
-                                                            View Original
+                                                            View
                                                         </Button>
                                                     </div>
                                                 </li>

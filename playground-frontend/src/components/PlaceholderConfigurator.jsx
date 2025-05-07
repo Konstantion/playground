@@ -1,3 +1,4 @@
+// playground-frontend/src/components/PlaceholderConfigurator.jsx
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.js';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.js';
@@ -27,7 +28,9 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { SlidersHorizontal, PlusCircle, MinusCircle } from 'lucide-react';
 
-export default function PlaceholderConfigurator({ id, question, setQuestion, className }) {
+// Added isEditable prop
+export default function PlaceholderConfigurator({ id, question, setQuestion, className, isEditable }) {
+    // ... (existing state and hooks remain the same) ...
     const { auth, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -47,10 +50,11 @@ export default function PlaceholderConfigurator({ id, question, setQuestion, cla
             >
                 Placeholder Identifier
             </Label>
-            <Select value={identifier} onValueChange={setIdentifier}>
+            {/* Disable Select if not editable */}
+            <Select value={identifier} onValueChange={setIdentifier} disabled={!isEditable}>
                 <SelectTrigger
                     id="placeholder-identifier"
-                    className="w-full dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500"
+                    className="w-full dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                     <SelectValue placeholder="Select identifier (e.g., P_1)" />
                 </SelectTrigger>
@@ -73,16 +77,18 @@ export default function PlaceholderConfigurator({ id, question, setQuestion, cla
             >
                 Definition Type
             </Label>
+            {/* Disable Select if not editable */}
             <Select
                 value={placeholderDefinitionType}
                 onValueChange={value => {
                     setPlaceholderDefinitionType(value);
                     setDefinition(null); /* Reset specific config */
                 }}
+                disabled={!isEditable}
             >
                 <SelectTrigger
                     id="placeholder-definition-type"
-                    className="w-full dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500"
+                    className="w-full dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                     <SelectValue placeholder="Select definition type" />
                 </SelectTrigger>
@@ -98,10 +104,13 @@ export default function PlaceholderConfigurator({ id, question, setQuestion, cla
     );
 
     const definitionConfigurator = () => {
+        // ... (logic to select component remains the same) ...
         let component;
+        // Pass isEditable down to specific configurators
         const commonProps = {
             key: placeholderDefinitionType,
             onChange: setDefinition,
+            isEditable: isEditable, // Pass down
         };
 
         switch (placeholderDefinitionType) {
@@ -138,12 +147,16 @@ export default function PlaceholderConfigurator({ id, question, setQuestion, cla
 
         return (
             <div className="mt-4 p-4 border border-slate-200 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-800/30">
-                {component}
+                {/* Disable the fieldset containing the configurator */}
+                <fieldset disabled={!isEditable}>
+                    {component}
+                </fieldset>
             </div>
         );
     };
 
     const handleActionClick = async () => {
+        // ... (action logic remains the same) ...
         setIsLoading(true);
         const body = { action: actionStr(action) };
 
@@ -217,6 +230,7 @@ export default function PlaceholderConfigurator({ id, question, setQuestion, cla
                 className
             )}
         >
+            {/* ... (CardHeader remains the same) ... */}
             <CardHeader className="pb-3 pt-4 px-4 sm:px-5">
                 <div className="flex items-center">
                     <SlidersHorizontal
@@ -242,16 +256,19 @@ export default function PlaceholderConfigurator({ id, question, setQuestion, cla
                     }}
                     className="flex flex-col flex-1"
                 >
+                    {/* Disable TabsList if not editable */}
                     <TabsList className="grid w-full grid-cols-2 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg">
                         <TabsTrigger
                             value={Action.ADD}
-                            className="py-2 data-[state=active]:bg-white data-[state=active]:dark:bg-slate-900 data-[state=active]:shadow-md rounded-md data-[state=active]:text-sky-600"
+                            className="py-2 data-[state=active]:bg-white data-[state=active]:dark:bg-slate-900 data-[state=active]:shadow-md rounded-md data-[state=active]:text-sky-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={!isEditable}
                         >
                             <PlusCircle size={16} className="mr-1.5" /> Add/Update
                         </TabsTrigger>
                         <TabsTrigger
                             value={Action.REMOVE}
-                            className="py-2 data-[state=active]:bg-white data-[state=active]:dark:bg-slate-900 data-[state=active]:shadow-md rounded-md data-[state=active]:text-red-600"
+                            className="py-2 data-[state=active]:bg-white data-[state=active]:dark:bg-slate-900 data-[state=active]:shadow-md rounded-md data-[state=active]:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={!isEditable}
                         >
                             <MinusCircle size={16} className="mr-1.5" /> Remove
                         </TabsTrigger>
@@ -259,7 +276,8 @@ export default function PlaceholderConfigurator({ id, question, setQuestion, cla
 
                     {/* Content for ADD Tab */}
                     <TabsContent value={Action.ADD} className="flex-1 mt-4 overflow-hidden">
-                        <ScrollArea className="h-full pr-2">
+                        {/* Disable content if not editable */}
+                        <ScrollArea className="h-full pr-2" style={{ pointerEvents: isEditable ? 'auto' : 'none', opacity: isEditable ? 1 : 0.7 }}>
                             <div className="space-y-4">
                                 {selectIdentifier()}
                                 {selectDefinitionType()}
@@ -270,7 +288,8 @@ export default function PlaceholderConfigurator({ id, question, setQuestion, cla
 
                     {/* Content for REMOVE Tab */}
                     <TabsContent value={Action.REMOVE} className="flex-1 mt-4 overflow-hidden">
-                        <ScrollArea className="h-full pr-2">
+                        {/* Disable content if not editable */}
+                        <ScrollArea className="h-full pr-2" style={{ pointerEvents: isEditable ? 'auto' : 'none', opacity: isEditable ? 1 : 0.7 }}>
                             <div className="space-y-4 p-1">
                                 {selectIdentifier()}
                                 <p className="text-xs text-slate-500 dark:text-slate-400 pt-2">
@@ -282,32 +301,25 @@ export default function PlaceholderConfigurator({ id, question, setQuestion, cla
                     </TabsContent>
 
                     <div className="mt-auto pt-4">
+                        {/* Disable Button if not editable */}
                         <Button
                             onClick={handleActionClick}
-                            className="w-full bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white"
-                            disabled={isLoading}
+                            className="w-full bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isLoading || !isEditable}
+                            title={!isEditable ? "Cannot modify placeholders for an immutable question" : ""}
                         >
+                            {/* ... (loading indicator logic remains the same) ... */}
                             {isLoading ? (
                                 <div className="flex items-center justify-center">
+                                    {/* SVG spinner */}
                                     <svg
                                         className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                                         xmlns="http://www.w3.org/2000/svg"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                     >
-                                        <circle
-                                            className="opacity-25"
-                                            cx="12"
-                                            cy="12"
-                                            r="10"
-                                            stroke="currentColor"
-                                            strokeWidth="4"
-                                        ></circle>
-                                        <path
-                                            className="opacity-75"
-                                            fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                        ></path>
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
                                     Processing...
                                 </div>
