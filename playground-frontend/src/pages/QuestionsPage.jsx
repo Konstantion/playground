@@ -1,6 +1,14 @@
+import React, { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
     Select,
@@ -9,9 +17,17 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useEffect, useState } from 'react';
 import { Lang } from '@/entities/Lang';
-import { CheckCircle, XCircle } from 'lucide-react';
+import {
+    CheckCircle,
+    XCircle,
+    PlusCircle,
+    FileQuestion,
+    Search,
+    CalendarDays,
+    Languages,
+    FileWarning,
+} from 'lucide-react'; // Added icons
 import { authenticatedReq } from '@/utils/Requester.js';
 import { Endpoints } from '@/utils/Endpoints.js';
 import { useAuth } from '@/hooks/useAuth.jsx';
@@ -21,16 +37,23 @@ import { useNavigate } from 'react-router-dom';
 import { Routes as RRoutes, RQuestions } from '@/rout/Routes.jsx';
 import Loading from '@/components/Loading.jsx';
 import { between, blank } from '@/utils/Strings.js';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
+// Page for displaying and creating Questions
 const QuestionsPage = () => {
-    const { auth, logout } = useAuth();
-    const [questionName, setQuestionName] = useState('');
-    const [questionLang, setQuestionLang] = useState(Object.values(Lang)[0]);
-    const [search, setSearch] = useState('');
-    const [dataItems, setDataItems] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
+    const { auth, logout } = useAuth(); // Authentication context
+    const navigate = useNavigate(); // Navigation hook
 
+    // State for new question form, list of questions, search, and loading
+    const [questionName, setQuestionName] = useState('');
+    const [questionLang, setQuestionLang] = useState(Object.values(Lang)[0] || ''); // Default to first language or empty
+    const [search, setSearch] = useState('');
+    const [dataItems, setDataItems] = useState([]); // Stores converted question data for display
+    const [loading, setLoading] = useState(true);
+    const [isCreating, setIsCreating] = useState(false); // Loading state for creation
+
+    // Fetch existing questions when the component mounts
     useEffect(() => {
         const fetchQuestions = async () => {
             setLoading(true);
@@ -40,15 +63,22 @@ const QuestionsPage = () => {
                 null,
                 auth.accessToken,
                 (type, message) => {
+                    // Error callback
                     setLoading(false);
-                    toast.error(message, { closeButton: true });
+                    toast.error(message || 'Failed to load questions.', {
+                        closeButton: true,
+                        duration: 5000,
+                    });
                     if (type === ErrorType.TokenExpired) {
                         logout();
                         navigate(RRoutes.Login.path);
                     }
                 },
                 questions => {
-                    const converted = questions.map(convert);
+                    // Success callback
+                    // Ensure questions is an array before mapping
+                    const questionsData = Array.isArray(questions) ? questions : [];
+                    const converted = questionsData.map(convert);
                     setDataItems(converted);
                     setLoading(false);
                 }
@@ -56,73 +86,126 @@ const QuestionsPage = () => {
         };
 
         fetchQuestions();
-    }, []);
+    }, [auth.accessToken, logout, navigate]); // Dependencies
 
+    // Handler for creating a new question
     const handleCreateQuestion = async () => {
-        if (!between(questionName, 1, 50)) {
-            toast.error('Question name must be between 1 and 50 characters.', {
+        // Validate inputs
+        if (!between(questionName.trim(), 1, 100)) {
+            // Increased max length for name
+            toast.error('Question name must be 1-100 characters.', {
                 closeButton: true,
+                duration: 3000,
             });
             return;
         } else if (blank(questionLang)) {
-            toast.error('Please select a language.', { closeButton: true });
+            toast.error('Please select a language for the question.', {
+                closeButton: true,
+                duration: 3000,
+            });
             return;
         }
 
+        setIsCreating(true);
         await authenticatedReq(
-            Endpoints.Questions.Base,
+            Endpoints.Questions.Base, // Endpoint for creating a question
             'POST',
-            { body: questionName, lang: questionLang },
+            { body: questionName.trim(), lang: questionLang }, // Request body
             auth.accessToken,
             (type, message) => {
-                toast.error(message, { closeButton: true });
+                // Error callback
+                toast.error(message || 'Failed to create question.', {
+                    closeButton: true,
+                    duration: 5000,
+                });
                 if (type === ErrorType.TokenExpired) {
                     logout();
                     navigate(RRoutes.Login.path);
                 }
+                setIsCreating(false);
             },
             question => {
-                toast.success('Question created successfully!', { closeButton: true });
-                setQuestionName('');
-                setDataItems(prev => [...prev, convert(question)]);
+                // Success callback
+                toast.success(`Question "${question.body}" created successfully!`, {
+                    duration: 3000,
+                });
+                setQuestionName(''); // Clear input field
+                // setQuestionLang(Object.values(Lang)[0] || ''); // Reset language if needed
+                setDataItems(prev => [...prev, convert(question)]); // Add new question to the list
+                setIsCreating(false);
             }
         );
     };
 
+    // Helper function to convert raw question data to the format needed for display
     const convert = question => ({
         id: question.id,
         name: question.body,
         validated: question.validated,
-        date: new Date(question.createdAt).toLocaleString(),
+        lang: question.lang,
+        date: new Date(question.createdAt).toLocaleDateString(), // Using toLocaleDateString for brevity
     });
 
-    const filteredItems = dataItems.filter(item =>
-        item.name.toLowerCase().includes(search.toLowerCase())
+    // Memoized list of filtered questions based on the search term
+    const filteredItems = useMemo(
+        () =>
+            dataItems.filter(
+                item =>
+                    item.name.toLowerCase().includes(search.toLowerCase()) ||
+                    item.lang.toLowerCase().includes(search.toLowerCase())
+            ),
+        [dataItems, search]
     );
 
     return (
-        <div className="p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="border rounded-md p-4 space-y-4 lg:col-span-1">
-                <h2 className="text-lg font-semibold mb-2">Create Question</h2>
-                <div className="grid gap-4">
-                    <div className="space-y-2">
-                        <label htmlFor="question-name" className="text-sm font-medium">
-                            Name
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 items-start">
+            {/* Section for creating a new Question */}
+            <Card className="lg:col-span-1 shadow-lg rounded-xl dark:bg-slate-800 border dark:border-slate-700/50">
+                <CardHeader className="pb-4">
+                    <div className="flex items-center">
+                        <PlusCircle size={24} className="mr-3 text-sky-600 dark:text-sky-500" />
+                        <div>
+                            <CardTitle className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+                                Create Question
+                            </CardTitle>
+                            <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
+                                Add a new question to the library.
+                            </CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-1.5">
+                        <label
+                            htmlFor="question-name"
+                            className="text-sm font-medium text-slate-700 dark:text-slate-300"
+                        >
+                            Question Name / Body
                         </label>
                         <Input
                             id="question-name"
                             value={questionName}
                             onChange={e => setQuestionName(e.target.value)}
-                            className="w-full"
+                            placeholder="e.g., What is the output of..."
+                            className="w-full dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500"
+                            maxLength={100}
                         />
                     </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Language</label>
+                    <div className="space-y-1.5">
+                        <label
+                            htmlFor="question-lang"
+                            className="text-sm font-medium text-slate-700 dark:text-slate-300"
+                        >
+                            Language
+                        </label>
                         <Select value={questionLang} onValueChange={setQuestionLang}>
-                            <SelectTrigger className="w-full">
+                            <SelectTrigger
+                                id="question-lang"
+                                className="w-full dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500"
+                            >
                                 <SelectValue placeholder="Select language" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="dark:bg-slate-700 dark:text-slate-200">
                                 {Object.values(Lang).map(lang => (
                                     <SelectItem key={lang} value={lang}>
                                         {lang}
@@ -131,53 +214,157 @@ const QuestionsPage = () => {
                             </SelectContent>
                         </Select>
                     </div>
-                    <Button onClick={handleCreateQuestion}>Create</Button>
-                </div>
-            </div>
-
-            <div className="lg:col-span-2 space-y-4">
-                {loading ? (
-                    <Loading />
-                ) : (
-                    <>
-                        <Input
-                            placeholder="Search by name..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="w-full"
-                        />
-                        <ScrollArea className="h-[600px] w-full rounded-md border p-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {filteredItems.map((item, idx) => (
-                                    <Card
-                                        key={idx}
-                                        className="w-full"
-                                        onClick={() => navigate(`${RQuestions}/${item.id}`)}
-                                    >
-                                        <CardHeader>
-                                            <h3 className="text-sm font-medium">Name</h3>
-                                            <p className="text-muted-foreground">{item.name}</p>
-                                        </CardHeader>
-                                        <CardContent className="space-y-1">
-                                            <div>
-                                                <p className="text-sm font-medium">Date</p>
-                                                <p className="text-muted-foreground">{item.date}</p>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <p className="text-sm font-medium">Validated</p>
-                                                {item.validated ? (
-                                                    <CheckCircle className="text-green-500 w-4 h-4" />
-                                                ) : (
-                                                    <XCircle className="text-red-500 w-4 h-4" />
-                                                )}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
+                </CardContent>
+                <CardFooter>
+                    <Button
+                        onClick={handleCreateQuestion}
+                        className="w-full bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white"
+                        disabled={isCreating}
+                    >
+                        {isCreating ? (
+                            <div className="flex items-center justify-center">
+                                <svg
+                                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    ></path>
+                                </svg>
+                                Creating...
                             </div>
-                        </ScrollArea>
-                    </>
-                )}
+                        ) : (
+                            <>
+                                <PlusCircle size={18} className="mr-2" /> Create Question
+                            </>
+                        )}
+                    </Button>
+                </CardFooter>
+            </Card>
+
+            {/* Section for displaying existing Questions */}
+            <div className="lg:col-span-2 space-y-5">
+                <Card className="shadow-lg rounded-xl dark:bg-slate-800 border dark:border-slate-700/50">
+                    <CardHeader className="pb-4">
+                        <div className="flex items-center">
+                            <FileQuestion
+                                size={24}
+                                className="mr-3 text-sky-600 dark:text-sky-500"
+                            />
+                            <div>
+                                <CardTitle className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+                                    Existing Questions
+                                </CardTitle>
+                                <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
+                                    Browse and manage your questions. ({filteredItems.length} found)
+                                </CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="relative mb-4">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 dark:text-slate-500" />
+                            <Input
+                                type="search"
+                                placeholder="Search by name or language..."
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                className="w-full pl-10 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500"
+                            />
+                        </div>
+
+                        {loading ? (
+                            <Loading message="Loading questions..." />
+                        ) : filteredItems.length === 0 ? (
+                            <div className="text-center py-10 text-slate-500 dark:text-slate-400">
+                                <FileWarning
+                                    size={48}
+                                    className="mx-auto mb-4 text-slate-400 dark:text-slate-500"
+                                />
+                                <p className="font-semibold text-lg">No Questions Found</p>
+                                <p className="text-sm mt-1">
+                                    {search
+                                        ? 'Try adjusting your search term.'
+                                        : 'Create a new question to get started!'}
+                                </p>
+                            </div>
+                        ) : (
+                            <ScrollArea className="h-[calc(100vh-380px)] min-h-[300px] pr-1">
+                                {' '}
+                                {/* Adjusted height */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {filteredItems.map(item => (
+                                        <Card
+                                            key={item.id}
+                                            className="cursor-pointer hover:shadow-lg transition-shadow duration-200 dark:bg-slate-850 dark:hover:bg-slate-700/70 border dark:border-slate-700 rounded-lg overflow-hidden"
+                                            onClick={() => navigate(`${RQuestions}/${item.id}`)}
+                                        >
+                                            <CardHeader className="p-4">
+                                                <CardTitle
+                                                    className="text-md font-semibold text-sky-700 dark:text-sky-500 truncate"
+                                                    title={item.name}
+                                                >
+                                                    {item.name}
+                                                </CardTitle>
+                                                <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+                                                    ID: {item.id}
+                                                </CardDescription>
+                                            </CardHeader>
+                                            <CardContent className="p-4 pt-0 space-y-2 text-xs">
+                                                <div className="flex items-center text-slate-600 dark:text-slate-300">
+                                                    <Languages
+                                                        size={13}
+                                                        className="mr-1.5 text-slate-500 dark:text-slate-400"
+                                                    />
+                                                    Language:{' '}
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="ml-1.5 text-xs px-1.5 py-0.5 dark:border-slate-600 dark:text-slate-300"
+                                                    >
+                                                        {item.lang}
+                                                    </Badge>
+                                                </div>
+                                                <div className="flex items-center text-slate-600 dark:text-slate-300">
+                                                    <CalendarDays
+                                                        size={13}
+                                                        className="mr-1.5 text-slate-500 dark:text-slate-400"
+                                                    />
+                                                    Created: {item.date}
+                                                </div>
+                                                <div className="flex items-center text-slate-600 dark:text-slate-300">
+                                                    {item.validated ? (
+                                                        <CheckCircle
+                                                            size={13}
+                                                            className="mr-1.5 text-green-500 dark:text-green-400"
+                                                        />
+                                                    ) : (
+                                                        <XCircle
+                                                            size={13}
+                                                            className="mr-1.5 text-red-500 dark:text-red-400"
+                                                        />
+                                                    )}
+                                                    Validated: {item.validated ? 'Yes' : 'No'}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </ScrollArea>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

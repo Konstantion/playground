@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.js';
 import { Action, actionStr, userStr } from '@/entities/Action.js';
 import { Label } from '@/components/ui/label.js';
@@ -20,136 +20,264 @@ import { Routes as RRoutes } from '@/rout/Routes.jsx';
 import { sNotEmpty } from '@/utils/ObjectUtils.js';
 import { useAuth } from '@/hooks/useAuth.jsx';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { Settings2, PlusCircle, MinusCircle, Link2 } from 'lucide-react';
 
-export default function CallArgsConfigurator({ id, question, setQuestion }) {
+export default function CallArgsConfigurator({ id, question, setQuestion, className }) {
     const { auth, logout } = useAuth();
     const navigate = useNavigate();
+
     const [action, setAction] = useState(Action.ADD);
-    const [callArg, setCallArg] = useState(CallArgs.A);
-    const [identifier, setIdentifier] = useState(PlaceholderIdentifier.P_1);
+    const [callArgName, setCallArgName] = useState(CallArgs.A);
+    const [linkedIdentifier, setLinkedIdentifier] = useState(PlaceholderIdentifier.P_1);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const selectCallArg = () => {
-        return (
-            <>
-                <Label>Call Arg Configurator</Label>
-                <Select defaultValue={callArg} onValueChange={setCallArg}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select call arg" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {Object.values(CallArgs).map(callArg => (
-                            <SelectItem key={callArg} value={callArg}>
-                                {callArg}
+    const availablePlaceholders = Object.keys(question.placeholderDefinitions || {});
+
+    const selectCallArgName = () => (
+        <div className="space-y-1.5">
+            <Label
+                htmlFor="call-arg-name"
+                className="text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+                Argument Name
+            </Label>
+            <Select value={callArgName} onValueChange={setCallArgName}>
+                <SelectTrigger
+                    id="call-arg-name"
+                    className="w-full dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500"
+                >
+                    <SelectValue placeholder="Select argument name" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-slate-700 dark:text-slate-200">
+                    {Object.values(CallArgs).map(arg => (
+                        <SelectItem key={arg} value={arg}>
+                            {arg}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
+    );
+
+    const selectLinkedIdentifier = () => (
+        <div className="space-y-1.5">
+            <Label
+                htmlFor="linked-identifier"
+                className="text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+                Link to Placeholder Identifier
+            </Label>
+            <Select
+                value={linkedIdentifier}
+                onValueChange={setLinkedIdentifier}
+                disabled={availablePlaceholders.length === 0}
+            >
+                <SelectTrigger
+                    id="linked-identifier"
+                    className="w-full dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500"
+                >
+                    <SelectValue placeholder="Select placeholder to link" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-slate-700 dark:text-slate-200">
+                    {availablePlaceholders.length > 0 ? (
+                        availablePlaceholders.map(placeholderId => (
+                            <SelectItem key={placeholderId} value={placeholderId}>
+                                {placeholderId}
                             </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </>
-        );
-    };
-
-    const selectIdentifier = () => {
-        return (
-            <>
-                <Label>Placeholder Identifier </Label>
-                <Select defaultValue={identifier} onValueChange={setIdentifier}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select identifier" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {Object.values(PlaceholderIdentifier).map(placeholder => (
-                            <SelectItem key={placeholder} value={placeholder}>
-                                {placeholder}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </>
-        );
-    };
-
-    const performAction = () => {
-        return <Button onClick={handleAction}>Perform Action</Button>;
-    };
+                        ))
+                    ) : (
+                        <SelectItem value="none" disabled>
+                            No placeholders defined
+                        </SelectItem>
+                    )}
+                </SelectContent>
+            </Select>
+            {availablePlaceholders.length === 0 && (
+                <p className="text-xs text-amber-600 dark:text-amber-500 mt-1">
+                    Define placeholders first to link them as call arguments.
+                </p>
+            )}
+        </div>
+    );
 
     const handleAction = async () => {
+        setIsLoading(true);
         const body = {
             action: actionStr(action),
         };
 
         if (action === Action.REMOVE) {
-            body.args = [callArg];
+            body.args = [callArgName];
         } else {
+            if (availablePlaceholders.length === 0) {
+                toast.warning(
+                    'Cannot add call argument. Please define at least one placeholder first.',
+                    { duration: 4000 }
+                );
+                setIsLoading(false);
+                return;
+            }
+
             body.callArgs = [
                 {
-                    identifier: identifier,
-                    name: callArg,
+                    identifier: linkedIdentifier,
+                    name: callArgName,
                 },
             ];
         }
 
         await authenticatedReq(
-            Endpoints.Questions.Base + `/${id}`,
+            `${Endpoints.Questions.Base}/${id}`,
             'PATCH',
             body,
             auth.accessToken,
             (type, message) => {
-                toast.error(message, { closeButton: true, duration: 10_000 });
+                toast.error(message || `Failed to ${action.toLowerCase()} call argument.`, {
+                    closeButton: true,
+                    duration: 5000,
+                });
                 if (type === ErrorType.TokenExpired) {
                     logout();
                     navigate(RRoutes.Login.path);
                 }
+                setIsLoading(false);
             },
             response => {
                 if (sNotEmpty(response?.updated)) {
                     setQuestion(response.updated);
+                    toast.success(
+                        `Call argument '${callArgName}' successfully ${userStr(action)}!`,
+                        { duration: 3000 }
+                    );
                 }
-
                 if (sNotEmpty(response?.violations)) {
                     Object.entries(response.violations).forEach(([key, value]) => {
                         toast.error(
-                            `Violation error for ${key}, ${value.join('and ').toLowerCase()}.`,
+                            `Validation error for ${key}: ${value.join(' and ').toLowerCase()}.`,
                             { closeButton: true }
                         );
                     });
-                } else {
-                    toast.success(`Call arg successfully ${userStr(action)}.`, {
-                        closeButton: true,
-                        duration: 5_000,
+                } else if (!sNotEmpty(response?.updated) && !sNotEmpty(response?.violations)) {
+                    toast.info(`Call argument operation for '${callArgName}' processed.`, {
+                        duration: 3000,
                     });
                 }
+                setIsLoading(false);
             }
         );
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Call Args</CardTitle>
+        <Card
+            className={cn(
+                'shadow-xl rounded-xl dark:bg-slate-800 border dark:border-slate-700/50 flex flex-col',
+                className
+            )}
+        >
+            <CardHeader className="pb-3 pt-4 px-4 sm:px-5">
+                <div className="flex items-center">
+                    <Settings2 size={20} className="mr-2.5 text-sky-600 dark:text-sky-500" />
+                    <div>
+                        <CardTitle className="text-base sm:text-lg font-semibold text-slate-700 dark:text-slate-200">
+                            Call Arguments
+                        </CardTitle>
+                        <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+                            Manage function arguments and link them to placeholders.
+                        </CardDescription>
+                    </div>
+                </div>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-                <Tabs className="m-2" defaultValue={action} onValueChange={setAction}>
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value={Action.ADD}>Add</TabsTrigger>
-                        <TabsTrigger value={Action.REMOVE}>Remove</TabsTrigger>
+            <CardContent className="flex-1 flex flex-col p-3 sm:p-4 min-h-0">
+                <Tabs value={action} onValueChange={setAction} className="flex flex-col flex-1">
+                    <TabsList className="grid w-full grid-cols-2 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg">
+                        <TabsTrigger
+                            value={Action.ADD}
+                            className="py-2 data-[state=active]:bg-white data-[state=active]:dark:bg-slate-900 data-[state=active]:shadow-md rounded-md data-[state=active]:text-sky-600"
+                        >
+                            <PlusCircle size={16} className="mr-1.5" /> Add/Update
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value={Action.REMOVE}
+                            className="py-2 data-[state=active]:bg-white data-[state=active]:dark:bg-slate-900 data-[state=active]:shadow-md rounded-md data-[state=active]:text-red-600"
+                        >
+                            <MinusCircle size={16} className="mr-1.5" /> Remove
+                        </TabsTrigger>
                     </TabsList>
-                    <TabsContent value={Action.ADD}>
-                        <Card>
-                            <CardContent className="flex flex-col gap-4">
-                                {selectCallArg()}
-                                {selectIdentifier()}
-                                {performAction()}
-                            </CardContent>
-                        </Card>
+
+                    {/* Content for ADD Tab */}
+                    <TabsContent value={Action.ADD} className="flex-1 mt-4">
+                        <div className="space-y-4 p-1">
+                            {selectCallArgName()}
+                            {selectLinkedIdentifier()}
+                            <div className="flex items-center text-sm text-slate-600 dark:text-slate-400 pt-2">
+                                <Link2 size={16} className="mr-2 text-sky-500" />
+                                <span>
+                                    Links argument{' '}
+                                    <b className="text-purple-600 dark:text-purple-400">
+                                        {callArgName}
+                                    </b>{' '}
+                                    to placeholder{' '}
+                                    <b className="text-sky-600 dark:text-sky-500">
+                                        {linkedIdentifier}
+                                    </b>
+                                    .
+                                </span>
+                            </div>
+                        </div>
                     </TabsContent>
-                    <TabsContent value={Action.REMOVE}>
-                        <Card>
-                            <CardContent className="flex flex-col gap-4">
-                                {selectCallArg()}
-                                {performAction()}
-                            </CardContent>
-                        </Card>
+
+                    {/* Content for REMOVE Tab */}
+                    <TabsContent value={Action.REMOVE} className="flex-1 mt-4">
+                        <div className="space-y-4 p-1">
+                            {selectCallArgName()}
+                            <p className="text-xs text-slate-500 dark:text-slate-400 pt-2">
+                                Select the call argument name you wish to remove. This will unlink
+                                it from any placeholder.
+                            </p>
+                        </div>
                     </TabsContent>
+
+                    <div className="mt-auto pt-4">
+                        <Button
+                            onClick={handleAction}
+                            className="w-full bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white"
+                            disabled={
+                                isLoading ||
+                                (action === Action.ADD && availablePlaceholders.length === 0)
+                            }
+                        >
+                            {isLoading ? (
+                                <div className="flex items-center justify-center">
+                                    <svg
+                                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <circle
+                                            className="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            strokeWidth="4"
+                                        ></circle>
+                                        <path
+                                            className="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        ></path>
+                                    </svg>
+                                    Processing...
+                                </div>
+                            ) : action === Action.ADD ? (
+                                'Add / Update Argument'
+                            ) : (
+                                'Remove Argument'
+                            )}
+                        </Button>
+                    </div>
                 </Tabs>
             </CardContent>
         </Card>

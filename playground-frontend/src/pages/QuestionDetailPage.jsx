@@ -47,68 +47,94 @@ export default function QuestionDetailPage() {
                 auth.accessToken,
                 (type, message) => {
                     setStatus(State.NotFound);
-                    toast.error(message, { closeButton: true });
+                    toast.error(message || 'Failed to load question details.', {
+                        closeButton: true,
+                        duration: 5000,
+                    });
                     if (type === ErrorType.TokenExpired) {
                         logout();
                         navigate(Routes.Login.path);
                     }
                 },
-                question => {
-                    setQuestion(question);
+                fetchedQuestion => {
+                    setQuestion(fetchedQuestion);
                     setStatus(State.Loaded);
                 }
             );
         };
 
         fetchQuestion();
-    }, [id]);
+    }, [id, auth.accessToken, logout, navigate]);
+
+    if (status === State.Loading) {
+        return (
+            <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col">
+                <Header page={null} setPage={page => navigate(`${RHome}/${page}`)} />
+                <Loading message="Loading question details..." />
+            </div>
+        );
+    }
+
+    if (status === State.NotFound || !question) {
+        return (
+            <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col">
+                <Header page={null} setPage={page => navigate(`${RHome}/${page}`)} />
+                <NotFound message="The question you are looking for could not be found." />
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-gray-100 flex flex-col">
+        <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col selection:bg-sky-500 selection:text-white">
             <Header page={null} setPage={page => navigate(`${RHome}/${page}`)} />
 
-            {status === State.Loading && <Loading />}
-            {status === State.NotFound && <NotFound />}
+            {/* Main content grid */}
+            <main className="flex-1 p-4 md:p-6 lg:p-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8">
+                    {/* Column 1: Question Preview & Placeholder Configurator */}
+                    <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-6 xl:gap-8">
+                        <QuestionPreview question={question} setQuestion={setQuestion} />
+                        <PlaceholderConfigurator
+                            id={id}
+                            question={question}
+                            setQuestion={setQuestion}
+                        />
+                    </div>
 
-            {status === State.Loaded && question && (
-                <div className="grid grid-cols-[2fr_2fr_3fr_3fr] grid-rows-2 gap-4 w-full h-screen p-4">
-                    <QuestionPreview
-                        className="col-span-2"
-                        question={question}
-                        setQuestion={setQuestion}
-                    />
+                    {/* Column 2: Variants Carousels & Call Args */}
+                    <div className="lg:col-span-7 xl:col-span-5 flex flex-col gap-6 xl:gap-8">
+                        <VariantsCarousel
+                            language={question.lang}
+                            variants={question.correctVariants}
+                            title={'Correct Variants'}
+                            question={question}
+                            setQuestion={setQuestion}
+                            correct={true}
+                            className="min-h-[300px] md:min-h-[350px]"
+                        />
+                        <VariantsCarousel
+                            language={question.lang}
+                            variants={question.incorrectVariants}
+                            title={'Incorrect Variants'}
+                            question={question}
+                            setQuestion={setQuestion}
+                            correct={false}
+                            className="min-h-[300px] md:min-h-[350px]"
+                        />
+                        <CallArgsConfigurator
+                            id={id}
+                            question={question}
+                            setQuestion={setQuestion}
+                        />
+                    </div>
 
-                    <VariantsCarousel
-                        language={question.lang}
-                        variants={question.correctVariants}
-                        title={'Correct Variants'}
-                        question={question}
-                        setQuestion={setQuestion}
-                        correct={true}
-                    />
-
-                    <VariantsCarousel
-                        language={question.lang}
-                        variants={question.incorrectVariants}
-                        title={'Incorrect Variants'}
-                        question={question}
-                        setQuestion={setQuestion}
-                        correct={false}
-                    />
-
-                    <PlaceholderConfigurator
-                        id={id}
-                        question={question}
-                        setQuestion={setQuestion}
-                    />
-
-                    <CallArgsConfigurator id={id} question={question} setQuestion={setQuestion} />
-
-                    <AddVariant question={question} setQuestion={setQuestion} />
-
-                    <ValidateCard question={question} setQuestion={setQuestion} />
+                    {/* Column 3: Add Variant & Validate Card */}
+                    <div className="lg:col-span-12 xl:col-span-3 flex flex-col gap-6 xl:gap-8">
+                        <AddVariant question={question} setQuestion={setQuestion} />
+                        <ValidateCard question={question} setQuestion={setQuestion} />
+                    </div>
                 </div>
-            )}
+            </main>
         </div>
     );
 }

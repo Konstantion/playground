@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+    CardFooter,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -10,6 +17,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    DialogClose,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,12 +28,33 @@ import { useAuth } from '@/hooks/useAuth.jsx';
 import { ErrorType } from '@/utils/ErrorType.js';
 import { toast } from 'sonner';
 import { Action, actionStr } from '@/entities/Action.js';
-import { CheckCircle, Edit, FileQuestion, Plus, Trash2, XCircle } from 'lucide-react';
+import {
+    CheckCircle,
+    Edit,
+    FileQuestion,
+    Plus,
+    Trash2,
+    XCircle,
+    Briefcase,
+    Info,
+    CalendarDays,
+    ListChecks,
+    Shuffle,
+    Clock,
+    Settings2,
+    Link as LinkIcon,
+    Search,
+    FileWarning,
+    Copy,
+} from 'lucide-react';
 import Loading from '@/components/Loading.jsx';
 import NotFound from '@/components/NotFound.jsx';
 import Header from '@/components/Header.jsx';
-import { RHome, RLogin } from '@/rout/Routes.jsx';
+import { RHome, RLogin, RQuestions } from '@/rout/Routes.jsx';
 import { between } from '@/utils/Strings.js';
+import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 
 export default function TestModelDetailPage() {
     const { id } = useParams();
@@ -34,21 +63,22 @@ export default function TestModelDetailPage() {
 
     const [model, setModel] = useState(null);
     const [status, setStatus] = useState('loading');
-    const [available, setAvailable] = useState([]);
-    const [search, setSearch] = useState('');
+    const [availableQuestions, setAvailableQuestions] = useState([]);
+    const [searchAvailable, setSearchAvailable] = useState('');
 
-    const [addOpen, setAddOpen] = useState(false);
-    const [addingQuestion, setAddingQuestion] = useState(false);
+    const [isAddQuestionDialogOpen, setIsAddQuestionDialogOpen] = useState(false);
+    const [isAddingQuestionToModel, setIsAddingQuestionToModel] = useState(false);
 
-    const [isEditNameOpen, setIsEditNameOpen] = useState(false);
+    const [isEditNameDialogOpen, setIsEditNameDialogOpen] = useState(false);
     const [draftModelName, setDraftModelName] = useState('');
 
     const [expiresAfter, setExpiresAfter] = useState('');
     const [shuffleQuestions, setShuffleQuestions] = useState(false);
     const [shuffleVariants, setShuffleVariants] = useState(false);
-    const [savingConfiguration, setSavingConfiguration] = useState(false);
+    const [isSavingConfiguration, setIsSavingConfiguration] = useState(false);
 
-    const [createOpen, setCreateOpen] = useState(false);
+    const [isImmutableTestCreatedDialogOpen, setIsImmutableTestCreatedDialogOpen] = useState(false);
+    const [createdImmutableTestId, setCreatedImmutableTestId] = useState(null);
 
     useEffect(() => {
         if (!id) {
@@ -64,7 +94,9 @@ export default function TestModelDetailPage() {
                 auth.accessToken,
                 (type, msg) => {
                     setStatus('notfound');
-                    toast.error(`Failed to load model: ${msg}`);
+                    toast.error(`Failed to load model: ${msg || 'Unknown error'}`, {
+                        duration: 4000,
+                    });
                     if (type === ErrorType.TokenExpired) {
                         logout();
                         navigate(RLogin);
@@ -73,10 +105,12 @@ export default function TestModelDetailPage() {
                 data => {
                     setModel(data);
                     setDraftModelName(data.name || '');
-                    setExpiresAfter(data.expiresAfter ? String(data.expiresAfter) : '');
+
+                    setExpiresAfter(data.expiresAfter ? String(data.expiresAfter / 60000) : '');
                     setShuffleQuestions(data.shuffleQuestions || false);
                     setShuffleVariants(data.shuffleVariants || false);
                     setStatus('loaded');
+                    document.title = `${data.name || 'Test Model'} - Playground`;
                 }
             );
         };
@@ -84,78 +118,70 @@ export default function TestModelDetailPage() {
     }, [id, auth.accessToken, logout, navigate]);
 
     const filteredAvailableQuestions = useMemo(() => {
-        if (!model) return [];
+        if (!model || !Array.isArray(availableQuestions)) return [];
         const existingQuestionIds = new Set(model.questions.map(q => q.id));
-        return available.filter(
+        return availableQuestions.filter(
             q =>
                 !existingQuestionIds.has(q.id) &&
-                (q.name || '').toLowerCase().includes(search.toLowerCase())
+                (q.body || q.name || `Question ID: ${q.id}`)
+                    .toLowerCase()
+                    .includes(searchAvailable.toLowerCase())
         );
-    }, [available, model, search]);
+    }, [availableQuestions, model, searchAvailable]);
 
-    const updateModelDetails = async (patchBody, successMessage) => {
-        await authenticatedReq(
+    const updateModelDetails = async (patchBody, successMessage, failureMessage) => {
+        setIsSavingConfiguration(true);
+        const result = await authenticatedReq(
             `${Endpoints.TestModel.Base}/${id}`,
             'PATCH',
             patchBody,
             auth.accessToken,
             (type, message) => {
-                toast.error(`Operation failed: ${message}`);
+                toast.error(failureMessage || `Operation failed: ${message || 'Unknown error'}`, {
+                    duration: 4000,
+                });
                 if (type === ErrorType.TokenExpired) {
                     logout();
                     navigate(RLogin);
                 }
+                setIsSavingConfiguration(false);
                 return false;
             },
             updatedModel => {
                 setModel(updatedModel);
 
-                setDraftModelName(updatedModel.name || '');
-                setExpiresAfter(updatedModel.expiresAfter ? String(updatedModel.expiresAfter) : '');
-                setShuffleQuestions(updatedModel.shuffleQuestions || false);
-                setShuffleVariants(updatedModel.shuffleVariants || false);
-
-                toast.success(successMessage);
+                if (patchBody.name) setDraftModelName(updatedModel.name || '');
+                toast.success(successMessage || 'Model updated successfully!', { duration: 3000 });
+                setIsSavingConfiguration(false);
                 return true;
             }
         );
+        return result;
     };
 
     const handleSaveModelName = async () => {
-        if (!between(draftModelName, 1, 50)) {
-            toast.error('Model name must be between 1 and 50 characters long.');
+        if (!between(draftModelName.trim(), 1, 50)) {
+            toast.error('Model name must be 1-50 characters.', { duration: 3000 });
             return;
         }
-        const body = { action: actionStr(Action.ADD), name: draftModelName };
-
-        await authenticatedReq(
-            `${Endpoints.TestModel.Base}/${id}`,
-            'PATCH',
-            body,
-            auth.accessToken,
-            (type, message) => {
-                toast.error(message);
-                if (type === ErrorType.TokenExpired) {
-                    logout();
-                    navigate(RLogin);
-                }
-            },
-            updatedModel => {
-                setModel(updatedModel);
-            }
+        const success = await updateModelDetails(
+            { action: actionStr(Action.ADD), name: draftModelName.trim() },
+            'Model name updated successfully!',
+            'Failed to update model name.'
         );
-
-        setIsEditNameOpen(false);
+        if (success) setIsEditNameDialogOpen(false);
     };
 
-    const handleCreateTest = async () => {
-        setSavingConfiguration(true);
-        const expiresValue =
-            expiresAfter && parseInt(expiresAfter, 10) > 0 ? parseInt(expiresAfter, 10) : null;
+    const handleCreateImmutableTest = async () => {
+        setIsSavingConfiguration(true);
+        const expiresValueMs =
+            expiresAfter && parseInt(expiresAfter, 10) > 0
+                ? parseInt(expiresAfter, 10) * 60000
+                : null;
 
         const body = {
-            testId: id,
-            expiresAfter: expiresValue,
+            testModelId: id,
+            expiresAfter: expiresValueMs,
             shuffleQuestions: shuffleQuestions,
             shuffleVariants: shuffleVariants,
         };
@@ -166,438 +192,607 @@ export default function TestModelDetailPage() {
             body,
             auth.accessToken,
             (type, message) => {
-                toast.error(`Failed to create test: ${message}`);
+                toast.error(`Failed to create immutable test: ${message || 'Unknown error'}`, {
+                    duration: 5000,
+                });
                 if (type === ErrorType.TokenExpired) {
                     logout();
                     navigate(RLogin);
                 }
+                setIsSavingConfiguration(false);
             },
             immutableTest => {
-                toast.success(`Test created successfully, ${immutableTest.id}`);
-                console.log(immutableTest);
+                toast.success(`Immutable Test (ID: ${immutableTest.id}) created successfully!`, {
+                    duration: 4000,
+                });
+                setCreatedImmutableTestId(immutableTest.id);
+                setIsImmutableTestCreatedDialogOpen(true);
+
+                setIsSavingConfiguration(false);
             }
         );
-
-        setSavingConfiguration(false);
     };
 
-    const modifyQuestionInModel = async (action, questionId) => {
-        const patchBody = { action: actionStr(action), questionId: questionId };
-        setAddingQuestion(true);
+    const modifyQuestionInModel = async (actionType, questionId) => {
+        if (actionType === Action.ADD) setIsAddingQuestionToModel(true);
+
+        const patchBody = { action: actionStr(actionType), questionId: questionId };
         await authenticatedReq(
             `${Endpoints.TestModel.Base}/${id}`,
             'PATCH',
             patchBody,
             auth.accessToken,
             (type, message) => {
-                toast.error(`Operation failed: ${message}`);
+                toast.error(`Operation failed: ${message || 'Unknown error'}`, { duration: 4000 });
                 if (type === ErrorType.TokenExpired) {
                     logout();
                     navigate(RLogin);
                 }
-                if (action === Action.ADD) setAddingQuestion(false);
+                if (actionType === Action.ADD) setIsAddingQuestionToModel(false);
             },
             updatedModel => {
                 setModel(updatedModel);
                 toast.success(
-                    `Question ${action === Action.ADD ? 'added to' : 'removed from'} model successfully!`
+                    `Question ${actionType === Action.ADD ? 'added to' : 'removed from'} model.`,
+                    { duration: 3000 }
                 );
-                if (action === Action.ADD) {
-                    fetchAvailableQuestions();
-                    setAddingQuestion(false);
+                if (actionType === Action.ADD) {
+                    setAvailableQuestions(prev => prev.filter(q => q.id !== questionId));
+                    setIsAddingQuestionToModel(false);
                 }
             }
         );
     };
 
-    const handleRemoveQuestion = async questionId => {
-        await modifyQuestionInModel(Action.REMOVE, questionId);
-    };
-
-    const fetchAvailableQuestions = async () => {
+    const fetchAvailableQuestionsForDialog = async () => {
+        if (availableQuestions.length > 0 && isAddQuestionDialogOpen) {
+            return;
+        }
         await authenticatedReq(
-            Endpoints.Questions.Base,
+            Endpoints.Questions.GetAll,
             'GET',
             null,
             auth.accessToken,
             (type, message) => {
-                toast.error(`Failed to load available questions: ${message}`);
+                toast.error(`Failed to load available questions: ${message || 'Unknown error'}`, {
+                    duration: 4000,
+                });
                 if (type === ErrorType.TokenExpired) {
                     logout();
                     navigate(RLogin);
                 }
             },
             data => {
-                setAvailable(
-                    data.map(q => ({
+                const questionsData = Array.isArray(data) ? data : [];
+                setAvailableQuestions(
+                    questionsData.map(q => ({
                         id: q.id,
                         name: q.body || `Question ID: ${q.id}`,
                         validated: q.validated,
                         createdAt: q.createdAt,
+                        lang: q.lang,
                     }))
                 );
             }
         );
     };
 
-    const handleOpenAddQuestionDialog = async () => {
-        setAddOpen(true);
-        await fetchAvailableQuestions();
+    const handleOpenAddQuestionDialog = () => {
+        setIsAddQuestionDialogOpen(true);
+        fetchAvailableQuestionsForDialog();
     };
 
-    const handleAddQuestionToModel = async questionId => {
-        await modifyQuestionInModel(Action.ADD, questionId);
+    const copyToClipboard = text => {
+        navigator.clipboard
+            .writeText(text)
+            .then(() => {
+                toast.success('Test ID copied to clipboard!', { duration: 2000 });
+            })
+            .catch(err => {
+                toast.error('Failed to copy Test ID.', { duration: 2000 });
+            });
     };
 
-    if (status === 'loading') return <Loading message="Loading test model details..." />;
-    if (status === 'notfound' || !model) return <NotFound message="Test model not found." />;
+    if (status === 'loading')
+        return (
+            <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col">
+                <Header page={null} setPage={p => navigate(`${RHome}/${p}`)} />
+                <Loading message="Loading test model details..." />
+            </div>
+        );
+    if (status === 'notfound' || !model)
+        return (
+            <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col">
+                <Header page={null} setPage={p => navigate(`${RHome}/${p}`)} />
+                <NotFound message="Test model not found." />
+            </div>
+        );
 
     return (
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
+        <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col selection:bg-sky-500 selection:text-white">
             <Header page={null} setPage={p => navigate(`${RHome}/${p}`)} />
 
-            <main className="flex-1 p-4 md:p-6 grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6 overflow-hidden">
-                <div className="flex flex-col gap-6">
-                    <Card className="shadow-lg rounded-lg dark:bg-gray-800 border dark:border-gray-700">
-                        <CardHeader className="pb-4">
-                            <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-                                Test Model Details
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
-                            <section className="flex items-start justify-between rounded-lg border dark:border-gray-700 bg-card dark:bg-gray-850 p-3 shadow-sm">
-                                <div>
-                                    <h4 className="font-medium text-gray-900 dark:text-gray-50">
-                                        Name
-                                    </h4>
-                                    <p className="whitespace-pre-wrap">{model.name}</p>
-                                </div>
-                                <Dialog open={isEditNameOpen} onOpenChange={setIsEditNameOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
-                                        >
-                                            <Edit size={16} />
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="dark:bg-gray-800">
-                                        <DialogHeader>
-                                            <DialogTitle className="dark:text-gray-50">
-                                                Edit Model Name
-                                            </DialogTitle>
-                                            <DialogDescription className="dark:text-gray-400">
-                                                Change the name for this test model.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <Input
-                                            value={draftModelName}
-                                            onChange={e => setDraftModelName(e.target.value)}
-                                            className="my-4 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
-                                            placeholder="Enter model name"
+            <main className="flex-1 p-4 md:p-6 lg:p-8">
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8 items-start">
+                    {/* Left Column: Model Details & Test Configuration */}
+                    <div className="xl:col-span-4 flex flex-col gap-6 xl:gap-8">
+                        {/* Model Details Card */}
+                        <Card className="shadow-xl rounded-xl dark:bg-slate-800 border dark:border-slate-700/50">
+                            <CardHeader className="pb-4">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center">
+                                        <Briefcase
+                                            size={22}
+                                            className="mr-3 text-sky-600 dark:text-sky-500"
                                         />
-                                        <DialogFooter>
+                                        <div>
+                                            <CardTitle className="text-lg sm:text-xl font-semibold text-slate-800 dark:text-slate-100">
+                                                {model.name || 'Test Model'}
+                                            </CardTitle>
+                                            <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+                                                ID: {model.id}
+                                            </CardDescription>
+                                        </div>
+                                    </div>
+                                    <Dialog
+                                        open={isEditNameDialogOpen}
+                                        onOpenChange={setIsEditNameDialogOpen}
+                                    >
+                                        <DialogTrigger asChild>
                                             <Button
-                                                variant="outline"
-                                                onClick={() => setIsEditNameOpen(false)}
-                                                className="dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-slate-500 hover:text-sky-600 dark:hover:text-sky-500 h-8 w-8 rounded-full"
                                             >
-                                                Cancel
+                                                <Edit size={16} />
                                             </Button>
-                                            <Button
-                                                onClick={handleSaveModelName}
-                                                className="dark:bg-blue-600 dark:hover:bg-blue-700"
-                                            >
-                                                Save Name
-                                            </Button>
-                                        </DialogFooter>
-                                    </DialogContent>
-                                </Dialog>
-                            </section>
-
-                            <section
-                                className={
-                                    'rounded-lg border dark:border-gray-700 bg-card dark:bg-gray-850 p-3 shadow-sm'
-                                }
-                            >
-                                <h4 className="font-medium text-gray-900 dark:text-gray-50">ID</h4>
-                                <p>{model.id}</p>
-                            </section>
-                            <section
-                                className={
-                                    'rounded-lg border dark:border-gray-700 bg-card dark:bg-gray-850 p-3 shadow-sm'
-                                }
-                            >
-                                <h4 className="font-medium text-gray-900 dark:text-gray-50">
-                                    Created
-                                </h4>
-                                <p>{new Date(model.createdAt).toLocaleString()}</p>
-                            </section>
-                            <section
-                                className={
-                                    'rounded-lg border dark:border-gray-700 bg-card dark:bg-gray-850 p-3 shadow-sm'
-                                }
-                            >
-                                <h4 className="font-medium text-gray-900 dark:text-gray-50">
-                                    Total Questions
-                                </h4>
-                                <p>{model.questions.length}</p>
-                            </section>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="shadow-lg rounded-lg dark:bg-gray-800 border dark:border-gray-700">
-                        <CardHeader className="pb-4">
-                            <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-                                Test Configuration
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
-                            <div>
-                                <Label
-                                    htmlFor="expiresAfter"
-                                    className="font-medium text-gray-900 dark:text-gray-50"
-                                >
-                                    Expires After (minutes, 0 or empty for no limit)
-                                </Label>
-                                <Input
-                                    id="expiresAfter"
-                                    type="number"
-                                    value={expiresAfter}
-                                    onChange={e => setExpiresAfter(e.target.value)}
-                                    placeholder="e.g., 60"
-                                    className="mt-1 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
-                                    min="0"
-                                />
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="shuffleQuestions"
-                                    checked={shuffleQuestions}
-                                    onCheckedChange={setShuffleQuestions}
-                                    className="dark:border-gray-600 data-[state=checked]:dark:bg-blue-600"
-                                />
-                                <Label
-                                    htmlFor="shuffleQuestions"
-                                    className="font-medium text-gray-900 dark:text-gray-50"
-                                >
-                                    Shuffle Questions
-                                </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="shuffleVariants"
-                                    checked={shuffleVariants}
-                                    onCheckedChange={setShuffleVariants}
-                                    className="dark:border-gray-600 data-[state=checked]:dark:bg-blue-600"
-                                />
-                                <Label
-                                    htmlFor="shuffleVariants"
-                                    className="font-medium text-gray-900 dark:text-gray-50"
-                                >
-                                    Shuffle Variants
-                                </Label>
-                            </div>
-                            <Button
-                                onClick={handleCreateTest}
-                                disabled={savingConfiguration}
-                                className="w-full mt-2 dark:bg-blue-600 dark:hover:bg-blue-700"
-                            >
-                                {savingConfiguration ? 'Creating...' : 'Create Test'}
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <Card className="flex flex-col flex-1 shadow-lg rounded-lg overflow-hidden dark:bg-gray-800 border dark:border-gray-700">
-                    <CardHeader className="pb-4 border-b dark:border-gray-700">
-                        <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-                            Questions in Model
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col flex-1 p-0 overflow-hidden">
-                        <div className="flex-grow overflow-y-auto p-4 md:p-6">
-                            {model.questions.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 dark:text-gray-400 py-10">
-                                    <FileQuestion
-                                        className="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500 mb-4"
-                                        strokeWidth={1.5}
-                                    />
-                                    <h3 className="text-lg font-medium text-gray-700 dark:text-gray-200">
-                                        No Questions Yet
-                                    </h3>
-                                    <p className="mt-1 text-sm">
-                                        This model doesn't have any questions. Add some to get
-                                        started!
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
-                                    {model.questions.map(q => (
-                                        <Card
-                                            key={q.id}
-                                            className="flex flex-col cursor-pointer hover:shadow-xl dark:bg-gray-850 dark:hover:bg-gray-700 transition-shadow duration-200 rounded-md border dark:border-gray-700"
-                                            onClick={() => navigate(`/questions/${q.id}`)}
-                                        >
-                                            <CardHeader className="p-3 space-y-1.5">
-                                                <div className="flex justify-between items-start gap-2">
-                                                    <span className="font-semibold text-sm text-gray-800 dark:text-gray-100 break-words leading-tight flex-grow">
-                                                        {q.body || q.name || `Question ID: ${q.id}`}
-                                                    </span>
+                                        </DialogTrigger>
+                                        <DialogContent className="dark:bg-slate-800">
+                                            <DialogHeader>
+                                                <DialogTitle className="dark:text-slate-100">
+                                                    Edit Model Name
+                                                </DialogTitle>
+                                            </DialogHeader>
+                                            <Input
+                                                value={draftModelName}
+                                                onChange={e => setDraftModelName(e.target.value)}
+                                                className="my-4 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600"
+                                                placeholder="Enter new model name"
+                                                maxLength={50}
+                                            />
+                                            <DialogFooter>
+                                                <DialogClose asChild>
                                                     <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className="w-7 h-7 flex-shrink-0 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-500"
-                                                        onClick={e => {
-                                                            e.stopPropagation();
-                                                            handleRemoveQuestion(q.id);
-                                                        }}
-                                                        aria-label="Remove question"
+                                                        variant="outline"
+                                                        className="dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
                                                     >
-                                                        <Trash2 className="w-4 h-4" />
+                                                        Cancel
                                                     </Button>
-                                                </div>
-                                                <div className="flex items-center justify-between text-xs">
-                                                    {q.validated ? (
-                                                        <span className="inline-flex items-center px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-100 rounded-full font-medium">
-                                                            <CheckCircle className="w-3.5 h-3.5 mr-1" />{' '}
-                                                            Validated
-                                                        </span>
-                                                    ) : (
-                                                        <span className="inline-flex items-center px-2 py-0.5 bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100 rounded-full font-medium">
-                                                            <XCircle className="w-3.5 h-3.5 mr-1" />{' '}
-                                                            Not Validated
-                                                        </span>
-                                                    )}
-                                                    <span className="text-gray-500 dark:text-gray-400">
-                                                        {new Date(q.createdAt).toLocaleDateString()}
-                                                    </span>
-                                                </div>
-                                            </CardHeader>
-                                        </Card>
-                                    ))}
+                                                </DialogClose>
+                                                <Button
+                                                    onClick={handleSaveModelName}
+                                                    className="bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white"
+                                                >
+                                                    Save Name
+                                                </Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
-                            )}
-                        </div>
-                        <div className="mt-auto p-4 md:p-6 border-t dark:border-gray-700">
-                            <Button
-                                variant="outline"
-                                onClick={handleOpenAddQuestionDialog}
-                                className="w-full dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-700"
-                            >
-                                <Plus className="mr-2 h-4 w-4" /> Add Question from Library
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
+                            </CardHeader>
+                            <CardContent className="space-y-2.5 text-sm text-slate-700 dark:text-slate-300 pt-0">
+                                <div className="flex items-center">
+                                    <CalendarDays
+                                        size={14}
+                                        className="mr-2 text-slate-500 dark:text-slate-400"
+                                    />{' '}
+                                    Created: {new Date(model.createdAt).toLocaleString()}
+                                </div>
+                                <div className="flex items-center">
+                                    <ListChecks
+                                        size={14}
+                                        className="mr-2 text-slate-500 dark:text-slate-400"
+                                    />{' '}
+                                    Questions: {model.questions?.length || 0}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Test Configuration Card */}
+                        <Card className="shadow-xl rounded-xl dark:bg-slate-800 border dark:border-slate-700/50">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center">
+                                    <Settings2
+                                        size={20}
+                                        className="mr-3 text-sky-600 dark:text-sky-500"
+                                    />
+                                    <div>
+                                        <CardTitle className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                                            Test Configuration
+                                        </CardTitle>
+                                        <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
+                                            Settings for generating an immutable test.
+                                        </CardDescription>
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4 text-sm">
+                                <div>
+                                    <Label
+                                        htmlFor="expiresAfter"
+                                        className="font-medium text-slate-700 dark:text-slate-300 flex items-center"
+                                    >
+                                        <Clock
+                                            size={14}
+                                            className="mr-1.5 text-slate-500 dark:text-slate-400"
+                                        />{' '}
+                                        Duration (minutes)
+                                    </Label>
+                                    <Input
+                                        id="expiresAfter"
+                                        type="number"
+                                        value={expiresAfter}
+                                        onChange={e => setExpiresAfter(e.target.value)}
+                                        placeholder="e.g., 60 (0 for no limit)"
+                                        className="mt-1.5 w-full dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500"
+                                        min="0"
+                                    />
+                                </div>
+                                <div className="flex items-center space-x-2 pt-1">
+                                    <Checkbox
+                                        id="shuffleQuestions"
+                                        checked={shuffleQuestions}
+                                        onCheckedChange={setShuffleQuestions}
+                                        className="dark:border-slate-600 data-[state=checked]:dark:bg-sky-600 data-[state=checked]:border-sky-600"
+                                    />
+                                    <Label
+                                        htmlFor="shuffleQuestions"
+                                        className="font-medium text-slate-700 dark:text-slate-300 flex items-center cursor-pointer"
+                                    >
+                                        <Shuffle
+                                            size={14}
+                                            className="mr-1.5 text-slate-500 dark:text-slate-400"
+                                        />{' '}
+                                        Shuffle Questions
+                                    </Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="shuffleVariants"
+                                        checked={shuffleVariants}
+                                        onCheckedChange={setShuffleVariants}
+                                        className="dark:border-slate-600 data-[state=checked]:dark:bg-sky-600 data-[state=checked]:border-sky-600"
+                                    />
+                                    <Label
+                                        htmlFor="shuffleVariants"
+                                        className="font-medium text-slate-700 dark:text-slate-300 flex items-center cursor-pointer"
+                                    >
+                                        <Shuffle
+                                            size={14}
+                                            className="mr-1.5 text-slate-500 dark:text-slate-400"
+                                        />{' '}
+                                        Shuffle Variants
+                                    </Label>
+                                </div>
+                            </CardContent>
+                            <CardFooter>
+                                <Button
+                                    onClick={handleCreateImmutableTest}
+                                    disabled={
+                                        isSavingConfiguration || model.questions?.length === 0
+                                    }
+                                    className="w-full bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white"
+                                    title={
+                                        model.questions?.length === 0
+                                            ? 'Add questions to the model first'
+                                            : ''
+                                    }
+                                >
+                                    {isSavingConfiguration
+                                        ? 'Creating Test...'
+                                        : 'Create Immutable Test'}
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    </div>
+
+                    {/* Right Column: Questions in Model */}
+                    <div className="xl:col-span-8">
+                        <Card className="shadow-xl rounded-xl dark:bg-slate-800 border dark:border-slate-700/50 flex flex-col min-h-[calc(100vh-180px)] md:min-h-0">
+                            <CardHeader className="pb-4 border-b dark:border-slate-700/50">
+                                <div className="flex justify-between items-center">
+                                    <div className="flex items-center">
+                                        <ListChecks
+                                            size={22}
+                                            className="mr-3 text-sky-600 dark:text-sky-500"
+                                        />
+                                        <div>
+                                            <CardTitle className="text-lg sm:text-xl font-semibold text-slate-800 dark:text-slate-100">
+                                                Questions in Model
+                                            </CardTitle>
+                                            <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
+                                                Manage the questions included in this test model.
+                                            </CardDescription>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleOpenAddQuestionDialog}
+                                        className="dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700"
+                                    >
+                                        <Plus className="mr-2 h-4 w-4" /> Add Question
+                                    </Button>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="flex-1 p-0 overflow-hidden">
+                                {model.questions.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 dark:text-slate-400 p-10">
+                                        <FileQuestion
+                                            className="h-16 w-16 text-slate-400 dark:text-slate-500 mb-4"
+                                            strokeWidth={1.5}
+                                        />
+                                        <h3 className="text-lg font-medium text-slate-700 dark:text-slate-200">
+                                            No Questions Yet
+                                        </h3>
+                                        <p className="mt-1 text-sm">
+                                            This model is empty. Click "Add Question" to get
+                                            started.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <ScrollArea className="h-[calc(100vh-320px)] md:h-auto md:max-h-[calc(100vh-280px)] xl:max-h-[70vh]">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 p-4 sm:p-5">
+                                            {model.questions.map(q => (
+                                                <Card
+                                                    key={q.id}
+                                                    className="flex flex-col dark:bg-slate-850 dark:hover:bg-slate-700/70 border dark:border-slate-700 rounded-lg overflow-hidden transition-all hover:shadow-md"
+                                                >
+                                                    <CardHeader
+                                                        className="p-3 space-y-1.5 flex-grow cursor-pointer"
+                                                        onClick={() =>
+                                                            navigate(`${RQuestions}/${q.id}`)
+                                                        }
+                                                    >
+                                                        <h4
+                                                            className="font-semibold text-sm text-sky-700 dark:text-sky-500 break-words leading-tight"
+                                                            title={
+                                                                q.body ||
+                                                                q.name ||
+                                                                `Question ID: ${q.id}`
+                                                            }
+                                                        >
+                                                            {q.body ||
+                                                                q.name ||
+                                                                `Question ID: ${q.id}`}
+                                                        </h4>
+                                                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                                                            ID: {q.id}
+                                                        </div>
+                                                    </CardHeader>
+                                                    <CardContent
+                                                        className="p-3 pt-0 text-xs space-y-1 cursor-pointer"
+                                                        onClick={() =>
+                                                            navigate(`${RQuestions}/${q.id}`)
+                                                        }
+                                                    >
+                                                        <Badge
+                                                            variant={
+                                                                q.validated
+                                                                    ? 'default'
+                                                                    : 'destructive'
+                                                            }
+                                                            className={cn(
+                                                                'text-xs',
+                                                                q.validated
+                                                                    ? 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300 border-green-300 dark:border-green-700'
+                                                                    : 'bg-red-100 text-red-700 dark:bg-red-700/30 dark:text-red-300 border-red-300 dark:border-red-700'
+                                                            )}
+                                                        >
+                                                            {q.validated ? (
+                                                                <CheckCircle
+                                                                    size={12}
+                                                                    className="mr-1"
+                                                                />
+                                                            ) : (
+                                                                <XCircle
+                                                                    size={12}
+                                                                    className="mr-1"
+                                                                />
+                                                            )}
+                                                            {q.validated
+                                                                ? 'Validated'
+                                                                : 'Not Validated'}
+                                                        </Badge>
+                                                        <div className="text-slate-500 dark:text-slate-400">
+                                                            Lang: {q.lang || 'N/A'}
+                                                        </div>
+                                                    </CardContent>
+                                                    <CardFooter className="p-2 border-t dark:border-slate-700/50">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="w-full justify-center text-red-600 hover:bg-red-100 dark:hover:bg-red-700/30 dark:text-red-500 dark:hover:text-red-400 text-xs"
+                                                            onClick={() =>
+                                                                modifyQuestionInModel(
+                                                                    Action.REMOVE,
+                                                                    q.id
+                                                                )
+                                                            }
+                                                        >
+                                                            <Trash2 size={13} className="mr-1.5" />{' '}
+                                                            Remove from Model
+                                                        </Button>
+                                                    </CardFooter>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    </ScrollArea>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
             </main>
 
-            <Dialog open={addOpen} onOpenChange={setAddOpen}>
-                <DialogContent className="max-w-lg w-[95vw] sm:w-[90vw] bg-white dark:bg-gray-800 rounded-lg">
+            {/* Dialog for Adding Questions to Model */}
+            <Dialog open={isAddQuestionDialogOpen} onOpenChange={setIsAddQuestionDialogOpen}>
+                <DialogContent className="max-w-2xl w-[95vw] sm:w-full dark:bg-slate-800 rounded-lg">
                     <DialogHeader className="pb-3">
-                        <DialogTitle className="text-lg font-medium text-gray-900 dark:text-gray-50">
-                            Add Question to Model
+                        <DialogTitle className="text-lg font-medium text-slate-900 dark:text-slate-50">
+                            Add Questions to Model
                         </DialogTitle>
-                        <DialogDescription className="text-sm text-gray-500 dark:text-gray-400">
-                            Select questions to add. The list will update after each addition.
+                        <DialogDescription className="text-sm text-slate-500 dark:text-slate-400">
+                            Select from available, validated questions. List updates after each
+                            addition.
                         </DialogDescription>
                     </DialogHeader>
-                    <Input
-                        placeholder="Search available questions..."
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        className="mb-4 mt-1 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
-                    />
-                    <div className="h-72 border dark:border-gray-700 rounded-md overflow-y-auto">
+                    <div className="relative my-4">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 dark:text-slate-500" />
+                        <Input
+                            type="search"
+                            placeholder="Search available questions by name..."
+                            value={searchAvailable}
+                            onChange={e => setSearchAvailable(e.target.value)}
+                            className="w-full pl-10 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600"
+                        />
+                    </div>
+                    <ScrollArea className="h-72 border dark:border-slate-700 rounded-md">
                         {filteredAvailableQuestions.length > 0 ? (
                             <ul className="space-y-1 p-2">
                                 {filteredAvailableQuestions.map(q => (
                                     <li
                                         key={q.id}
-                                        className="flex justify-between items-center p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                        className="flex justify-between items-center p-2.5 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-md transition-colors"
                                     >
-                                        <div className="flex items-center space-x-2 overflow-hidden">
+                                        <div className="flex flex-col overflow-hidden mr-2">
                                             <span
-                                                className="text-sm text-gray-800 dark:text-gray-100 truncate"
+                                                className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate"
                                                 title={q.name}
                                             >
                                                 {q.name}
                                             </span>
-                                            {q.validated ? (
-                                                <span className="flex-shrink-0 px-1.5 py-0.5 bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-100 rounded-full text-xs inline-flex items-center">
-                                                    <CheckCircle className="w-3 h-3 mr-0.5" /> Valid
-                                                </span>
-                                            ) : (
-                                                <span className="flex-shrink-0 px-1.5 py-0.5 bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100 rounded-full text-xs inline-flex items-center">
-                                                    <XCircle className="w-3 h-3 mr-0.5" /> Not Valid
-                                                </span>
-                                            )}
+                                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                                                Lang: {q.lang || 'N/A'}
+                                            </span>
                                         </div>
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => handleAddQuestionToModel(q.id)}
-                                            disabled={addingQuestion}
-                                            className="ml-2 flex-shrink-0 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
-                                        >
-                                            {addingQuestion ? (
-                                                <Loading className="h-4 w-4" />
-                                            ) : (
-                                                <Plus className="h-4 w-4" />
-                                            )}
-                                        </Button>
+                                        <div className="flex items-center space-x-2 flex-shrink-0">
+                                            <Badge
+                                                variant={q.validated ? 'default' : 'secondary'}
+                                                className={cn(
+                                                    'text-xs py-0.5 px-1.5',
+                                                    q.validated
+                                                        ? 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300'
+                                                        : 'bg-slate-100 text-slate-600 dark:bg-slate-600 dark:text-slate-300'
+                                                )}
+                                            >
+                                                {q.validated ? (
+                                                    <CheckCircle size={12} className="mr-1" />
+                                                ) : (
+                                                    <Info size={12} className="mr-1" />
+                                                )}
+                                                {q.validated ? 'Valid' : 'Not Valid'}
+                                            </Badge>
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                onClick={() =>
+                                                    modifyQuestionInModel(Action.ADD, q.id)
+                                                }
+                                                disabled={isAddingQuestionToModel}
+                                                className="h-7 w-7 text-sky-600 hover:text-sky-700 dark:text-sky-500 dark:hover:text-sky-400"
+                                                aria-label="Add question to model"
+                                            >
+                                                {isAddingQuestionToModel && (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                )}
+                                                {!isAddingQuestionToModel && (
+                                                    <Plus className="h-4 w-4" />
+                                                )}
+                                            </Button>
+                                        </div>
                                     </li>
                                 ))}
                             </ul>
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-center p-4 text-gray-500 dark:text-gray-400">
-                                <FileQuestion
-                                    className="h-12 w-12 text-gray-400 dark:text-gray-500 mb-3"
+                            <div className="flex flex-col items-center justify-center h-full text-center p-6 text-slate-500 dark:text-slate-400">
+                                <FileWarning
+                                    size={40}
+                                    className="text-slate-400 dark:text-slate-500 mb-3"
                                     strokeWidth={1.5}
                                 />
-                                <p className="text-sm font-medium">No Matching Questions Found</p>
+                                <p className="text-sm font-medium">
+                                    {searchAvailable
+                                        ? 'No matching questions found.'
+                                        : availableQuestions.length === 0 &&
+                                            model.questions.length > 0
+                                          ? 'All available questions are in the model.'
+                                          : 'No questions available or all are added.'}
+                                </p>
                                 <p className="text-xs mt-1">
-                                    {search
+                                    {searchAvailable
                                         ? 'Try a different search term.'
-                                        : 'All available questions might already be in the model, or there are no questions in the library.'}
+                                        : 'You might need to create more questions or check your filters.'}
                                 </p>
                             </div>
                         )}
-                    </div>
+                    </ScrollArea>
                     <DialogFooter className="mt-5">
-                        <Button
-                            variant="outline"
-                            onClick={() => setAddOpen(false)}
-                            className="dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"
-                        >
-                            Done Adding
-                        </Button>
+                        <DialogClose asChild>
+                            <Button
+                                variant="outline"
+                                className="dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700"
+                            >
+                                Done
+                            </Button>
+                        </DialogClose>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-                <DialogContent className="bg-white dark:bg-gray-800 rounded-lg">
+            {/* Dialog for Immutable Test Created Confirmation */}
+            <Dialog
+                open={isImmutableTestCreatedDialogOpen}
+                onOpenChange={setIsImmutableTestCreatedDialogOpen}
+            >
+                <DialogContent className="dark:bg-slate-800">
                     <DialogHeader>
-                        <DialogTitle className="text-gray-900 dark:text-gray-50">
-                            Create Actual Test
+                        <DialogTitle className="flex items-center text-green-600 dark:text-green-400">
+                            <CheckCircle className="mr-2" /> Immutable Test Created!
                         </DialogTitle>
-                        <DialogDescription className="text-gray-500 dark:text-gray-400">
-                            (This feature is coming soon — configure your test parameters here.)
+                        <DialogDescription className="dark:text-slate-400 pt-2">
+                            A new immutable test has been successfully generated from this model.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4 text-sm text-gray-600 dark:text-gray-300">
-                        Test configuration options will appear here.
-                    </div>
-                    <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={() => setCreateOpen(false)}
-                            className="dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"
-                        >
-                            Close
-                        </Button>
+                    {createdImmutableTestId && (
+                        <div className="my-4 p-3 bg-slate-100 dark:bg-slate-700/50 rounded-md">
+                            <Label className="text-xs text-slate-600 dark:text-slate-400">
+                                Generated Test ID:
+                            </Label>
+                            <div className="flex items-center justify-between mt-1">
+                                <p className="text-sm font-mono text-sky-700 dark:text-sky-400 break-all">
+                                    {createdImmutableTestId}
+                                </p>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => copyToClipboard(createdImmutableTestId)}
+                                    className="h-7 w-7 text-slate-500 hover:text-sky-600"
+                                >
+                                    <Copy size={14} />
+                                </Button>
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
+                                You can now share this ID with students or use it for test
+                                administration.
+                            </p>
+                        </div>
+                    )}
+                    <DialogFooter className="mt-2">
+                        <DialogClose asChild>
+                            <Button className="w-full bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white">
+                                Close
+                            </Button>
+                        </DialogClose>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

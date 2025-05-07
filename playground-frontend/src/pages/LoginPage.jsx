@@ -1,7 +1,7 @@
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button.js';
 import { Input } from '@/components/ui/input.js';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs.js';
@@ -20,6 +20,7 @@ import { RHome } from '@/rout/Routes.jsx';
 import { toast } from 'sonner';
 import { ErrorType } from '@/utils/ErrorType.js';
 import { TestsPage } from '@/pages/Pages.js';
+import { LockKeyhole, UserPlus } from 'lucide-react';
 
 const Mode = Object.freeze({
     Login: 'login',
@@ -51,20 +52,20 @@ const validate = (input, mode) => {
     const errors = sCp(Errors);
 
     if (!between(input.username, 6, 20)) {
-        errors.username = 'Username must be between 6 and 20 characters';
+        errors.username = 'Username must be 6-20 characters.';
     } else {
         errors.username = '';
     }
 
     if (!between(input.password, 6, 20)) {
-        errors.password = 'Password must be between 6 and 20 characters';
+        errors.password = 'Password must be 6-20 characters.';
     } else {
         errors.password = '';
     }
 
     if (mode === Mode.Register) {
         if (!between(input.email, 6, 40) || !contains(input.email, '@')) {
-            errors.email = 'Email must be between 6 and 40 characters and contain @';
+            errors.email = 'Enter a valid email (6-40 characters).';
         } else {
             errors.email = '';
         }
@@ -72,11 +73,11 @@ const validate = (input, mode) => {
         if (input.role === Role.Student || input.role === Role.Teacher) {
             errors.role = '';
         } else {
-            errors.role = 'Select a role';
+            errors.role = 'Please select a role.';
         }
 
         if (input.password !== input.confirmPassword) {
-            errors.confirmPassword = 'Passwords do not match';
+            errors.confirmPassword = 'Passwords do not match.';
         } else {
             errors.confirmPassword = '';
         }
@@ -89,6 +90,7 @@ export default function LoginPage() {
     const [mode, setMode] = useState(Mode.Login);
     const [input, setInput] = useState(sCp(IInput));
     const [error, setError] = useState(sCp(Errors));
+    const [isLoading, setIsLoading] = useState(false);
 
     const { login, logout } = useAuth();
     const navigate = useNavigate();
@@ -98,14 +100,30 @@ export default function LoginPage() {
             ...prev,
             [key]: e.target.value,
         }));
+
+        if (error[key]) {
+            setError(prev => ({ ...prev, [key]: '' }));
+        }
+    };
+
+    const setRole = value => {
+        setInput(prev => ({ ...prev, role: value }));
+        if (error.role) {
+            setError(prev => ({ ...prev, role: '' }));
+        }
     };
 
     const handleSubmit = preventAndAsync(async () => {
+        setIsLoading(true);
         const { errors, valid } = validate(input, mode);
         setError(errors);
 
         if (!valid) {
-            toast.error('Please fix the errors in the form', { closeButton: true });
+            toast.error('Please correct the errors in the form.', {
+                closeButton: true,
+                duration: 3000,
+            });
+            setIsLoading(false);
             return;
         }
 
@@ -115,14 +133,20 @@ export default function LoginPage() {
                 input.password,
                 userAndToken => {
                     login(userAndToken);
+                    toast.success(`Welcome back, ${userAndToken.user.username}!`, {
+                        duration: 2000,
+                    });
                     navigate(`${RHome}/${TestsPage}`);
                 },
                 (type, message) => {
                     if (type === ErrorType.TokenExpired) {
                         logout();
                     }
-                    toast.error(`${substrs(message, 150)}`, { closeButton: true });
-                    setInput(sCp(IInput));
+                    toast.error(
+                        substrs(message, 150) || 'Login failed. Please check your credentials.',
+                        { closeButton: true }
+                    );
+                    setInput(prev => ({ ...prev, password: '' }));
                     setError(sCp(Errors));
                 }
             );
@@ -134,125 +158,258 @@ export default function LoginPage() {
                 input.password,
                 input.role,
                 () => {
-                    toast.success('User registered!');
+                    toast.success('Registration successful! Please log in.', {
+                        closeButton: true,
+                        duration: 3000,
+                    });
                     setMode(Mode.Login);
                     setInput(sCp(IInput));
                     setError(sCp(Errors));
                 },
                 (type, message) => {
-                    toast.error(`${substrs(message, 150)}`, { closeButton: true });
+                    toast.error(substrs(message, 150) || 'Registration failed. Please try again.', {
+                        closeButton: true,
+                    });
                 }
             );
         }
+        setIsLoading(false);
     });
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 p-4">
-            <Card className="w-full max-w-md shadow-2xl">
-                <Tabs defaultValue="login" value={mode} onValueChange={setMode} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="login">Login</TabsTrigger>
-                        <TabsTrigger value="register">Register</TabsTrigger>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-sky-100 dark:from-slate-900 dark:to-sky-900 p-4 selection:bg-sky-500 selection:text-white">
+            <Card className="w-full max-w-md shadow-2xl rounded-xl dark:bg-slate-800">
+                <CardHeader className="text-center pt-8 pb-4">
+                    <div className="inline-flex items-center justify-center bg-sky-500 text-white p-3 rounded-full mb-4">
+                        {mode === Mode.Login ? <LockKeyhole size={32} /> : <UserPlus size={32} />}
+                    </div>
+                    <CardTitle className="text-3xl font-bold text-slate-800 dark:text-slate-100">
+                        {mode === Mode.Login ? 'Welcome Back!' : 'Create Account'}
+                    </CardTitle>
+                    <CardDescription className="text-slate-600 dark:text-slate-400 pt-1">
+                        {mode === Mode.Login
+                            ? 'Sign in to access your dashboard.'
+                            : 'Fill in the details to join us.'}
+                    </CardDescription>
+                </CardHeader>
+
+                <Tabs
+                    defaultValue={Mode.Login}
+                    value={mode}
+                    onValueChange={setMode}
+                    className="w-full px-2 pb-2"
+                >
+                    <TabsList className="grid w-full grid-cols-2 mb-6 bg-slate-200 dark:bg-slate-700 rounded-lg">
+                        <TabsTrigger
+                            value={Mode.Login}
+                            className="py-2.5 data-[state=active]:bg-white data-[state=active]:dark:bg-slate-950 data-[state=active]:shadow-md data-[state=active]:text-sky-600 rounded-md"
+                        >
+                            Login
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value={Mode.Register}
+                            className="py-2.5 data-[state=active]:bg-white data-[state=active]:dark:bg-slate-950 data-[state=active]:shadow-md data-[state=active]:text-sky-600 rounded-md"
+                        >
+                            Register
+                        </TabsTrigger>
                     </TabsList>
 
-                    <CardContent className="space-y-4 mt-4">
-                        <form className="space-y-4">
+                    <CardContent className="space-y-6">
+                        <form className="space-y-4" onSubmit={handleSubmit}>
+                            {/* Email input for registration */}
                             {mode === Mode.Register && (
-                                <>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">
-                                            Email
-                                        </label>
-                                        <Input
-                                            type="email"
-                                            placeholder="example@email.com"
-                                            value={input.email}
-                                            onChange={setter('email')}
-                                            max={40}
-                                        />
-                                        <span className="text-xs text-red-500">{error.email}</span>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Select Role
-                                        </label>
-                                        <Select
-                                            onValueChange={value => {
-                                                setInput({ ...input, role: value });
-                                            }}
+                                <div className="space-y-1.5">
+                                    <label
+                                        htmlFor="email"
+                                        className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                    >
+                                        Email Address
+                                    </label>
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        placeholder="you@example.com"
+                                        value={input.email}
+                                        onChange={setter('email')}
+                                        maxLength={40}
+                                        className={`dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500 ${error.email ? 'border-red-500 focus:ring-red-500' : 'border-slate-300'}`}
+                                        aria-invalid={!!error.email}
+                                        aria-describedby="email-error"
+                                    />
+                                    {error.email && (
+                                        <span
+                                            id="email-error"
+                                            className="text-xs text-red-500 dark:text-red-400"
                                         >
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue
-                                                    placeholder="Select a role"
-                                                    defaultValue={input.role}
-                                                    value={input.role}
-                                                />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value={Role.Student}>
-                                                    Student
-                                                </SelectItem>
-                                                <SelectItem value={Role.Teacher}>
-                                                    Teacher
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <span className="text-xs text-gray-500 mt-1 block">
-                                            {error.role}
+                                            {error.email}
                                         </span>
-                                    </div>
-                                </>
+                                    )}
+                                </div>
                             )}
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
+                            {/* Role selection for registration */}
+                            {mode === Mode.Register && (
+                                <div className="space-y-1.5">
+                                    <label
+                                        htmlFor="role"
+                                        className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                    >
+                                        I am a...
+                                    </label>
+                                    <Select
+                                        onValueChange={setRole}
+                                        defaultValue={input.role}
+                                        value={input.role}
+                                    >
+                                        <SelectTrigger
+                                            id="role"
+                                            className={`w-full dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500 ${error.role ? 'border-red-500 focus:ring-red-500' : 'border-slate-300'}`}
+                                            aria-invalid={!!error.role}
+                                            aria-describedby="role-error"
+                                        >
+                                            <SelectValue placeholder="Select a role" />
+                                        </SelectTrigger>
+                                        <SelectContent className="dark:bg-slate-700 dark:text-slate-200">
+                                            <SelectItem value={Role.Student}>Student</SelectItem>
+                                            <SelectItem value={Role.Teacher}>Teacher</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {error.role && (
+                                        <span
+                                            id="role-error"
+                                            className="text-xs text-red-500 dark:text-red-400"
+                                        >
+                                            {error.role}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Username input */}
+                            <div className="space-y-1.5">
+                                <label
+                                    htmlFor="username"
+                                    className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                >
                                     Username
                                 </label>
                                 <Input
-                                    placeholder="Your username"
+                                    id="username"
+                                    placeholder="Your unique username"
                                     value={input.username}
                                     onChange={setter('username')}
-                                    max={20}
+                                    maxLength={20}
+                                    className={`dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500 ${error.username ? 'border-red-500 focus:ring-red-500' : 'border-slate-300'}`}
+                                    aria-invalid={!!error.username}
+                                    aria-describedby="username-error"
                                 />
-                                <span className="text-xs text-red-500">{error.username}</span>
+                                {error.username && (
+                                    <span
+                                        id="username-error"
+                                        className="text-xs text-red-500 dark:text-red-400"
+                                    >
+                                        {error.username}
+                                    </span>
+                                )}
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
+
+                            {/* Password input */}
+                            <div className="space-y-1.5">
+                                <label
+                                    htmlFor="password"
+                                    className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                >
                                     Password
                                 </label>
                                 <Input
+                                    id="password"
                                     type="password"
                                     placeholder="••••••••"
                                     value={input.password}
                                     onChange={setter('password')}
-                                    max={20}
-                                    min={6}
+                                    maxLength={20}
+                                    minLength={6}
+                                    className={`dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500 ${error.password ? 'border-red-500 focus:ring-red-500' : 'border-slate-300'}`}
+                                    aria-invalid={!!error.password}
+                                    aria-describedby="password-error"
                                 />
-                                <span className="text-xs text-red-500">{error.password}</span>
+                                {error.password && (
+                                    <span
+                                        id="password-error"
+                                        className="text-xs text-red-500 dark:text-red-400"
+                                    >
+                                        {error.password}
+                                    </span>
+                                )}
                             </div>
 
+                            {/* Confirm password input for registration */}
                             {mode === Mode.Register && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">
+                                <div className="space-y-1.5">
+                                    <label
+                                        htmlFor="confirmPassword"
+                                        className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                    >
                                         Confirm Password
                                     </label>
                                     <Input
+                                        id="confirmPassword"
                                         type="password"
                                         placeholder="Re-enter your password"
                                         value={input.confirmPassword}
                                         onChange={setter('confirmPassword')}
-                                        max={20}
-                                        min={6}
+                                        maxLength={20}
+                                        minLength={6}
+                                        className={`dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500 ${error.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'border-slate-300'}`}
+                                        aria-invalid={!!error.confirmPassword}
+                                        aria-describedby="confirm-password-error"
                                     />
-                                    <span className="text-xs text-red-500">
-                                        {error.confirmPassword}
-                                    </span>
+                                    {error.confirmPassword && (
+                                        <span
+                                            id="confirm-password-error"
+                                            className="text-xs text-red-500 dark:text-red-400"
+                                        >
+                                            {error.confirmPassword}
+                                        </span>
+                                    )}
                                 </div>
                             )}
 
-                            <Button type="submit" className="w-full mt-2" onClick={handleSubmit}>
-                                {mode === Mode.Login ? 'Login' : 'Register'}
+                            {/* Submit button */}
+                            <Button
+                                type="submit"
+                                className="w-full mt-6 py-3 text-base bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 ease-in-out disabled:opacity-70"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? (
+                                    <div className="flex items-center justify-center">
+                                        <svg
+                                            className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                            ></circle>
+                                            <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                            ></path>
+                                        </svg>
+                                        Processing...
+                                    </div>
+                                ) : mode === Mode.Login ? (
+                                    'Login'
+                                ) : (
+                                    'Register'
+                                )}
                             </Button>
                         </form>
                     </CardContent>
