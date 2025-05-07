@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Routes as RRoutes, RTestModels } from '@/rout/Routes.jsx';
 import Loading from '@/components/Loading.jsx';
+import { between } from '@/utils/Strings.js';
 
 export default function TestModelsPage() {
     const { auth, logout } = useAuth();
@@ -47,8 +48,8 @@ export default function TestModelsPage() {
     }, []);
 
     const handleCreate = async () => {
-        if (!modelName.trim()) {
-            toast.error('Name cannot be empty');
+        if (!between(modelName, 1, 50)) {
+            toast.error('Name must be between 1 and 50 characters');
             return;
         }
         await authenticatedReq(

@@ -22,11 +22,9 @@ import { Plus, Trash2 } from 'lucide-react';
 import Loading from '@/components/Loading.jsx';
 import NotFound from '@/components/NotFound.jsx';
 import Header from '@/components/Header.jsx';
-import { RHome } from '@/rout/Routes.jsx';
+import { RHome, RLogin } from '@/rout/Routes.jsx';
+import { Action, actionStr } from '@/entities/Action.js';
 
-/**
- * Page for viewing and editing a single TestModel
- */
 export default function TestModelDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -55,7 +53,9 @@ export default function TestModelDetailPage() {
                 (type, msg) => {
                     setStatus('notfound');
                     toast.error(msg);
-                    if (type === ErrorType.TokenExpired) logout();
+                    if (type === ErrorType.TokenExpired) {
+                        logout();
+                    }
                 },
                 data => {
                     setModel(data);
@@ -74,26 +74,13 @@ export default function TestModelDetailPage() {
     }, [available, model, search]);
 
     const removeQ = async qid => {
-        await authenticatedReq(
-            `${Endpoints.TestModel.Base}/${id}/questions/${qid}`,
-            'DELETE',
-            null,
-            auth.accessToken,
-            (t, m) => toast.error(m),
-            () => {
-                setModel(m => ({
-                    ...m,
-                    questions: m.questions.filter(q => q.id !== qid),
-                }));
-                toast.success('Removed');
-            }
-        );
+        await modifyQ(Action.REMOVE, qid);
     };
 
     const openAdd = async () => {
         setAddOpen(true);
         await authenticatedReq(
-            Endpoints.Questions.GetAll,
+            Endpoints.Questions.Base,
             'GET',
             null,
             auth.accessToken,
@@ -104,19 +91,29 @@ export default function TestModelDetailPage() {
 
     const addQ = async qid => {
         setAdding(true);
+        await modifyQ(Action.ADD, qid);
+        setAdding(false);
+    };
+
+    const modifyQ = async (action, qid) => {
+        const patchBody = { action: actionStr(action), questionId: qid };
         await authenticatedReq(
-            `${Endpoints.TestModel.Base}/${id}/questions/${qid}`,
-            'POST',
-            null,
+            `${Endpoints.TestModel.Base}/${id}`,
+            'PATCH',
+            patchBody,
             auth.accessToken,
-            (t, m) => toast.error(m),
-            newQ => {
-                setModel(m => ({ ...m, questions: [...m.questions, newQ] }));
-                setAddOpen(false);
+            (t, m) => {
+                toast.error(m);
+                if (t === ErrorType.TokenExpired) {
+                    logout();
+                    navigate(RLogin);
+                }
+            },
+            testModel => {
+                setModel(testModel);
                 toast.success('Added');
             }
         );
-        setAdding(false);
     };
 
     if (status === 'loading') return <Loading />;
@@ -169,7 +166,7 @@ export default function TestModelDetailPage() {
                                                 className="text-blue-600 hover:underline cursor-pointer"
                                                 onClick={() => navigate(`/questions/${q.id}`)}
                                             >
-                                                {q.body || q.name}
+                                                {q.body}
                                             </span>
                                             <Button
                                                 size="icon"

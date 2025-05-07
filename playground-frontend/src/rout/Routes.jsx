@@ -7,11 +7,13 @@ import TestModelDetailPage from '@/pages/TestModelDetailPage.jsx';
 export const RHome = '/home';
 export const RQuestions = '/questions';
 export const RTestModels = '/test_models';
+export const RLogin = '/login';
+export const RTest = '/test';
 
 export const Routes = Object.freeze({
-    Login: { path: '/login', element: <LoginPage />, public: true },
+    Login: { path: RLogin, element: <LoginPage />, public: true },
     Home: { path: `${RHome}/:section`, element: <HomePage />, public: false }, // updated path
-    Test: { path: `/test`, element: <StatisticsPage />, public: false }, // updated path
+    Test: { path: RTest, element: <StatisticsPage />, public: false }, // updated path
     QuestionDetail: {
         path: `${RQuestions}/:id`,
         element: <QuestionDetailPage />,
