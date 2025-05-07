@@ -20,18 +20,19 @@ data class ImmutableTestResponse(
 ) {
   companion object {
     fun ImmutableTestEntity.asResponse(): ImmutableTestResponse {
-      val response = ImmutableTestResponse(
-        id = id(),
-        name = name(),
-        questions = questions().map { question -> question.asResponse() },
-        active = active(),
-        shuffleQuestions = shuffleQuestions(),
-        shuffleVariants = shuffleVariants(),
-        createdAt = createdAt().toEpochMilli(),
-        creator = creator()?.asResponse(),
-        expiresAfter = expiresAfter()?.toEpochMilli(),
-        userTests = userTests().map { userTest -> userTest.asResponse() }
-      )
+      val response =
+        ImmutableTestResponse(
+          id = id(),
+          name = name(),
+          questions = questions().map { question -> question.asResponse() },
+          active = active(),
+          shuffleQuestions = shuffleQuestions(),
+          shuffleVariants = shuffleVariants(),
+          createdAt = createdAt().toEpochMilli(),
+          creator = creator()?.asResponse(),
+          expiresAfter = expiresAfter()?.toEpochMilli(),
+          userTests = userTests().map { userTest -> userTest.asResponse() }
+        )
       return response
     }
   }

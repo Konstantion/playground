@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert components
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'; // Import Alert components
 import { Lock } from 'lucide-react'; // Import Lock icon
-
 // ... other imports ...
 import Header from '@/components/Header.jsx';
 import Loading from '@/components/Loading.jsx';
@@ -19,7 +18,7 @@ import CallArgsConfigurator from '@/components/CallArgsConfigurator.jsx';
 import AddVariant from '@/components/AddVariant.jsx';
 import { VariantsCarousel } from '@/components/VariantsCarousel.jsx';
 import ValidateCard from '@/components/ValidateCard.jsx';
-import {Card} from "@/components/ui/card.js";
+import { Card } from '@/components/ui/card.js';
 
 const State = Object.freeze({
     Loading: 'Loading',
@@ -105,7 +104,8 @@ export default function QuestionDetailPage() {
                         <Lock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                         <AlertTitle className="font-semibold">Read-Only Mode</AlertTitle>
                         <AlertDescription className="text-sm">
-                            This question is part of an immutable test snapshot and cannot be edited.
+                            This question is part of an immutable test snapshot and cannot be
+                            edited.
                         </AlertDescription>
                     </Alert>
                 )}

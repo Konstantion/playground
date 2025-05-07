@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import EEditor from '@/components/code/EEditor.jsx';
 import { Checkbox } from '@/components/ui/checkbox.js';
 import { Label } from '@/components/ui/label.js';
@@ -16,7 +16,7 @@ import { Action, actionStr } from '@/entities/Action.js';
 import { Button } from '@/components/ui/button.js';
 import { sNotEmpty } from '@/utils/ObjectUtils.js';
 import { cn } from '@/lib/utils';
-import { FilePlus2, TerminalSquare, CheckSquare, Square, PlusCircle } from 'lucide-react';
+import { CheckSquare, FilePlus2, PlusCircle, Square, TerminalSquare } from 'lucide-react';
 
 const buildSignature = question => {
     if (!question || !question.lang) return '// Language not specified';

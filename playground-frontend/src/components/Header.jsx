@@ -2,13 +2,13 @@ import { useAuth } from '@/hooks/useAuth.jsx';
 import { Button } from '@/components/ui/button.js';
 import { pagesFor } from '@/pages/Pages.js'; // Import TestsPage key
 import {
-    LogOut,
-    UserCircle,
-    Briefcase,
-    LayoutDashboard,
     BarChart3,
+    Briefcase,
+    ClipboardList,
+    LayoutDashboard,
+    LogOut,
     Settings,
-    ClipboardList, // Using ClipboardList for "Tests"
+    UserCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

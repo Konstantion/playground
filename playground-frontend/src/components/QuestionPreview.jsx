@@ -1,18 +1,18 @@
 // playground-frontend/src/components/QuestionPreview.jsx
-import React, { useMemo, useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
+    CalendarDays,
     CheckCircle,
+    Code2,
     Edit,
+    Info,
+    Languages,
+    Lock,
+    Tag,
     Trash2,
     XCircle,
-    Info,
-    Code2,
-    Languages,
-    Tag,
-    CalendarDays,
-    Lock, // Import Lock icon
 } from 'lucide-react';
 // ... other imports ...
 import { Badge } from '@/components/ui/badge';
@@ -21,13 +21,13 @@ import { Input } from '@/components/ui/input.js';
 import { Editor } from '@monaco-editor/react';
 import {
     Dialog,
+    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-    DialogClose,
 } from '@/components/ui/dialog.js';
 import { Button } from '@/components/ui/button.js';
 import { authenticatedReq } from '@/utils/Requester.js';
@@ -183,7 +183,7 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                         className="text-slate-500 hover:text-sky-600 dark:hover:text-sky-500 h-8 w-8 disabled:text-slate-400 disabled:dark:text-slate-600 disabled:hover:bg-transparent disabled:cursor-not-allowed"
                         onClick={onEdit}
                         disabled={editDisabled || !isEditable} // Disable based on prop
-                        title={!isEditable ? "Cannot edit an immutable question" : "Edit"}
+                        title={!isEditable ? 'Cannot edit an immutable question' : 'Edit'}
                     >
                         {isEditable ? <Edit size={16} /> : <Lock size={16} />}
                     </Button>
@@ -244,7 +244,11 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                                 className="rounded-full w-9 h-9 sm:w-10 sm:h-10 disabled:opacity-50 disabled:cursor-not-allowed"
                                 aria-label="Delete question"
                                 disabled={!isEditable}
-                                title={!isEditable ? "Cannot delete an immutable question" : "Delete question"}
+                                title={
+                                    !isEditable
+                                        ? 'Cannot delete an immutable question'
+                                        : 'Delete question'
+                                }
                             >
                                 {isEditable ? <Trash2 size={18} /> : <Lock size={18} />}
                             </Button>
@@ -279,15 +283,15 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                 </div>
                 {/* Add Public/Immutable Status Badge */}
                 <Badge
-                    variant={isEditable ? "secondary" : "outline"}
+                    variant={isEditable ? 'secondary' : 'outline'}
                     className={cn(
-                        "mt-2 text-xs w-fit",
+                        'mt-2 text-xs w-fit',
                         isEditable
-                            ? "dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600"
-                            : "dark:border-amber-600 dark:text-amber-400 dark:bg-amber-900/30 border-amber-400 text-amber-700 bg-amber-50"
+                            ? 'dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600'
+                            : 'dark:border-amber-600 dark:text-amber-400 dark:bg-amber-900/30 border-amber-400 text-amber-700 bg-amber-50'
                     )}
                 >
-                    {isEditable ? "Public / Editable" : "Immutable / Read-Only"}
+                    {isEditable ? 'Public / Editable' : 'Immutable / Read-Only'}
                 </Badge>
             </CardHeader>
 

@@ -3,21 +3,21 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
     Card,
     CardContent,
-    CardHeader,
-    CardTitle,
     CardDescription,
     CardFooter,
+    CardHeader,
+    CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
+    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-    DialogClose,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,28 +29,29 @@ import { ErrorType } from '@/utils/ErrorType.js';
 import { toast } from 'sonner';
 import { Action, actionStr } from '@/entities/Action.js';
 import {
+    AlertTriangle,
+    Briefcase,
+    CalendarDays,
     CheckCircle,
+    Clock,
+    Copy,
     Edit,
     FileQuestion,
+    FileWarning,
+    Info,
+    ListChecks,
+    Loader2,
     Plus,
+    Search,
+    Settings2,
+    Shuffle,
     Trash2,
     XCircle,
-    Briefcase,
-    Info,
-    CalendarDays,
-    ListChecks,
-    Shuffle,
-    Clock,
-    Settings2,
-    Search,
-    FileWarning,
-    Copy,
-    AlertTriangle, Loader2, // Import AlertTriangle for delete dialog
 } from 'lucide-react';
 import Loading from '@/components/Loading.jsx';
 import NotFound from '@/components/NotFound.jsx';
 import Header from '@/components/Header.jsx';
-import { RHome, RLogin, RQuestions, RTestModels } from '@/rout/Routes.jsx'; // Import RTestModels
+import { RHome, RLogin, RQuestions } from '@/rout/Routes.jsx'; // Import RTestModels
 import { between } from '@/utils/Strings.js';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -334,7 +335,6 @@ export default function TestModelDetailPage() {
     };
     // ----------------------
 
-
     if (status === 'loading')
         return (
             <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col">
@@ -401,7 +401,9 @@ export default function TestModelDetailPage() {
                                                 </DialogHeader>
                                                 <Input
                                                     value={draftModelName}
-                                                    onChange={e => setDraftModelName(e.target.value)}
+                                                    onChange={e =>
+                                                        setDraftModelName(e.target.value)
+                                                    }
                                                     className="my-4 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600"
                                                     placeholder="Enter new model name"
                                                     maxLength={50}
@@ -420,7 +422,9 @@ export default function TestModelDetailPage() {
                                                         className="bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white"
                                                         disabled={isSavingConfiguration} // Disable while saving
                                                     >
-                                                        {isSavingConfiguration ? 'Saving...' : 'Save Name'}
+                                                        {isSavingConfiguration
+                                                            ? 'Saving...'
+                                                            : 'Save Name'}
                                                     </Button>
                                                 </DialogFooter>
                                             </DialogContent>
@@ -444,12 +448,18 @@ export default function TestModelDetailPage() {
                                             <DialogContent className="dark:bg-slate-800">
                                                 <DialogHeader>
                                                     <DialogTitle className="flex items-center text-red-600 dark:text-red-500">
-                                                        <AlertTriangle className="mr-2" size={20}/> Confirm Deletion
+                                                        <AlertTriangle className="mr-2" size={20} />{' '}
+                                                        Confirm Deletion
                                                     </DialogTitle>
                                                     <DialogDescription className="dark:text-slate-400 pt-2">
-                                                        Are you sure you want to delete the test model{' '}
-                                                        <span className="font-semibold text-slate-700 dark:text-slate-200">"{model.name}"</span>?
-                                                        This action cannot be undone. Associated immutable tests might also be affected or orphaned.
+                                                        Are you sure you want to delete the test
+                                                        model{' '}
+                                                        <span className="font-semibold text-slate-700 dark:text-slate-200">
+                                                            "{model.name}"
+                                                        </span>
+                                                        ? This action cannot be undone. Associated
+                                                        immutable tests might also be affected or
+                                                        orphaned.
                                                     </DialogDescription>
                                                 </DialogHeader>
                                                 <DialogFooter className="mt-4">
@@ -467,7 +477,9 @@ export default function TestModelDetailPage() {
                                                         onClick={handleDeleteModel}
                                                         disabled={isDeleting}
                                                     >
-                                                        {isDeleting ? 'Deleting...' : 'Delete Model'}
+                                                        {isDeleting
+                                                            ? 'Deleting...'
+                                                            : 'Delete Model'}
                                                     </Button>
                                                 </DialogFooter>
                                             </DialogContent>
@@ -823,9 +835,9 @@ export default function TestModelDetailPage() {
                                     {searchAvailable
                                         ? 'No matching questions found.'
                                         : availableQuestions.length === 0 &&
-                                        model.questions.length > 0
-                                            ? 'All available questions are in the model.'
-                                            : 'No questions available or all are added.'}
+                                            model.questions.length > 0
+                                          ? 'All available questions are in the model.'
+                                          : 'No questions available or all are added.'}
                                 </p>
                                 <p className="text-xs mt-1">
                                     {searchAvailable

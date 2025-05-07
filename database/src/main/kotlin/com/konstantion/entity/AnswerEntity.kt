@@ -3,6 +3,7 @@ package com.konstantion.entity
 import com.konstantion.utils.FieldUtils.nonNull
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -16,11 +17,12 @@ import java.util.UUID
 open class AnswerEntity {
   @Id @GeneratedValue(strategy = GenerationType.UUID) open var id: UUID? = null
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "question_id", nullable = false)
   open var question: QuestionEntity? = null
 
-  @Column(name = "answer", nullable = false) open var answer: String? = null
+  @Column(name = "answer", nullable = false, columnDefinition = "TEXT")
+  open var answer: String? = null
 
   @Column(name = "task_id", nullable = false) open var taskId: Long? = null
 

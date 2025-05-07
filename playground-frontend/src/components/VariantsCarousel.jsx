@@ -1,19 +1,19 @@
 // playground-frontend/src/components/VariantsCarousel.jsx
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Editor } from '@monaco-editor/react';
 import {
+    AlertCircle,
     Check,
     ChevronLeft,
     ChevronRight,
     Edit,
+    FileText,
+    Lock,
     Trash2,
     X,
-    FileText,
-    AlertCircle,
-    Lock, // Import Lock icon
 } from 'lucide-react';
 // ... other imports ...
 import { authenticatedReq } from '@/utils/Requester.js';
@@ -28,26 +28,25 @@ import { sNotEmpty } from '@/utils/ObjectUtils.js';
 import { Badge } from '@/components/ui/badge.js';
 import {
     Dialog,
+    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
-    DialogClose,
 } from '@/components/ui/dialog.js';
 
 // Added isEditable prop
 export function VariantsCarousel({
-                                     className,
-                                     question,
-                                     correct,
-                                     title,
-                                     variants,
-                                     language,
-                                     setQuestion,
-                                     isEditable, // Accept prop
-                                 }) {
+    className,
+    question,
+    correct,
+    title,
+    variants,
+    language,
+    setQuestion,
+    isEditable, // Accept prop
+}) {
     // ... (existing state and hooks remain the same) ...
     const { auth, logout } = useAuth();
     const navigate = useNavigate();
@@ -273,7 +272,11 @@ export function VariantsCarousel({
                                 }}
                                 disabled={isEditing || !isEditable} // Disable if editing or not editable
                                 aria-label="Edit variant"
-                                title={!isEditable ? "Cannot edit variants for an immutable question" : "Edit variant"}
+                                title={
+                                    !isEditable
+                                        ? 'Cannot edit variants for an immutable question'
+                                        : 'Edit variant'
+                                }
                             >
                                 {isEditable ? <Edit size={16} /> : <Lock size={16} />}
                             </Button>
@@ -284,7 +287,11 @@ export function VariantsCarousel({
                                 onClick={() => openDeleteDialog(currentVariant)}
                                 disabled={isEditing || !isEditable} // Disable if editing or not editable
                                 aria-label="Delete variant"
-                                title={!isEditable ? "Cannot delete variants for an immutable question" : "Delete variant"}
+                                title={
+                                    !isEditable
+                                        ? 'Cannot delete variants for an immutable question'
+                                        : 'Delete variant'
+                                }
                             >
                                 {isEditable ? <Trash2 size={16} /> : <Lock size={16} />}
                             </Button>

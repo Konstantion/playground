@@ -5,14 +5,15 @@ import com.konstantion.entity.ImmutableTestEntity
 import com.konstantion.entity.QuestionEntity
 import com.konstantion.entity.QuestionMetadataEntity
 import com.konstantion.entity.TestMetadataEntity
+import com.konstantion.entity.UserEntity
 import com.konstantion.entity.UserQuestionAnswerEntity
 import com.konstantion.entity.UserTestEntity
 import com.konstantion.executor.TestModelExecutor
 import com.konstantion.model.Answer
-import com.konstantion.model.QuestionMetadata
 import com.konstantion.model.TestModel
 import com.konstantion.model.TestModelMetadata
 import com.konstantion.model.User
+import com.konstantion.repository.AnswerRepository
 import com.konstantion.repository.CodeRepository
 import com.konstantion.repository.ImmutableTestRepository
 import com.konstantion.repository.QuestionMetadataRepository
@@ -35,6 +36,7 @@ import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 data class UserTestService(
@@ -49,6 +51,7 @@ data class UserTestService(
   private val userQuestionAnswerRepository: UserQuestionAnswerRepository,
   private val testModelExecutor: TestModelExecutor,
   private val questionMetadataRepository: QuestionMetadataRepository,
+  private val answerRepository: AnswerRepository
 ) {
   private val log: Logger = LoggerFactory.getLogger(javaClass)
 
@@ -59,46 +62,59 @@ data class UserTestService(
     )
   }
 
-  fun createTestForUser(targetUser: User, testModelId: UUID): Either<ServiceIssue, UserTestEntity> {
+  @Transactional // Ensure atomicity: all saves succeed or none do.
+  fun createTestForUser(
+    targetUser: UserEntity,
+    immutableTestId: UUID
+  ): Either<ServiceIssue, UserTestEntity> {
     log.info(
       "CreateUserTest[userId={}, username={}, immutableTestModelId={}]",
       targetUser.id(),
-      targetUser.getUsername(),
-      testModelId
+      targetUser.username(),
+      immutableTestId
     )
 
     val immutableTestEntityDb =
       when (
         val result: Either<ServiceIssue, ImmutableTestEntity> =
-          immutableTestRepository.sqlOptionalAction { findById(testModelId) }
+          immutableTestRepository.sqlOptionalAction { findById(immutableTestId) }
       ) {
-        is Either.Left -> return Either.left(result.value)
+        is Either.Left -> return Either.left(result.value) // Not found or DB error
         is Either.Right -> result.value
       }
 
     if (!immutableTestEntityDb.active) {
-      return Either.left(UnexpectedAction("Immutable test is not active: $testModelId"))
+      return Either.left(UnexpectedAction("Immutable test is not active: $immutableTestId"))
     }
-
     if (
       immutableTestEntityDb.expiresAfter != null &&
         immutableTestEntityDb.expiresAfter!!.isBefore(Instant.now())
     ) {
-      return Either.left(UnexpectedAction("Immutable test is expired: $testModelId"))
+      return Either.left(UnexpectedAction("Immutable test is expired: $immutableTestId"))
     }
 
     if (immutableTestEntityDb.userTests.any { test -> test.user().id() == targetUser.id() }) {
-      return Either.left(UnexpectedAction("User test already exists for user: ${targetUser.id()}"))
+      return Either.left(
+        UnexpectedAction(
+          "User test already exists for user ${targetUser.id()} and immutable test $immutableTestId"
+        )
+      )
+    }
+    if (immutableTestEntityDb.questions().isEmpty()) {
+      return Either.left(
+        UnexpectedAction(
+          "Cannot create test: Immutable test model has no questions: $immutableTestId"
+        )
+      )
     }
 
     val testModel =
       TestModel(
         id = immutableTestEntityDb.id(),
         name = immutableTestEntityDb.name(),
-        questions = immutableTestEntityDb.questions().map { question -> question.toModel() }
+        questions = immutableTestEntityDb.questions().map { it.toModel() }
       )
-
-    val metadata: TestModelMetadata =
+    val generatedMetadata: TestModelMetadata =
       when (
         val executorResult: Either<TestModelExecutor.Issue, TestModelMetadata> =
           testModelExecutor.run(testModel)
@@ -106,35 +122,103 @@ data class UserTestService(
         is Either.Left ->
           return Either.left(
             UnexpectedAction(
-              "Test model execution failed: ${testModel.id}, ${executorResult.value}"
+              "Test model execution failed: ${testModel.id}, Issue: ${executorResult.value}"
             )
           )
         is Either.Right -> executorResult.value
       }
 
-    val idToQuestion =
-      immutableTestEntityDb.questions().associateBy { questionEntity -> questionEntity.id() }
+    val idToQuestionEntityMap = immutableTestEntityDb.questions().associateBy { it.id() }
+    val allAnswersToPersist = mutableListOf<AnswerEntity>()
 
-    val toSave: TestMetadataEntity =
+    val transientQuestionMetadataList =
+      generatedMetadata.questionMetadatas.map { generatedQuestionMetadata ->
+        val originalQuestionEntity =
+          idToQuestionEntityMap[generatedQuestionMetadata.questionIdentifier]
+            ?: return Either.left(
+              SqlError(
+                "Consistency error: Original question ${generatedQuestionMetadata.questionIdentifier} not found in ImmutableTest ${immutableTestEntityDb.id()}"
+              )
+            )
+
+        val transientCorrectAnswers =
+          generatedQuestionMetadata.correctAnswers.map { answerDto ->
+            toAnswerEntity(answerDto, originalQuestionEntity)
+          }
+
+        val transientIncorrectAnswers =
+          generatedQuestionMetadata.incorrectAnswers.map { answerDto ->
+            toAnswerEntity(answerDto, originalQuestionEntity)
+          }
+
+        allAnswersToPersist.addAll(transientCorrectAnswers)
+        allAnswersToPersist.addAll(transientIncorrectAnswers)
+
+        generatedQuestionMetadata to (transientCorrectAnswers + transientIncorrectAnswers)
+      }
+
+    val persistedAnswersResult: Either<ServiceIssue, MutableList<AnswerEntity>> =
+      answerRepository.sqlAction { saveAllAndFlush(allAnswersToPersist) }
+    val persistedAnswers =
+      when (persistedAnswersResult) {
+        is Either.Left -> {
+          log.error("Failed to save answers in bulk: {}", persistedAnswersResult.value)
+          return Either.left(persistedAnswersResult.value)
+        }
+        is Either.Right -> persistedAnswersResult.value
+      }
+
+    val taskIdToPersistedAnswerMap = persistedAnswers.associateBy { it.taskId }
+
+    val testMetadataToSave =
       TestMetadataEntity().apply {
-        immutableTestEntity = immutableTestEntityDb
-        name = metadata.name
-        questionMetadata =
-          metadata.questionMetadatas
-            .map { questionMetadata: QuestionMetadata ->
-              val questionEntity = idToQuestion[questionMetadata.questionIdentifier]!!
+        this.immutableTestEntity = immutableTestEntityDb
+        this.name = generatedMetadata.name
+
+        this.questionMetadata =
+          transientQuestionMetadataList
+            .map { (questionMetadataDto, transientAnswersForDto) ->
+              val originalQuestionEntity =
+                idToQuestionEntityMap[questionMetadataDto.questionIdentifier]!!
+
+              val persistedAnswersForDto =
+                transientAnswersForDto.mapNotNull { transientAnswer ->
+                  taskIdToPersistedAnswerMap[transientAnswer.taskId]
+                }
+
+              if (persistedAnswersForDto.size != transientAnswersForDto.size) {
+                log.error(
+                  "Mismatch between transient ({}) and persisted ({}) answers for question metadata {}",
+                  transientAnswersForDto.size,
+                  persistedAnswersForDto.size,
+                  questionMetadataDto.questionIdentifier
+                )
+              }
+
+              val correctPersisted =
+                persistedAnswersForDto
+                  .filter { persistedAnswer ->
+                    questionMetadataDto.correctAnswers.any {
+                      it.executorTaskId.value == persistedAnswer.taskId
+                    }
+                  }
+                  .toMutableList()
+
+              val incorrectPersisted =
+                persistedAnswersForDto
+                  .filter { persistedAnswer ->
+                    questionMetadataDto.incorrectAnswers.any {
+                      it.executorTaskId.value == persistedAnswer.taskId
+                    }
+                  }
+                  .toMutableList()
+
               QuestionMetadataEntity().apply {
-                question = questionEntity
-                text = questionMetadata.text
-                formatAndCode = Json.encodeToString(questionMetadata.formatAndCode)
-                correctAnswers =
-                  questionMetadata.correctAnswers
-                    .map { answer: Answer -> toAnswerEntity(answer, questionEntity) }
-                    .toMutableList()
-                incorrectAnswers =
-                  questionMetadata.incorrectAnswers
-                    .map { answer: Answer -> toAnswerEntity(answer, questionEntity) }
-                    .toMutableList()
+                this.question = originalQuestionEntity
+                this.text = questionMetadataDto.text
+                this.formatAndCode = Json.encodeToString(questionMetadataDto.formatAndCode)
+                this.correctAnswers = correctPersisted
+                this.incorrectAnswers = incorrectPersisted
               }
             }
             .toMutableList()
@@ -143,18 +227,22 @@ data class UserTestService(
     val testMetadataDb =
       when (
         val result: Either<ServiceIssue, TestMetadataEntity> =
-          testMetadataRepository.sqlAction { saveAndFlush(toSave) }
+          testMetadataRepository.sqlAction { saveAndFlush(testMetadataToSave) }
       ) {
-        is Either.Left -> return Either.left(result.value)
+        is Either.Left -> {
+          log.error("Failed to save test metadata: {}", result.value)
+          return Either.left(result.value)
+        }
         is Either.Right -> result.value
       }
 
     val userTestEntityToSave =
       UserTestEntity().apply {
-        immutableTest = immutableTestEntityDb
-        testMetadata = testMetadataDb
-        user = userRepository.findById(targetUser.id()).orElseThrow()
-        questionAnswers = mutableListOf()
+        this.immutableTest = immutableTestEntityDb
+        this.testMetadata = testMetadataDb
+        this.user = targetUser
+        this.questionAnswers = mutableListOf()
+        this.active = true
       }
 
     val userTestDb =
@@ -162,43 +250,75 @@ data class UserTestService(
         val result: Either<ServiceIssue, UserTestEntity> =
           userTestRepository.sqlAction { saveAndFlush(userTestEntityToSave) }
       ) {
+        is Either.Left -> {
+          log.error("Failed to save user test: {}", result.value)
+
+          return Either.left(result.value)
+        }
+        is Either.Right -> result.value
+      }
+
+    val finalImmutableTest =
+      when (
+        val result: Either<ServiceIssue, ImmutableTestEntity> =
+          immutableTestRepository.sqlOptionalAction { findById(immutableTestEntityDb.id()) }
+      ) {
         is Either.Left -> return Either.left(result.value)
         is Either.Right -> result.value
       }
 
-    immutableTestEntityDb.userTests.add(userTestDb)
-    when (val result = immutableTestRepository.sqlAction { saveAndFlush(immutableTestEntityDb) }) {
-      is Either.Left -> return Either.left(result.value)
+    finalImmutableTest.userTests.add(userTestDb)
+    when (val result = immutableTestRepository.sqlAction { saveAndFlush(finalImmutableTest) }) {
+      is Either.Left -> {
+        log.error(
+          "Failed to update immutable test {} with user test reference {}: {}",
+          finalImmutableTest.id(),
+          userTestDb.id(),
+          result.value
+        )
+
+        return Either.left(result.value)
+      }
       else -> {}
     }
 
+    log.info("Successfully created UserTest: {}", userTestDb.id())
     return Either.right(userTestDb)
   }
 
-  fun getTestForUser(targetUser: User, testModelId: UUID): Either<ServiceIssue, UserTestEntity> {
+  fun getTestForUser(targetUser: User, userTestId: UUID): Either<ServiceIssue, UserTestEntity> {
     log.info(
-      "GetUserTest[userId={}, username={}, immutableTestModelId={}]",
+      "GetUserTest[userId={}, username={}, userTestId={}]",
       targetUser.id(),
       targetUser.getUsername(),
-      testModelId
+      userTestId
     )
 
-    return findTestForUser(targetUser, testModelId)
+    return findTestForUser(targetUser, userTestId)
   }
 
+  fun getTestsForUser(user: UserEntity): Either<ServiceIssue, List<UserTestEntity>> {
+    log.info("GetTestsForUser[userId={}, username={}]", user.id(), user.username())
+
+    return userTestRepository
+      .sqlAction { findByUserId(user.id()) }
+      .ifLeft { issue -> log.error("Failed to get tests for user {}: {}", user.id(), issue) }
+  }
+
+  @Transactional
   fun submitUserAnswer(
     targetUser: User,
     params: UserAnswerParams
   ): Either<ServiceIssue, UserTestEntity> {
     log.info(
-      "SubmitUserAnswer[userId={}, username={}, testId={}]",
+      "SubmitUserAnswer[userId={}, username={}, userTestId={}]",
       targetUser.id(),
       targetUser.getUsername(),
       params.testId
     )
 
     if (!targetUser.isStudent()) {
-      return Either.left(UnexpectedAction("User is not a student: ${targetUser.getUsername()}"))
+      return Either.left(Forbidden("Only students can submit answers."))
     }
 
     val testDb: UserTestEntity =
@@ -211,11 +331,17 @@ data class UserTestService(
       }
 
     if (!testDb.active) {
-      return Either.left(UnexpectedAction("Test is not active: ${params.testId}"))
+      return Either.left(
+        UnexpectedAction("Test ${params.testId} is not active or already submitted.")
+      )
     }
 
-    val userAnswers: MutableList<UserQuestionAnswerEntity> = mutableListOf()
-    for ((questionMetadataId, answersIds) in params.answers) {
+    val userAnswersToSave: MutableList<UserQuestionAnswerEntity> = mutableListOf()
+    val allAnswerIdsFromRequest = params.answers.values.flatten().toSet()
+    val relatedAnswersDbMap =
+      answerRepository.findAllById(allAnswerIdsFromRequest).associateBy { it.id() }
+
+    for ((questionMetadataId, answerIdsFromRequest) in params.answers) {
       val questionMetadataDb: QuestionMetadataEntity =
         when (
           val result: Either<ServiceIssue, QuestionMetadataEntity> =
@@ -225,28 +351,47 @@ data class UserTestService(
           is Either.Right -> result.value
         }
 
-      val questionMetadataAnswersDb = questionMetadataDb.answers()
-      val answersDb: MutableList<AnswerEntity> = mutableListOf()
+      //      if (questionMetadataDb.testMetadata?.id() != testDb.testMetadata().id()) {
+      //        return Either.left(
+      //          UnexpectedAction(
+      //            "Question metadata $questionMetadataId does not belong to test metadata
+      // ${testDb.testMetadata().id()}"
+      //          )
+      //        )
+      //      }
 
-      for (answerId in answersIds) {
-        val maybeAnswerDb = questionMetadataAnswersDb.find { answerDb -> answerDb.id() == answerId }
-        if (maybeAnswerDb == null) {
-          return Either.left(UnexpectedAction("Answer not found: $answerId"))
+      val validAnswerIdsForQuestion = questionMetadataDb.answers().map { it.id() }.toSet()
+      val submittedAnswersForQuestion: MutableList<AnswerEntity> = mutableListOf()
+
+      for (submittedAnswerId in answerIdsFromRequest) {
+
+        if (!validAnswerIdsForQuestion.contains(submittedAnswerId)) {
+          return Either.left(
+            UnexpectedAction(
+              "Invalid answer ID $submittedAnswerId submitted for question metadata $questionMetadataId"
+            )
+          )
         }
-        answersDb.add(maybeAnswerDb)
+
+        val answerEntity =
+          relatedAnswersDbMap[submittedAnswerId]
+            ?: return Either.left(
+              SqlError("Consistency error: Answer $submittedAnswerId not found after bulk fetch.")
+            )
+        submittedAnswersForQuestion.add(answerEntity)
       }
 
-      userAnswers +=
+      userAnswersToSave +=
         UserQuestionAnswerEntity().apply {
-          question = questionMetadataDb
-          answers = answersDb
+          this.question = questionMetadataDb
+          this.answers = submittedAnswersForQuestion
         }
     }
 
     val userAnswersDb =
       when (
         val result: Either<ServiceIssue, MutableList<UserQuestionAnswerEntity>> =
-          userQuestionAnswerRepository.sqlAction { saveAll(userAnswers) }
+          userQuestionAnswerRepository.sqlAction { saveAllAndFlush(userAnswersToSave) }
       ) {
         is Either.Left -> return Either.left(result.value)
         is Either.Right -> result.value
@@ -254,7 +399,7 @@ data class UserTestService(
 
     testDb.questionAnswers = userAnswersDb
     testDb.active = false
-    val toReturn =
+    val updatedUserTest =
       when (
         val result: Either<ServiceIssue, UserTestEntity> =
           userTestRepository.sqlAction { saveAndFlush(testDb) }
@@ -263,79 +408,104 @@ data class UserTestService(
         is Either.Right -> result.value
       }
 
-    return Either.right(toReturn)
+    log.info(
+      "UserTest {} submitted successfully for user {}",
+      updatedUserTest.id(),
+      targetUser.id()
+    )
+    return Either.right(updatedUserTest)
   }
 
+  /**
+   * Scheduled task to find and deactivate expired ImmutableTests and their associated UserTests.
+   */
   private fun deactivateExpired() {
-    val toCheck: List<ImmutableTestEntity> =
-      when (
-        val result: Either<ServiceIssue, List<ImmutableTestEntity>> =
-          immutableTestRepository.sqlAction { findAllByExpiresAfterNotNullAndActive(true) }
-      ) {
-        is Either.Left -> {
-          log.error("Failed to get expired tests: ${result.value}")
-          return
-        }
-        is Either.Right -> result.value
+    val activeExpiringTests: List<ImmutableTestEntity> =
+      try {
+        immutableTestRepository.findAllByExpiresAfterNotNullAndActive(true)
+      } catch (e: Exception) {
+        log.error("Failed to query for active expiring tests", e)
+        return
       }
 
-    for (test in toCheck) {
-      if (test.expiresAfter != null && test.expiresAfter!!.isBefore(Instant.now())) {
-        test.active = false
-        when (
-          val result: Either<ServiceIssue, ImmutableTestEntity> =
-            immutableTestRepository.sqlAction { saveAndFlush(test) }
-        ) {
-          is Either.Left -> log.error("Failed to deactivate expired test: ${result.value}")
-          is Either.Right -> {}
-        }
+    val now = Instant.now()
+    val testsToExpire =
+      activeExpiringTests.filter { it.expiresAfter != null && it.expiresAfter!!.isBefore(now) }
 
-        test.userTests.forEach { userTest ->
-          userTest.active = false
-          when (
-            val result: Either<ServiceIssue, UserTestEntity> =
-              userTestRepository.sqlAction { saveAndFlush(userTest) }
-          ) {
-            is Either.Left ->
-              log.error("Failed to deactivate expired test for user: ${result.value}")
-            is Either.Right -> {}
+    if (testsToExpire.isEmpty()) {
+      return
+    }
+
+    log.info("Found {} active tests that have expired. Deactivating...", testsToExpire.size)
+
+    testsToExpire.forEach { test ->
+      test.active = false
+      try {
+        immutableTestRepository.save(test)
+
+        test.userTests
+          .filter { it.active }
+          .forEach { userTest ->
+            userTest.active = false
+            try {
+              userTestRepository.save(userTest)
+            } catch (e: Exception) {
+              log.error(
+                "Failed to deactivate expired UserTest id=${userTest.id()} for ImmutableTest id=${test.id()}",
+                e
+              )
+            }
           }
-        }
+        log.info("Deactivated expired ImmutableTest id={}", test.id())
+      } catch (e: Exception) {
+        log.error("Failed to deactivate expired ImmutableTest id=${test.id()}", e)
       }
+    }
+
+    try {
+      immutableTestRepository.flush()
+      userTestRepository.flush()
+    } catch (e: Exception) {
+      log.error("Error flushing repositories after deactivating expired tests", e)
     }
   }
 
-  private fun findTestForUser(user: User, testId: UUID): Either<ServiceIssue, UserTestEntity> {
+  /** Helper to find a UserTest by ID and verify user permissions. */
+  private fun findTestForUser(user: User, userTestId: UUID): Either<ServiceIssue, UserTestEntity> {
     val userTestEntityDb =
       when (
         val result: Either<ServiceIssue, UserTestEntity> =
-          userTestRepository.sqlOptionalAction { findById(testId) }
+          userTestRepository.sqlOptionalAction { findById(userTestId) }
       ) {
-        is Either.Left -> return Either.left(result.value)
+        is Either.Left ->
+          return Either.left(
+            SqlError(
+              "UserTest with id $userTestId not found or DB error: ${result.value.message()}"
+            )
+          )
         is Either.Right -> result.value
       }
 
-    val testForStudent = user.isStudent() && userTestEntityDb.user().id() == user.id()
-    val testForTeacher =
+    val isOwnerStudent = user.isStudent() && userTestEntityDb.user().id() == user.id()
+
+    val isSourceCreator =
       !user.isStudent() && userTestEntityDb.immutableTest().creator()?.id() == user.id()
-    if (!testForStudent && !testForTeacher) {
-      return Either.left(UnexpectedAction("User test not found for user: ${user.id()}"))
+
+    if (!isOwnerStudent && !isSourceCreator) {
+      log.warn("User {} permission denied for UserTest {}", user.id(), userTestId)
+      return Either.left(Forbidden("User does not have permission to access this test instance."))
     }
 
     return Either.right(userTestEntityDb)
   }
 
-  data class UserAnswerParams(
-    val testId: UUID,
-    // questionMetadataId -> list[answerId]
-    val answers: Map<UUID, List<UUID>>
-  )
-
   private fun toAnswerEntity(from: Answer, questionEntity: QuestionEntity): AnswerEntity {
     return AnswerEntity().apply {
-      question = questionEntity
-      answer = from.text
-      taskId = from.executorTaskId.value
+      this.question = questionEntity
+      this.answer = from.text
+      this.taskId = from.executorTaskId.value
     }
   }
+
+  data class UserAnswerParams(val testId: UUID, val answers: Map<UUID, List<UUID>>)
 }

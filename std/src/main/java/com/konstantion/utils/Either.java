@@ -1,5 +1,6 @@
 package com.konstantion.utils;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public sealed interface Either<L, R> {
@@ -9,6 +10,15 @@ public sealed interface Either<L, R> {
   <U> Either<L, U> flatMap(Function<? super R, ? extends Either<L, ? extends U>> f);
 
   <U> Either<L, U> map(Function<? super R, ? extends U> mapper);
+
+  default Either<L, R> ifLeft(Consumer<? super L> consumer) {
+    return match(
+        l -> {
+          consumer.accept(l);
+          return this;
+        },
+        r -> this);
+  }
 
   record Left<L, R>(L value) implements Either<L, R> {
     @Override

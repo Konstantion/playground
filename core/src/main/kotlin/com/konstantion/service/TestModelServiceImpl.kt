@@ -213,11 +213,7 @@ data class TestModelServiceImpl(
               is Either.Right -> Either.right(testModel)
             }
           } else {
-            log.warn(
-              "User {} attempted to delete test model {} without permission.",
-              user.id(),
-              id
-            )
+            log.warn("User {} attempted to delete test model {} without permission.", user.id(), id)
             Forbidden.asEither("User is not allowed to delete this test model.")
           }
         }
@@ -228,4 +224,4 @@ data class TestModelServiceImpl(
       }
     }
   }
-  }
+}

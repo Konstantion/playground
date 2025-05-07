@@ -1,6 +1,6 @@
 // playground-frontend/src/components/PlaceholderConfigurator.jsx
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.js';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.js';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.js';
 import { Action, actionStr, userStr } from '@/entities/Action.js';
 import { PlaceholderDefinition, PlaceholderIdentifier } from '@/entities/Placeholder.js';
@@ -26,10 +26,16 @@ import { ErrorType } from '@/utils/ErrorType.js';
 import { Routes as RRoutes } from '@/rout/Routes.jsx';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { SlidersHorizontal, PlusCircle, MinusCircle } from 'lucide-react';
+import { MinusCircle, PlusCircle, SlidersHorizontal } from 'lucide-react';
 
 // Added isEditable prop
-export default function PlaceholderConfigurator({ id, question, setQuestion, className, isEditable }) {
+export default function PlaceholderConfigurator({
+    id,
+    question,
+    setQuestion,
+    className,
+    isEditable,
+}) {
     // ... (existing state and hooks remain the same) ...
     const { auth, logout } = useAuth();
     const navigate = useNavigate();
@@ -148,9 +154,7 @@ export default function PlaceholderConfigurator({ id, question, setQuestion, cla
         return (
             <div className="mt-4 p-4 border border-slate-200 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-800/30">
                 {/* Disable the fieldset containing the configurator */}
-                <fieldset disabled={!isEditable}>
-                    {component}
-                </fieldset>
+                <fieldset disabled={!isEditable}>{component}</fieldset>
             </div>
         );
     };
@@ -277,7 +281,13 @@ export default function PlaceholderConfigurator({ id, question, setQuestion, cla
                     {/* Content for ADD Tab */}
                     <TabsContent value={Action.ADD} className="flex-1 mt-4 overflow-hidden">
                         {/* Disable content if not editable */}
-                        <ScrollArea className="h-full pr-2" style={{ pointerEvents: isEditable ? 'auto' : 'none', opacity: isEditable ? 1 : 0.7 }}>
+                        <ScrollArea
+                            className="h-full pr-2"
+                            style={{
+                                pointerEvents: isEditable ? 'auto' : 'none',
+                                opacity: isEditable ? 1 : 0.7,
+                            }}
+                        >
                             <div className="space-y-4">
                                 {selectIdentifier()}
                                 {selectDefinitionType()}
@@ -289,7 +299,13 @@ export default function PlaceholderConfigurator({ id, question, setQuestion, cla
                     {/* Content for REMOVE Tab */}
                     <TabsContent value={Action.REMOVE} className="flex-1 mt-4 overflow-hidden">
                         {/* Disable content if not editable */}
-                        <ScrollArea className="h-full pr-2" style={{ pointerEvents: isEditable ? 'auto' : 'none', opacity: isEditable ? 1 : 0.7 }}>
+                        <ScrollArea
+                            className="h-full pr-2"
+                            style={{
+                                pointerEvents: isEditable ? 'auto' : 'none',
+                                opacity: isEditable ? 1 : 0.7,
+                            }}
+                        >
                             <div className="space-y-4 p-1">
                                 {selectIdentifier()}
                                 <p className="text-xs text-slate-500 dark:text-slate-400 pt-2">
@@ -306,7 +322,11 @@ export default function PlaceholderConfigurator({ id, question, setQuestion, cla
                             onClick={handleActionClick}
                             className="w-full bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={isLoading || !isEditable}
-                            title={!isEditable ? "Cannot modify placeholders for an immutable question" : ""}
+                            title={
+                                !isEditable
+                                    ? 'Cannot modify placeholders for an immutable question'
+                                    : ''
+                            }
                         >
                             {/* ... (loading indicator logic remains the same) ... */}
                             {isLoading ? (
@@ -318,8 +338,19 @@ export default function PlaceholderConfigurator({ id, question, setQuestion, cla
                                         fill="none"
                                         viewBox="0 0 24 24"
                                     >
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        <circle
+                                            className="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            strokeWidth="4"
+                                        ></circle>
+                                        <path
+                                            className="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        ></path>
                                     </svg>
                                     Processing...
                                 </div>

@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
+import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
@@ -28,11 +29,19 @@ open class QuestionMetadataEntity {
   @Column(name = "format_and_code", nullable = false) open var formatAndCode: String? = null
 
   @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-  @JoinColumn(name = "correct_answer_id", nullable = false)
+  @JoinTable(
+    name = "question_metadata_correct_answers",
+    joinColumns = [JoinColumn(name = "question_metadata_id")],
+    inverseJoinColumns = [JoinColumn(name = "answer_id")]
+  )
   open var correctAnswers: MutableList<AnswerEntity> = mutableListOf()
 
   @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-  @JoinColumn(name = "incorrect_answer_id", nullable = false)
+  @JoinTable(
+    name = "question_metadata_incorrect_answers",
+    joinColumns = [JoinColumn(name = "question_metadata_id")],
+    inverseJoinColumns = [JoinColumn(name = "answer_id")]
+  )
   open var incorrectAnswers: MutableList<AnswerEntity> = mutableListOf()
 
   fun id(): UUID = nonNull(id)

@@ -22,4 +22,7 @@ export const Endpoints = deepFreeze({
     ImmutableTest: {
         Base: `${BACKEND_API_URL}/immutable_test`,
     },
+    UserTest: {
+        Base: `${BACKEND_API_URL}/user_test`,
+    },
 });
