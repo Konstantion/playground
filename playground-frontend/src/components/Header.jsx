@@ -1,46 +1,41 @@
 import { useAuth } from '@/hooks/useAuth.jsx';
 import { Button } from '@/components/ui/button.js';
-import { pagesFor } from '@/pages/Pages.js';
+import { pagesFor } from '@/pages/Pages.js'; // Import TestsPage key
 import {
     LogOut,
     UserCircle,
     Briefcase,
     LayoutDashboard,
     BarChart3,
-    FileText,
     Settings,
-} from 'lucide-react'; // Added icons
+    ClipboardList, // Using ClipboardList for "Tests"
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Mapping page keys to icons for the header navigation
 const pageIcons = {
-    Tests: <FileText size={16} />,
+    TestsPage: <ClipboardList size={16} />, // Use TestsPage key
     TestModels: <Briefcase size={16} />,
     Questions: <LayoutDashboard size={16} />,
     Statistics: <BarChart3 size={16} />,
     // Add more mappings as needed
 };
 
-// Header component for the application
 const Header = ({ page, setPage }) => {
     const { logout, auth } = useAuth(); // Authentication context
 
-    // Determine the list of pages accessible to the current user's role
     const accessiblePages = pagesFor(auth.user.role);
 
     return (
         <header className="w-full bg-white dark:bg-slate-800 shadow-md px-4 sm:px-6 py-3 flex justify-between items-center sticky top-0 z-50 border-b dark:border-slate-700">
-            {/* Left section: App title and navigation */}
             <div className="flex items-center gap-4 sm:gap-6">
                 <div className="flex items-center gap-2">
                     <Settings size={28} className="text-sky-600 dark:text-sky-500" />{' '}
-                    {/* App Icon */}
                     <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
                         Playground
                     </h1>
                 </div>
 
-                {/* Navigation links */}
                 <nav className="hidden md:flex items-center gap-1 sm:gap-2">
                     {accessiblePages.map(key => (
                         <Button
@@ -62,7 +57,6 @@ const Header = ({ page, setPage }) => {
                 </nav>
             </div>
 
-            {/* Right section: User info and logout button */}
             <div className="flex items-center gap-3 sm:gap-4">
                 <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
                     <UserCircle size={20} className="text-slate-500 dark:text-slate-400" />
@@ -81,10 +75,6 @@ const Header = ({ page, setPage }) => {
                     Logout
                 </Button>
             </div>
-
-            {/* Mobile Navigation (Hamburger Menu could be added here if many items) */}
-            {/* For now, if pages are few, they might fit or be handled by responsive shrinking. */}
-            {/* If more items, a dropdown or off-canvas menu would be better for mobile. */}
         </header>
     );
 };

@@ -20,7 +20,7 @@ data class ImmutableTestResponse(
 ) {
   companion object {
     fun ImmutableTestEntity.asResponse(): ImmutableTestResponse {
-      return ImmutableTestResponse(
+      val response = ImmutableTestResponse(
         id = id(),
         name = name(),
         questions = questions().map { question -> question.asResponse() },
@@ -32,6 +32,7 @@ data class ImmutableTestResponse(
         expiresAfter = expiresAfter()?.toEpochMilli(),
         userTests = userTests().map { userTest -> userTest.asResponse() }
       )
+      return response
     }
   }
 }
