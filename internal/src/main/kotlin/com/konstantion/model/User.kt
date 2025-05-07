@@ -11,15 +11,11 @@ interface User {
 
   fun role(): Role
 
-  fun permissions(): List<Permission>
-
   fun isAdmin() = role() == Role.Admin
 
   fun isTeacher() = role() == Role.Teacher
 
   fun isStudent() = role() == Role.Student
-
-  fun hasPermission(permission: Permission) = permissions().contains(permission)
 
   companion object {
     fun admin(): User {
@@ -31,8 +27,6 @@ interface User {
         override fun getPassword(): String = "password"
 
         override fun role() = Role.Admin
-
-        override fun permissions() = emptyList<Permission>()
       }
     }
   }

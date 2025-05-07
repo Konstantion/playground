@@ -155,7 +155,14 @@ data class QuestionValidator(
 
               val badFactor = badMetadatas.size.toDouble() / metadatas.size.toDouble()
               if (badFactor > SUCCESS_FACTOR) {
-                log.warn("Question with id={} has incorrect answers: {}", id, uniqueIssues)
+                log.warn(
+                  "Question with id={} has bad factor={}, " +
+                    "badMetadatas.size={}, metadatas.size={}",
+                  id,
+                  badFactor,
+                  badMetadatas.size,
+                  metadatas.size
+                )
                 when (status(id)) {
                   is StatusResponse.Submitted ->
                     require(

@@ -1,10 +1,17 @@
 import Header from '@/components/Header.jsx';
-import { QuestionsPage as QQuestionsPage, StatisticsPage, TestsPage } from '@/pages/Pages.js';
+import {
+    QuestionsPage as QuestionsPPage,
+    StatisticsPage as StatisticsPPage,
+    TestModelsPage as TestModelsPPage,
+    TestsPage as TestsPPage,
+} from '@/pages/Pages.js';
 import QuestionsPage from '@/pages/QuestionsPage.jsx';
 
-import { useNavigate, useParams } from 'react-router-dom';
-import { RHome } from '@/rout/Routes.jsx';
+import {useNavigate, useParams} from 'react-router-dom';
+import {RHome} from '@/rout/Routes.jsx';
 import NotFound from '@/components/NotFound.jsx';
+import {StatisticsPage} from '@/pages/StatisticsPage.jsx';
+import TestModelsPage from '@/pages/TestModelsPage.jsx';
 
 export default function HomePage() {
     const { section } = useParams();
@@ -12,12 +19,14 @@ export default function HomePage() {
 
     const renderPage = page => {
         switch (page) {
-            case TestsPage:
+            case TestsPPage:
                 return <div>Tests</div>;
-            case QQuestionsPage:
+            case QuestionsPPage:
                 return <QuestionsPage />;
-            case StatisticsPage:
+            case StatisticsPPage:
                 return <StatisticsPage />;
+            case TestModelsPPage:
+                return <TestModelsPage />;
             default:
                 return <NotFound />;
         }

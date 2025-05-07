@@ -37,4 +37,10 @@ open class UserTestEntity {
   @Column(name = "active", nullable = false) open var active: Boolean = true
 
   fun user(): UserEntity = FieldUtils.nonNull(user)
+
+  fun id(): UUID = FieldUtils.nonNull(id)
+  fun immutableTest(): ImmutableTestEntity = FieldUtils.nonNull(immutableTest)
+  fun testMetadata(): TestMetadataEntity = FieldUtils.nonNull(testMetadata)
+  fun questionAnswers(): List<UserQuestionAnswerEntity> = FieldUtils.nonNull(questionAnswers)
+  fun active(): Boolean = active
 }

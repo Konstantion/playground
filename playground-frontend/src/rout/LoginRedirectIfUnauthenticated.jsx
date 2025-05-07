@@ -1,7 +1,7 @@
-import { useAuth } from '../hooks/useAuth.jsx';
-import { Navigate } from 'react-router-dom';
-import { RHome, Routes } from './Routes.jsx';
-import { TestsPage } from '@/pages/Pages.js';
+import {useAuth} from '../hooks/useAuth.jsx';
+import {Navigate} from 'react-router-dom';
+import {RHome, Routes} from './Routes.jsx';
+import {TestsPage} from '@/pages/Pages.js';
 
 export const LoginRedirectIfUnauthenticated = ({ children }) => {
     const { auth } = useAuth();

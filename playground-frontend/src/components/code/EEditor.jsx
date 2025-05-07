@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { Editor } from '@monaco-editor/react';
+import {useRef, useState} from 'react';
+import {Editor} from '@monaco-editor/react';
 
 export default function EEditor({ initialCode, onChange, language, editable }) {
     const editorRef = useRef(null);

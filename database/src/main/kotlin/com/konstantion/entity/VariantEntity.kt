@@ -15,8 +15,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
-import java.time.LocalDateTime
-import java.time.ZoneId
+import java.time.Instant
 import java.util.UUID
 
 @Entity
@@ -29,12 +28,13 @@ open class VariantEntity {
   @JoinColumn(name = "code_id")
   open var code: CodeEntity? = null
 
-  @Column(name = "created_at", nullable = false)
-  open var createdAt: LocalDateTime? = LocalDateTime.now()
+  @Column(name = "created_at", nullable = false) open var createdAt: Instant? = Instant.now()
 
   @ManyToOne(fetch = FetchType.LAZY, optional = true)
   @JoinColumn(name = "created_by", nullable = true)
   open var createdBy: UserEntity? = null
+
+  @Column(name = "public", nullable = false) open var public: Boolean = true
 
   fun <L> toCorrect(lang: L): Question.Variant.Correct<L> where L : Lang {
     return Question.Variant.Correct(nonNull(id), refine(nonNull(code).toModel(lang)))
@@ -48,8 +48,9 @@ open class VariantEntity {
 
   fun code(): CodeEntity = nonNull(code)
 
-  fun createdAt(): Long =
-    nonNull(createdAt).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+  fun createdAt(): Instant = nonNull(createdAt)
+
+  fun public() = nonNull(public)
 
   override fun toString(): String {
     return "VariantEntity(id=$id, code=$code)"

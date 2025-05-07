@@ -5,7 +5,6 @@ import com.konstantion.entity.UserEntity
 import com.konstantion.executor.QuestionExecutor
 import com.konstantion.model.FormatAndCode
 import com.konstantion.model.Lang
-import com.konstantion.model.Permission
 import com.konstantion.model.Question
 import com.konstantion.model.Role
 import com.konstantion.port.QuestionPort
@@ -35,7 +34,7 @@ data class QuestionServiceImpl(
   ): Either<ServiceIssue, QuestionEntity> {
     log.info("Save[userId={}, username={}, question={}]", user.id(), user.username(), question)
 
-    return if (user.isAdmin() || user.isTeacher() || user.hasPermission(Permission.SaveQuestion)) {
+    return if (user.isAdmin() || user.isTeacher()) {
       val saveResult = questionPort.sqlAction { save(QuestionEntity.fromModel(question)) }
       log.info(
         "SaveResult[userId={}, username={}, result={}]",
@@ -116,7 +115,7 @@ data class QuestionServiceImpl(
       user.username(),
       params
     )
-    return if (user.isAdmin() || user.hasPermission(Permission.CreateQuestion)) {
+    return if (user.isAdmin() || user.isTeacher()) {
       val entity: QuestionEntity =
         QuestionEntity().apply {
           lang = encodeToString(Lang.serializer(), params.lang)
@@ -150,7 +149,7 @@ data class QuestionServiceImpl(
       params
     )
 
-    return if (user.isAdmin() || user.hasPermission(Permission.UpdateQuestion)) {
+    return if (user.isAdmin() || user.isTeacher()) {
       when (
         val result: Either<ServiceIssue, QuestionEntity> =
           questionPort
@@ -171,21 +170,26 @@ data class QuestionServiceImpl(
             user.username(),
             entity
           )
-          val updateResult: UpdateResult = updateHelper.update(entity, params)
-          if (updateResult.invalidate) {
-            questionValidator.onInvalidated(entity)
+
+          if (!entity.public()) {
+            Either.left(UnexpectedAction("Question is not editable."))
+          } else {
+            val updateResult: UpdateResult = updateHelper.update(entity, params)
+            if (updateResult.invalidate) {
+              questionValidator.onInvalidated(entity)
+            }
+
+            val saved = questionPort.save(entity)
+
+            log.info(
+              "UpdateQuestionSuccess[userId={}, username={}, entity={}, violations={}]",
+              user.id(),
+              user.username(),
+              saved,
+              updateResult
+            )
+            Either.right(QuestionService.UpdateResult(saved, updateResult.violations))
           }
-
-          val saved = questionPort.save(entity)
-
-          log.info(
-            "UpdateQuestionSuccess[userId={}, username={}, entity={}, violations={}]",
-            user.id(),
-            user.username(),
-            saved,
-            updateResult
-          )
-          Either.right(QuestionService.UpdateResult(saved, updateResult.violations))
         }
       }
     } else {

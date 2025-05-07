@@ -26,7 +26,7 @@ import jakarta.persistence.MapKeyColumn
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.UUID
 import kotlinx.serialization.json.Json
 import org.hibernate.annotations.OnDelete
@@ -90,8 +90,7 @@ open class QuestionEntity {
   @OnDelete(action = OnDeleteAction.SET_NULL)
   open var creator: UserEntity? = null
 
-  @Column(name = "created_at", nullable = false)
-  open var createdAt: LocalDateTime? = LocalDateTime.now()
+  @Column(name = "created_at", nullable = false) open var createdAt: Instant? = Instant.now()
 
   fun id(): UUID = nonNull(id)
 
@@ -117,7 +116,7 @@ open class QuestionEntity {
 
   fun creator(): UserEntity? = creator
 
-  fun createdAt(): LocalDateTime = nonNull(createdAt)
+  fun createdAt(): Instant = nonNull(createdAt)
 
   override fun toString(): String {
     return "QuestionEntity(id=$id, lang=$lang, body=$body, formatAndCode=$formatAndCode, placeholderDefinitions=$placeholderDefinitions, callArgs=$callArgs, additionalCheck=$additionalCheck, correctVariants=$correctVariants, incorrectVariants=$incorrectVariants)"

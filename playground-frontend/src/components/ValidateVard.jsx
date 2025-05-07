@@ -1,14 +1,14 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.js';
-import { Button } from '@/components/ui/button.js';
-import { CheckCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import { useAuth } from '@/hooks/useAuth.jsx';
-import { authenticatedReq } from '@/utils/Requester.js';
-import { Endpoints } from '@/utils/Endpoints.js';
-import { ErrorType } from '@/utils/ErrorType.js';
-import { Routes as RRoutes } from '@/rout/Routes.jsx';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card.js';
+import {Button} from '@/components/ui/button.js';
+import {CheckCircle} from 'lucide-react';
+import {toast} from 'sonner';
+import {useAuth} from '@/hooks/useAuth.jsx';
+import {authenticatedReq} from '@/utils/Requester.js';
+import {Endpoints} from '@/utils/Endpoints.js';
+import {ErrorType} from '@/utils/ErrorType.js';
+import {Routes as RRoutes} from '@/rout/Routes.jsx';
 
 const intervalMs = 2000;
 

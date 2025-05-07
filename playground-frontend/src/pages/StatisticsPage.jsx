@@ -1,30 +1,16 @@
-import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
-import {
-    Carousel,
-    CarouselContent,
-    CarouselItem,
-    CarouselNext,
-    CarouselPrevious,
-} from '@/components/ui/carousel.js';
-import Header from '@/components/Header.jsx';
-import { ScrollArea } from '@/components/ui/scroll-area.js';
-import { Label } from '@/components/ui/label.js';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select.js';
-import { I32RangeConfigurator } from '@/components/placeholder/I32RangeConfigurator.jsx';
-import { Button } from '@/components/ui/button.js';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs.js';
+import {Card, CardContent, CardHeader} from '@/components/ui/card.js';
+import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious,} from '@/components/ui/carousel.js';
+import {ScrollArea} from '@/components/ui/scroll-area.js';
+import {Label} from '@/components/ui/label.js';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from '@/components/ui/select.js';
+import {I32RangeConfigurator} from '@/components/placeholder/I32RangeConfigurator.jsx';
+import {Button} from '@/components/ui/button.js';
+import {Tabs, TabsList, TabsTrigger} from '@/components/ui/tabs.js';
 
 export function StatisticsPage() {
     const correct = ['correct code 1', 'correct code 2'];
     return (
         <>
-            <Header />
             <div
                 className="grid grid-cols-[2fr_2fr_3fr_3fr] grid-rows-2 gap-4 w-full min-h-screen
         p-4

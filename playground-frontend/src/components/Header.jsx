@@ -1,6 +1,6 @@
-import { useAuth } from '@/hooks/useAuth.jsx';
-import { Button } from '@/components/ui/button.js';
-import { pagesFor } from '@/pages/Pages.js';
+import {useAuth} from '@/hooks/useAuth.jsx';
+import {Button} from '@/components/ui/button.js';
+import {pagesFor} from '@/pages/Pages.js';
 
 const Header = ({ page, setPage }) => {
     const { logout, auth } = useAuth();

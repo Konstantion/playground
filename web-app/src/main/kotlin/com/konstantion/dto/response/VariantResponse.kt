@@ -7,6 +7,6 @@ import java.util.UUID
 data class VariantResponse(val id: UUID, val code: CodeResponse, val createdAt: Long) {
   companion object {
     fun VariantEntity.asResponse() =
-      VariantResponse(id = id(), code = code().asResponse(), createdAt = createdAt())
+      VariantResponse(id = id(), code = code().asResponse(), createdAt = createdAt().toEpochMilli())
   }
 }

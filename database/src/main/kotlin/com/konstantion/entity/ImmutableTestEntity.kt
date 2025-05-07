@@ -13,7 +13,7 @@ import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.UUID
 import org.hibernate.annotations.OnDelete
 import org.hibernate.annotations.OnDeleteAction
@@ -35,8 +35,11 @@ open class ImmutableTestEntity {
 
   @Column(name = "active", nullable = false) open var active: Boolean = true
 
-  @Column(name = "created_at", nullable = false)
-  open var createdAt: LocalDateTime = LocalDateTime.now()
+  @Column(name = "shuffle_questions", nullable = false) open var shuffleQuestions: Boolean = false
+
+  @Column(name = "shuffle_answers", nullable = false) open var shuffleVariants: Boolean = false
+
+  @Column(name = "created_at", nullable = false) open var createdAt: Instant = Instant.now()
 
   @ManyToOne(fetch = FetchType.LAZY, optional = true)
   @JoinColumn(name = "creator_id", nullable = true)
@@ -44,7 +47,7 @@ open class ImmutableTestEntity {
   open var creator: UserEntity? = null
 
   /** The time when the test model expires. If null, the test model does not expire. */
-  @Column(name = "expires_after", nullable = true) open var expiresAfter: LocalDateTime? = null
+  @Column(name = "expires_after", nullable = true) open var expiresAfter: Instant? = null
 
   @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
   open var userTests: MutableList<UserTestEntity> = mutableListOf()
@@ -54,4 +57,12 @@ open class ImmutableTestEntity {
   fun name(): String = FieldUtils.nonNull(name)
 
   fun questions(): List<QuestionEntity> = FieldUtils.nonNull(questions)
+
+  fun active(): Boolean = active
+  fun shuffleQuestions(): Boolean = shuffleQuestions
+  fun shuffleVariants(): Boolean = shuffleVariants
+  fun createdAt(): Instant = FieldUtils.nonNull(createdAt)
+  fun creator(): UserEntity? = creator
+  fun expiresAfter(): Instant? = expiresAfter
+  fun userTests(): List<UserTestEntity> = FieldUtils.nonNull(userTests)
 }

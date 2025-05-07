@@ -1,20 +1,15 @@
 package com.konstantion.entity
 
-import com.konstantion.model.Permission
 import com.konstantion.model.Role
 import com.konstantion.model.User
 import com.konstantion.utils.FieldUtils.nonNull
-import jakarta.persistence.CollectionTable
 import jakarta.persistence.Column
-import jakarta.persistence.ElementCollection
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
-import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
 import jakarta.persistence.Table
 import java.util.UUID
 
@@ -28,12 +23,6 @@ open class UserEntity {
   @Column(name = "password", nullable = false) open var password: String? = null
 
   @Column(name = "role") @Enumerated(EnumType.STRING) open var role: Role? = null
-
-  @ElementCollection(targetClass = Permission::class, fetch = FetchType.EAGER)
-  @CollectionTable(name = "user_permissions", joinColumns = [JoinColumn(name = "user_id")])
-  @Column(name = "permission")
-  @Enumerated(EnumType.STRING)
-  open var permissions: MutableSet<Permission> = mutableSetOf()
 
   @Column(name = "anonymous", nullable = false) open var anonymous: Boolean = false
 
@@ -49,7 +38,7 @@ open class UserEntity {
 
   fun isTeacher(): Boolean = role() == Role.Teacher
 
-  fun hasPermission(permission: Permission) = permissions.contains(permission)
+  fun isStudent(): Boolean = role() == Role.Student
 
   fun asUser(): User {
     return object : User {
@@ -60,8 +49,6 @@ open class UserEntity {
       override fun getPassword(): String = password()
 
       override fun role(): Role = nonNull(role)
-
-      override fun permissions(): List<Permission> = permissions.toList()
     }
   }
 }

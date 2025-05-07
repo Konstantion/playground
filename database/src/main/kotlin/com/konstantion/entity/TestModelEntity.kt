@@ -14,7 +14,7 @@ import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.UUID
 import org.hibernate.annotations.OnDelete
 import org.hibernate.annotations.OnDeleteAction
@@ -34,10 +34,7 @@ open class TestModelEntity {
   )
   open var questions: MutableList<QuestionEntity> = mutableListOf()
 
-  @Column(name = "active", nullable = false) open var active: Boolean = true
-
-  @Column(name = "created_at", nullable = false)
-  open var createdAt: LocalDateTime = LocalDateTime.now()
+  @Column(name = "created_at", nullable = false) open var createdAt: Instant = Instant.now()
 
   @ManyToOne(fetch = FetchType.LAZY, optional = true)
   @JoinColumn(name = "creator_id", nullable = true)
@@ -50,9 +47,7 @@ open class TestModelEntity {
 
   fun questions(): MutableList<QuestionEntity> = questions
 
-  fun active(): Boolean = active
-
-  fun createdAt(): LocalDateTime = createdAt
+  fun createdAt(): Instant = createdAt
 
   fun toModel(): TestModel {
     return TestModel(id = id(), name = name(), questions = questions.map(QuestionEntity::toModel))

@@ -1,12 +1,12 @@
-import React, { useMemo, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { CheckCircle, Edit, Trash2, XCircle } from 'lucide-react';
-import { CodeBlock } from '@/components/code/CodeBlock.jsx';
-import { Badge } from '@/components/ui/badge';
-import { prettierStr } from '@/entities/Placeholder.js';
-import { Input } from '@/components/ui/input.js';
-import { Editor } from '@monaco-editor/react';
+import React, {useMemo, useState} from 'react';
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
+import {ScrollArea} from '@/components/ui/scroll-area';
+import {CheckCircle, Edit, Trash2, XCircle} from 'lucide-react';
+import {CodeBlock} from '@/components/code/CodeBlock.jsx';
+import {Badge} from '@/components/ui/badge';
+import {prettierStr} from '@/entities/Placeholder.js';
+import {Input} from '@/components/ui/input.js';
+import {Editor} from '@monaco-editor/react';
 import {
     Dialog,
     DialogContent,
@@ -16,16 +16,16 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog.js';
-import { Button } from '@/components/ui/button.js';
-import { authenticatedReq } from '@/utils/Requester.js';
-import { Endpoints } from '@/utils/Endpoints.js';
-import { useAuth } from '@/hooks/useAuth.jsx';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { ErrorType } from '@/utils/ErrorType.js';
-import { RHome, Routes as RRoutes } from '@/rout/Routes.jsx';
-import { sNotEmpty } from '@/utils/ObjectUtils.js';
-import { QuestionsPage } from '@/pages/Pages.js';
+import {Button} from '@/components/ui/button.js';
+import {authenticatedReq} from '@/utils/Requester.js';
+import {Endpoints} from '@/utils/Endpoints.js';
+import {useAuth} from '@/hooks/useAuth.jsx';
+import {useNavigate} from 'react-router-dom';
+import {toast} from 'sonner';
+import {ErrorType} from '@/utils/ErrorType.js';
+import {RHome, Routes as RRoutes} from '@/rout/Routes.jsx';
+import {sNotEmpty} from '@/utils/ObjectUtils.js';
+import {QuestionsPage} from '@/pages/Pages.js';
 
 export default function QuestionPreview({ question, className, setQuestion }) {
     const { auth, logout } = useAuth();

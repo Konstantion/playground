@@ -36,6 +36,7 @@ open class QuestionMetadataEntity {
   open var incorrectAnswers: MutableList<AnswerEntity> = mutableListOf()
 
   fun id(): UUID = nonNull(id)
+  fun question(): QuestionEntity = nonNull(question)
   fun text(): String = nonNull(text)
   fun formatAndCode(): String = nonNull(formatAndCode)
   fun correctAnswers(): MutableList<AnswerEntity> = correctAnswers

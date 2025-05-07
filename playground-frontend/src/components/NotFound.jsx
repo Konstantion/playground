@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { AlertTriangle } from 'lucide-react';
-import { TestsPage } from '@/pages/Pages.js';
-import { RHome } from '@/rout/Routes.jsx';
+import {Button} from '@/components/ui/button';
+import {useNavigate} from 'react-router-dom';
+import {AlertTriangle} from 'lucide-react';
+import {TestsPage} from '@/pages/Pages.js';
+import {RHome} from '@/rout/Routes.jsx';
 
 export default function NotFound() {
     const navigate = useNavigate();

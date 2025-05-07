@@ -1,10 +1,16 @@
-import { Role } from '@/entities/Role.js';
+import {Role} from '@/entities/Role.js';
 
 export const TestsPage = 'Tests';
+export const TestModelsPage = 'TestModels';
 export const QuestionsPage = 'Questions';
 export const StatisticsPage = 'Statistics';
 
-export const TeacherPages = Object.freeze([TestsPage, QuestionsPage, StatisticsPage]);
+export const TeacherPages = Object.freeze([
+    TestsPage,
+    QuestionsPage,
+    TestModelsPage,
+    StatisticsPage,
+]);
 
 export const StudentPages = Object.freeze([TestsPage]);
 

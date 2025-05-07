@@ -1,5 +1,6 @@
 package com.konstantion.entity
 
+import com.konstantion.utils.FieldUtils
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -27,4 +28,9 @@ open class TestMetadataEntity {
   @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
   @JoinColumn(name = "test_metadata_id", nullable = false)
   open var questionMetadata: MutableList<QuestionMetadataEntity> = mutableListOf()
+
+  fun id(): UUID = FieldUtils.nonNull(id)
+  fun immutableTestEntity(): ImmutableTestEntity = FieldUtils.nonNull(immutableTestEntity)
+  fun name(): String = FieldUtils.nonNull(name)
+  fun questionMetadata(): List<QuestionMetadataEntity> = FieldUtils.nonNull(questionMetadata)
 }

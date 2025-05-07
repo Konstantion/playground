@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository
 @Repository
 interface ImmutableTestRepository : JpaRepository<ImmutableTestEntity, UUID>, Port {
   fun findAllByExpiresAfterNotNullAndActive(active: Boolean): List<ImmutableTestEntity>
+
+  fun findAllByCreatorId(creatorId: UUID): List<ImmutableTestEntity>
 }

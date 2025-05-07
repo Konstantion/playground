@@ -34,6 +34,7 @@ class QuestionExecutorTest {
         Question.Variant.Correct(
           UUID.randomUUID(),
           Code(
+            UUID.randomUUID(),
             """
               return "hi"
             """
@@ -45,6 +46,7 @@ class QuestionExecutorTest {
         Question.Variant.Correct(
           UUID.randomUUID(),
           Code(
+            UUID.randomUUID(),
             """
                   return a + c
             """
@@ -59,6 +61,7 @@ class QuestionExecutorTest {
         Question.Variant.Incorrect(
           UUID.randomUUID(),
           Code(
+            UUID.randomUUID(),
             """
               return str(a) 
             """
@@ -100,6 +103,7 @@ class QuestionExecutorTest {
         Question.Variant.Incorrect(
           UUID.randomUUID(),
           Code(
+            UUID.randomUUID(),
             """
               return str(a) + 1
             """

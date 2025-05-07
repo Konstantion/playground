@@ -1,25 +1,19 @@
-import { useAuth } from '../hooks/useAuth.jsx';
-import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button.js';
-import { Input } from '@/components/ui/input.js';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs.js';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select.js';
-import { preventAndAsync } from '@/utils/Misc.js';
-import { sCp, sEq } from '@/utils/ObjectUtils.js';
-import { between, contains, substrs } from '@/utils/Strings.js';
-import { fetchJwt, register } from '@/utils/AuthUtils.js';
-import { RHome } from '@/rout/Routes.jsx';
-import { toast } from 'sonner';
-import { ErrorType } from '@/utils/ErrorType.js';
-import { TestsPage } from '@/pages/Pages.js';
+import {useAuth} from '../hooks/useAuth.jsx';
+import {useNavigate} from 'react-router-dom';
+import {useState} from 'react';
+import {Card, CardContent} from '@/components/ui/card';
+import {Button} from '@/components/ui/button.js';
+import {Input} from '@/components/ui/input.js';
+import {Tabs, TabsList, TabsTrigger} from '@/components/ui/tabs.js';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from '@/components/ui/select.js';
+import {preventAndAsync} from '@/utils/Misc.js';
+import {sCp, sEq} from '@/utils/ObjectUtils.js';
+import {between, contains, substrs} from '@/utils/Strings.js';
+import {fetchJwt, register} from '@/utils/AuthUtils.js';
+import {RHome} from '@/rout/Routes.jsx';
+import {toast} from 'sonner';
+import {ErrorType} from '@/utils/ErrorType.js';
+import {TestsPage} from '@/pages/Pages.js';
 
 const Mode = Object.freeze({
     Login: 'login',

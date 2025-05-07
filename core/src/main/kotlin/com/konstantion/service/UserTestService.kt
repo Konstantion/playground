@@ -28,7 +28,7 @@ import com.konstantion.service.SqlHelper.sqlOptionalAction
 import com.konstantion.utils.CommonScheduler
 import com.konstantion.utils.Either
 import java.time.Duration
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.UUID
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -82,7 +82,7 @@ data class UserTestService(
 
     if (
       immutableTestEntityDb.expiresAfter != null &&
-        immutableTestEntityDb.expiresAfter!!.isBefore(LocalDateTime.now())
+        immutableTestEntityDb.expiresAfter!!.isBefore(Instant.now())
     ) {
       return Either.left(UnexpectedAction("Immutable test is expired: $testModelId"))
     }
@@ -197,6 +197,10 @@ data class UserTestService(
       params.testId
     )
 
+    if (!targetUser.isStudent()) {
+      return Either.left(UnexpectedAction("User is not a student: ${targetUser.getUsername()}"))
+    }
+
     val testDb: UserTestEntity =
       when (
         val result: Either<ServiceIssue, UserTestEntity> =
@@ -276,7 +280,7 @@ data class UserTestService(
       }
 
     for (test in toCheck) {
-      if (test.expiresAfter != null && test.expiresAfter!!.isBefore(LocalDateTime.now())) {
+      if (test.expiresAfter != null && test.expiresAfter!!.isBefore(Instant.now())) {
         test.active = false
         when (
           val result: Either<ServiceIssue, ImmutableTestEntity> =
@@ -311,7 +315,10 @@ data class UserTestService(
         is Either.Right -> result.value
       }
 
-    if (userTestEntityDb.user().id() != user.id()) {
+    val testForStudent = user.isStudent() && userTestEntityDb.user().id() == user.id()
+    val testForTeacher =
+      !user.isStudent() && userTestEntityDb.immutableTest().creator()?.id() == user.id()
+    if (!testForStudent && !testForTeacher) {
       return Either.left(UnexpectedAction("User test not found for user: ${user.id()}"))
     }
 

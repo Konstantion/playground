@@ -1,5 +1,6 @@
 package com.konstantion.entity
 
+import com.konstantion.utils.FieldUtils
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -27,4 +28,8 @@ open class UserQuestionAnswerEntity {
     inverseJoinColumns = [JoinColumn(name = "answer_id", nullable = false)]
   )
   open var answers: MutableList<AnswerEntity> = mutableListOf()
+
+  fun id(): UUID = FieldUtils.nonNull(id)
+  fun question(): QuestionMetadataEntity = FieldUtils.nonNull(question)
+  fun answers(): List<AnswerEntity> = FieldUtils.nonNull(answers)
 }

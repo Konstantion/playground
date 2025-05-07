@@ -22,12 +22,12 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/test_model")
-data class TestModelController(private val testModelService: TestModelService<TestModelEntity>) {
+data class TestModelController(private val testModelService: TestModelService) {
   @GetMapping
   fun getAllTestModels(@AuthenticationPrincipal userEntity: UserEntity): ResponseEntity<*> {
     return when (
       val result: Either<ServiceIssue, List<TestModelEntity>> =
-        testModelService.getTestModels(userEntity.asUser())
+        testModelService.getTestModels(userEntity)
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.map { entity -> entity.asResponse() })
@@ -41,7 +41,7 @@ data class TestModelController(private val testModelService: TestModelService<Te
   ): ResponseEntity<*> {
     return when (
       val result: Either<ServiceIssue, TestModelEntity> =
-        testModelService.getTestModelById(userEntity.asUser(), id)
+        testModelService.getTestModelById(userEntity, id)
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
@@ -55,7 +55,7 @@ data class TestModelController(private val testModelService: TestModelService<Te
   ): ResponseEntity<*> {
     return when (
       val result: Either<ServiceIssue, TestModelEntity> =
-        testModelService.createTestModel(userEntity.asUser(), request.asParams())
+        testModelService.createTestModel(userEntity, request.asParams())
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
@@ -69,8 +69,8 @@ data class TestModelController(private val testModelService: TestModelService<Te
     @RequestBody request: UpdateTestModelRequest
   ): ResponseEntity<*> {
     return when (
-      val result: Either<ServiceIssue, TestModelService.UpdateResult<TestModelEntity>> =
-        testModelService.updateTestModel(userEntity.asUser(), id, request.asParams())
+      val result: Either<ServiceIssue, TestModelService.UpdateResult> =
+        testModelService.updateTestModel(userEntity, id, request.asParams())
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.entity.asResponse())

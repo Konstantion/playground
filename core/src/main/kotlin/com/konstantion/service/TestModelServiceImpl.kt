@@ -2,16 +2,15 @@ package com.konstantion.service
 
 import com.konstantion.entity.QuestionEntity
 import com.konstantion.entity.TestModelEntity
-import com.konstantion.model.Permission
+import com.konstantion.entity.UserEntity
 import com.konstantion.model.Role
-import com.konstantion.model.User
 import com.konstantion.port.QuestionPort
 import com.konstantion.port.TestModelPort
 import com.konstantion.service.SqlHelper.sqlAction
 import com.konstantion.utils.Either
 import com.konstantion.utils.Maybe
 import com.konstantion.utils.Maybe.Companion.asMaybe
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.UUID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -21,11 +20,11 @@ import org.springframework.stereotype.Service
 data class TestModelServiceImpl(
   private val testPort: TestModelPort<TestModelEntity>,
   private val questionPort: QuestionPort<QuestionEntity>
-) : TestModelService<TestModelEntity> {
+) : TestModelService {
   private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-  override fun getTestModelById(user: User, id: UUID): Either<ServiceIssue, TestModelEntity> {
-    log.info("GetTestModelById[userId={}, username={}, id={}]", user.id(), user.getUsername(), id)
+  override fun getTestModelById(user: UserEntity, id: UUID): Either<ServiceIssue, TestModelEntity> {
+    log.info("GetTestModelById[userId={}, username={}, id={}]", user.id(), user.username(), id)
     return when (user.role()) {
       Role.Admin,
       Role.Teacher -> {
@@ -49,8 +48,8 @@ data class TestModelServiceImpl(
     }
   }
 
-  override fun getTestModels(user: User): Either<ServiceIssue, List<TestModelEntity>> {
-    log.info("GetTestModels[userId={}, username={}]", user.id(), user.getUsername())
+  override fun getTestModels(user: UserEntity): Either<ServiceIssue, List<TestModelEntity>> {
+    log.info("GetTestModels[userId={}, username={}]", user.id(), user.username())
     return when (user.role()) {
       Role.Admin,
       Role.Teacher -> testPort.sqlAction { findAllByCreatorId(user.id()) }
@@ -58,8 +57,8 @@ data class TestModelServiceImpl(
     }
   }
 
-  override fun getAllTestModels(user: User): Either<ServiceIssue, List<TestModelEntity>> {
-    log.info("GetAllTestModels[userId={}, username={}]", user.id(), user.getUsername())
+  override fun getAllTestModels(user: UserEntity): Either<ServiceIssue, List<TestModelEntity>> {
+    log.info("GetAllTestModels[userId={}, username={}]", user.id(), user.username())
     return when (user.role()) {
       Role.Admin -> testPort.sqlAction { findAll() }
       Role.Teacher,
@@ -68,20 +67,21 @@ data class TestModelServiceImpl(
   }
 
   override fun createTestModel(
-    user: User,
+    user: UserEntity,
     params: TestModelService.CreateTestModelParams
   ): Either<ServiceIssue, TestModelEntity> {
     log.info(
       "CreateTestModel[userId={}, username={}, params={}]",
       user.id(),
-      user.getUsername(),
+      user.username(),
       params
     )
-    return if (user.isAdmin() || user.hasPermission(Permission.CreateTestModel)) {
+    return if (user.isAdmin() || user.isTeacher()) {
       val toSave =
         TestModelEntity().apply {
           name = params.name
-          createdAt = LocalDateTime.now()
+          createdAt = Instant.now()
+          creator = user
         }
 
       when (
@@ -95,7 +95,7 @@ data class TestModelServiceImpl(
           log.info(
             "CreateTestModel[userId={}, username={}, result={}]",
             user.id(),
-            user.getUsername(),
+            user.username(),
             result.value
           )
           result
@@ -107,18 +107,18 @@ data class TestModelServiceImpl(
   }
 
   override fun updateTestModel(
-    user: User,
+    user: UserEntity,
     id: UUID,
     params: TestModelService.UpdateTestModelParams
-  ): Either<ServiceIssue, TestModelService.UpdateResult<TestModelEntity>> {
+  ): Either<ServiceIssue, TestModelService.UpdateResult> {
     log.info(
       "UpdateTestModel[userId={}, username={}, id={}, params={}]",
       user.id(),
-      user.getUsername(),
+      user.username(),
       id,
       params
     )
-    return if (user.isAdmin() || user.hasPermission(Permission.UpdateTestModel)) {
+    return if (user.isAdmin() || user.isTeacher()) {
       testPort
         .sqlAction { findById(id).asMaybe() }
         .flatMap { maybeTest ->
@@ -129,22 +129,22 @@ data class TestModelServiceImpl(
                 val violations: MutableMap<String, MutableList<String>> = mutableMapOf()
                 if (params.name != null) {
                   when {
-                    params.name!!.isBlank() ->
+                    params.name.isBlank() ->
                       violations
                         .computeIfAbsent("name") { mutableListOf() }
                         .add("Name cannot be blank.")
-                    params.name!!.length > 255 ->
+                    params.name.length > 255 ->
                       violations
                         .computeIfAbsent("name") { mutableListOf() }
                         .add("Name cannot be longer than 255 characters.")
-                    else -> test.name = params.name!!
+                    else -> test.name = params.name
                   }
                 }
 
                 if (params.questionId != null) {
                   when (
                     val findResult: Either<ServiceIssue, Maybe<QuestionEntity>> =
-                      questionPort.sqlAction { findById(params.questionId!!).asMaybe() }
+                      questionPort.sqlAction { findById(params.questionId).asMaybe() }
                   ) {
                     is Either.Left ->
                       violations
@@ -180,7 +180,7 @@ data class TestModelServiceImpl(
                     log.info(
                       "UpdateTestModel[userId={}, username={}, result={}]",
                       user.id(),
-                      user.getUsername(),
+                      user.username(),
                       saveResult.value
                     )
                     Either.right(TestModelService.UpdateResult(saveResult.value, violations))

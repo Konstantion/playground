@@ -1,4 +1,4 @@
-import { deepFreeze } from './ObjectUtils';
+import {deepFreeze} from './ObjectUtils';
 
 const BACKEND_URL = 'http://localhost:8079';
 const BACKEND_API_URL = `${BACKEND_URL}/api`;
@@ -15,5 +15,8 @@ export const Endpoints = deepFreeze({
     },
     Variant: {
         Base: `${BACKEND_API_URL}/variant`,
+    },
+    TestModel: {
+        Base: `${BACKEND_API_URL}/test_model`,
     },
 });

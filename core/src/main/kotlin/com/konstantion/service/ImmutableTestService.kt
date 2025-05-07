@@ -4,9 +4,9 @@ import com.konstantion.entity.CodeEntity
 import com.konstantion.entity.ImmutableTestEntity
 import com.konstantion.entity.QuestionEntity
 import com.konstantion.entity.TestModelEntity
+import com.konstantion.entity.UserEntity
 import com.konstantion.entity.VariantEntity
 import com.konstantion.executor.TestModelExecutor
-import com.konstantion.model.User
 import com.konstantion.repository.CodeRepository
 import com.konstantion.repository.ImmutableTestRepository
 import com.konstantion.repository.QuestionRepository
@@ -16,15 +16,15 @@ import com.konstantion.repository.UserRepository
 import com.konstantion.repository.UserTestRepository
 import com.konstantion.repository.VariantRepository
 import com.konstantion.service.SqlHelper.sqlAction
+import com.konstantion.service.SqlHelper.sqlOptionalAction
 import com.konstantion.utils.Either
 import com.konstantion.utils.Maybe
 import com.konstantion.utils.Maybe.Companion.asMaybe
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.UUID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 @Service
 data class ImmutableTestService(
@@ -40,22 +40,71 @@ data class ImmutableTestService(
 ) {
   private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-  @Transactional
+  fun findAllByCreator(user: UserEntity): Either<ServiceIssue, List<ImmutableTestEntity>> {
+    log.info(
+      "FindAllByCreator[userId={}, username={}]",
+      user.id(),
+      user.username(),
+    )
+
+    if (user.isStudent()) {
+      return Forbidden.asEither("User is not allowed to find immutable tests.")
+    }
+
+    return when (
+      val result: Either<ServiceIssue, List<ImmutableTestEntity>> =
+        immutableTestRepository.sqlAction { findAllByCreatorId(user.id()) }
+    ) {
+      is Either.Left -> Either.left(result.value)
+      is Either.Right -> Either.right(result.value)
+    }
+  }
+
+  fun findById(user: UserEntity, id: UUID): Either<ServiceIssue, ImmutableTestEntity> {
+    log.info(
+      "FindById[userId={}, username={}, id={}]",
+      user.id(),
+      user.username(),
+      id,
+    )
+
+    if (user.isStudent()) {
+      return Forbidden.asEither("User is not allowed to find immutable tests.")
+    }
+
+    return when (
+      val result: Either<ServiceIssue, ImmutableTestEntity> =
+        immutableTestRepository.sqlOptionalAction { findById(id) }
+    ) {
+      is Either.Left -> Either.left(result.value)
+      is Either.Right -> {
+        val test = result.value
+        if (test.creator?.id() == user.id()) {
+          Either.right(test)
+        } else {
+          Forbidden.asEither("User is not allowed to find immutable tests.")
+        }
+      }
+    }
+  }
+
   fun createImmutableTest(
-    user: User,
-    testModelId: UUID
+    user: UserEntity,
+    createParams: CreateImmutableParams,
   ): Either<ServiceIssue, ImmutableTestEntity> {
     log.info(
-      "CreateImmutableTest[userId={}, username={}, testModelId={}]",
+      "CreateImmutableTest[userId={}, username={}, params={}]",
       user.id(),
-      user.getUsername(),
-      testModelId
+      user.username(),
+      createParams,
     )
 
     if (user.isStudent()) {
       return Forbidden.asEither("User is not allowed to create immutable test.")
     }
 
+    val (testModelId, expiresAfterParam, shuffleQuestionsParam, shuffleVariantsParam) = createParams
+    val expiresAfterInstant: Instant? = expiresAfterParam?.run(Instant::ofEpochMilli)
     val maybeQuestion =
       when (
         val result: Either<ServiceIssue, Maybe<TestModelEntity>> =
@@ -85,71 +134,33 @@ data class ImmutableTestService(
       return Either.left(UnexpectedAction("Test model has no questions: $testModelId"))
     }
 
+    if (expiresAfterInstant != null && expiresAfterInstant.isBefore(Instant.now())) {
+      return Either.left(UnexpectedAction("Expiration date is in the past: $expiresAfterParam"))
+    }
+
     val deepClone = deepCloneTestModel(testModel)
     val userEntity = userRepository.findById(user.id()).orElseThrow()
     val immutableTest =
       ImmutableTestEntity().apply {
         name = deepClone.name
-        active = deepClone.active
-        createdAt = LocalDateTime.now()
+        active = true
+        createdAt = Instant.now()
         questions = deepClone.questions
         creator = userEntity
+        expiresAfter = expiresAfterInstant
+        shuffleVariants = shuffleVariantsParam
+        shuffleQuestions = shuffleQuestionsParam
       }
 
     val immutableEntity = immutableTestRepository.saveAndFlush(immutableTest)
     return Either.right(immutableEntity)
   }
 
-  fun setExpiration(
-    user: User,
-    immutableTestId: UUID,
-    expiresAfter: LocalDateTime
-  ): Either<ServiceIssue, Unit> {
-    log.info(
-      "SetExpiration[userId={}, username={}, immutableTestId={}, expiresAfter={}]",
-      user.id(),
-      user.getUsername(),
-      immutableTestId,
-      expiresAfter
-    )
-
-    if (user.isStudent()) {
-      return Forbidden.asEither("User is not allowed to set expiration.")
-    }
-
-    val maybeImmutableTest =
-      when (
-        val result: Either<ServiceIssue, Maybe<ImmutableTestEntity>> =
-          immutableTestRepository
-            .sqlAction { findById(immutableTestId) }
-            .map { maybeQuestion -> maybeQuestion.asMaybe() }
-      ) {
-        is Either.Left -> return Either.left(result.value)
-        is Either.Right -> result.value
-      }
-
-    val immutableTest: ImmutableTestEntity =
-      when (maybeImmutableTest) {
-        is Maybe.Just -> maybeImmutableTest.value
-        Maybe.None ->
-          return Either.left(UnexpectedAction("Immutable test not found: $immutableTestId"))
-      }
-
-    if (!user.isAdmin() || user.id() != immutableTest.creator?.id()) {
-      return Forbidden.asEither("User is not allowed to set expiration.")
-    }
-
-    immutableTest.expiresAfter = expiresAfter
-    immutableTestRepository.saveAndFlush(immutableTest)
-    return Either.right(Unit)
-  }
-
   private fun deepCloneTestModel(original: TestModelEntity): TestModelEntity {
     val clone =
       TestModelEntity().apply {
         name = original.name
-        active = original.active
-        createdAt = LocalDateTime.now()
+        createdAt = Instant.now()
         // Optionally, you might also want to copy the creator if that makes sense.
         creator = original.creator
       }
@@ -166,7 +177,7 @@ data class ImmutableTestService(
               callArgs = ArrayList(question.callArgs)
               validated = question.validated
               public = false
-              createdAt = LocalDateTime.now()
+              createdAt = Instant.now()
               creator = question.creator
             }
 
@@ -189,7 +200,8 @@ data class ImmutableTestService(
                         outputType = codeEntity.outputType
                       }
                     }
-                  createdAt = LocalDateTime.now()
+                  public = false
+                  createdAt = Instant.now()
                   createdBy = variant.createdBy
                 }
               }
@@ -206,7 +218,8 @@ data class ImmutableTestService(
                         outputType = codeEntity.outputType
                       }
                     }
-                  createdAt = LocalDateTime.now()
+                  public = false
+                  createdAt = Instant.now()
                   createdBy = variant.createdBy
                 }
               }
@@ -218,4 +231,11 @@ data class ImmutableTestService(
 
     return clone
   }
+
+  data class CreateImmutableParams(
+    val testModelId: UUID,
+    val expiresAfter: Long?,
+    val shuffleQuestions: Boolean,
+    val shuffleVariants: Boolean,
+  )
 }

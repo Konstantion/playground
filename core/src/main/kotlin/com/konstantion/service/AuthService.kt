@@ -75,8 +75,6 @@ data class AuthService(private val userRepository: UserRepository) {
         password = params.password
         role = params.role
         anonymous = false
-        // TODO: add permissions
-        permissions = mutableSetOf()
       }
 
     val userDb: UserEntity =
