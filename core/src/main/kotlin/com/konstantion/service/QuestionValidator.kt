@@ -101,23 +101,23 @@ data class QuestionValidator(
 
               check(metadatas.isNotEmpty() && metadatas.size == VALIDATION_ATTEMPTS)
 
-              val badMetadatas = mutableSetOf<QuestionMetadata>()
-              for (metadata in metadatas) {
+              val badMetadatas = mutableMapOf<Int, QuestionMetadata>()
+              for ((index, metadata) in metadatas.withIndex()) {
                 if (metadata.correctAnswers.isEmpty()) {
-                  badMetadatas += metadata
+                  badMetadatas[index] = metadata
                   uniqueIssues +=
                     "No correct answers were returned for question with id=${metadata.questionIdentifier}"
                 }
 
                 if (metadata.incorrectAnswers.isEmpty()) {
-                  badMetadatas += metadata
+                  badMetadatas[index] = metadata
                   uniqueIssues +=
                     "No incorrect answers were returned for question with id=${metadata.questionIdentifier}"
                 }
 
                 metadata.answers().forEach { answer ->
                   if (answer.text.isEmpty()) {
-                    badMetadatas += metadata
+                    badMetadatas[index] = metadata
                     uniqueIssues += "Correct answer with id=${answer.variantIdentifier} is empty"
                   }
 
@@ -128,7 +128,7 @@ data class QuestionValidator(
                     }
 
                   if (sameCorrect.isNotEmpty()) {
-                    badMetadatas += metadata
+                    badMetadatas[index] = metadata
                     uniqueIssues +=
                       "Answer with id=${answer.variantIdentifier} is same as " +
                         "correct answers with ids=${
@@ -143,7 +143,7 @@ data class QuestionValidator(
                     }
 
                   if (sameIncorrect.isNotEmpty()) {
-                    badMetadatas += metadata
+                    badMetadatas[index] = metadata
                     uniqueIssues +=
                       "Answer with id=${answer.variantIdentifier} is same as " +
                         "incorrect answers with ids=${
@@ -153,7 +153,7 @@ data class QuestionValidator(
                 }
               }
 
-              val badFactor = badMetadatas.size.toDouble() / metadatas.size.toDouble()
+              val badFactor = badMetadatas.values.size.toDouble() / metadatas.size.toDouble()
               if (badFactor > SUCCESS_FACTOR) {
                 log.warn(
                   "Question with id={} has bad factor={}, " +

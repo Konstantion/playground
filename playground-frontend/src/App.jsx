@@ -9,7 +9,7 @@ function App() {
             <TooltipProvider>
                 <>
                     <AppRouter />
-                    <Toaster position={'top-right'} richColors={true} />
+                    <Toaster closeButton position={'top-right'} richColors={true} />
                 </>
             </TooltipProvider>
         </AuthProvider>

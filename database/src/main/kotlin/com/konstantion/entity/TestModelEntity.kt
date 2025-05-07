@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
+import jakarta.persistence.ManyToMany
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
@@ -26,7 +27,7 @@ open class TestModelEntity {
 
   @Column(name = "name", nullable = false) open var name: String? = null
 
-  @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+  @ManyToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
   @JoinTable(
     name = "test_models_questions",
     joinColumns = [JoinColumn(name = "test_model_id")],

@@ -55,9 +55,11 @@ export default function TestModelDetailPage() {
                     toast.error(msg);
                     if (type === ErrorType.TokenExpired) {
                         logout();
+                        navigate(RLogin);
                     }
                 },
                 data => {
+                    console.log(data)
                     setModel(data);
                     setStatus('loaded');
                 }
@@ -114,6 +116,7 @@ export default function TestModelDetailPage() {
                 toast.success('Added');
             }
         );
+        setAdding(false);
     };
 
     if (status === 'loading') return <Loading />;
@@ -123,30 +126,29 @@ export default function TestModelDetailPage() {
         <div className="min-h-screen bg-gray-100 flex flex-col">
             <Header page={null} setPage={p => navigate(`${RHome}/${p}`)} />
 
-            <div className="p-4 grid grid-cols-[2fr_3fr] gap-6 flex-1 overflow-hidden">
+            <div className="p-4 grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6 flex-1 overflow-hidden">
                 <Card className="flex flex-col">
                     <CardHeader>
-                        <CardTitle>{`Test Model #${model.id}`}</CardTitle>
+                        <CardTitle>Test Model Details</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <p>
-                                <strong>Name:</strong> {model.name}
-                            </p>
-                            <p>
-                                <strong>Created:</strong>{' '}
-                                {new Date(model.createdAt).toLocaleString()}
-                            </p>
+                            <p><strong>Name:</strong> {model.name}</p>
+                            <p><strong>ID:</strong> {model.id}</p>
+                            <p><strong>Created:</strong> {new Date(model.createdAt).toLocaleString()}</p>
                         </div>
                         <div className="flex space-x-2">
                             <Button variant="outline" onClick={openAdd} leftIcon={<Plus />}>
                                 Add Question
                             </Button>
-                            <Button onClick={() => setCreateOpen(true)}>Create Actual Test</Button>
+                            <Button onClick={() => setCreateOpen(true)}>
+                                Create Actual Test
+                            </Button>
                         </div>
                     </CardContent>
                 </Card>
 
+                {/* Right: Questions List */}
                 <Card className="flex-1 flex flex-col">
                     <CardHeader>
                         <CardTitle>Questions in Model</CardTitle>
@@ -156,38 +158,46 @@ export default function TestModelDetailPage() {
                             <p className="text-sm text-gray-500">No questions added yet.</p>
                         ) : (
                             <ScrollArea className="flex-1">
-                                <ul className="space-y-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {model.questions.map(q => (
-                                        <li
-                                            key={q.id}
-                                            className="p-3 bg-white rounded shadow flex justify-between items-center"
-                                        >
-                                            <span
-                                                className="text-blue-600 hover:underline cursor-pointer"
-                                                onClick={() => navigate(`/questions/${q.id}`)}
-                                            >
-                                                {q.body}
-                                            </span>
+                                        <Card key={q.id} className="cursor-pointer" onClick={() => navigate(`/questions/${q.id}`)}>
+                                            <CardHeader className="flex justify-between items-center">
+                                                <span className="font-medium text-sm">{q.body || q.name}</span>
+                                                {q.validated ? (
+                                                    <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded-full text-xs">
+                                                        Validated
+                                                    </span>
+                                                ) : (
+                                                    <span className="px-2 py-0.5 bg-red-100 text-red-800 rounded-full text-xs">
+                                                        Not Validated
+                                                    </span>
+                                                )}
+                                            </CardHeader>
+                                            <CardContent className="pt-0">
+                                                <p className="text-muted-foreground text-sm">
+                                                    Created: {new Date(q.createdAt).toLocaleString()}
+                                                </p>
+                                            </CardContent>
                                             <Button
                                                 size="icon"
                                                 variant="ghost"
-                                                onClick={() => removeQ(q.id)}
+                                                className="absolute top-2 right-2"
+                                                onClick={e => { e.stopPropagation(); removeQ(q.id); }}
                                             >
                                                 <Trash2 />
                                             </Button>
-                                        </li>
+                                        </Card>
                                     ))}
-                                </ul>
+                                </div>
                             </ScrollArea>
                         )}
                     </CardContent>
                 </Card>
             </div>
 
+            {/* Add Question Dialog */}
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
-                <DialogTrigger asChild>
-                    <div />
-                </DialogTrigger>
+                <DialogTrigger asChild><div /></DialogTrigger>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle>Add a Question</DialogTitle>
@@ -227,10 +237,9 @@ export default function TestModelDetailPage() {
                 </DialogContent>
             </Dialog>
 
+            {/* Create Test Dialog */}
             <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-                <DialogTrigger asChild>
-                    <div />
-                </DialogTrigger>
+                <DialogTrigger asChild><div /></DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Create Actual Test</DialogTitle>
