@@ -21,6 +21,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
+import jakarta.persistence.ManyToMany
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.MapKeyColumn
 import jakarta.persistence.OneToMany
@@ -80,6 +81,10 @@ open class QuestionEntity {
     inverseJoinColumns = [JoinColumn(name = "variant_id")]
   )
   open var incorrectVariants: MutableList<VariantEntity> = mutableListOf()
+
+  @ManyToMany(mappedBy = "questions", fetch = FetchType.LAZY)
+  @OnDelete(action = OnDeleteAction.CASCADE)
+  open var testModels: MutableList<TestModelEntity> = mutableListOf()
 
   @Column(name = "is_validated", nullable = false) open var validated: Boolean = false
 

@@ -1,16 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
+    DialogTrigger,
     DialogContent,
-    DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
+    DialogDescription,
+    DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { authenticatedReq } from '@/utils/Requester.js';
@@ -18,12 +18,12 @@ import { Endpoints } from '@/utils/Endpoints.js';
 import { useAuth } from '@/hooks/useAuth.jsx';
 import { ErrorType } from '@/utils/ErrorType.js';
 import { toast } from 'sonner';
-import { Plus, Trash2 } from 'lucide-react';
+import { Action, actionStr } from '@/entities/Action.js';
+import { CheckCircle, Trash2, Plus, XCircle } from 'lucide-react';
 import Loading from '@/components/Loading.jsx';
 import NotFound from '@/components/NotFound.jsx';
 import Header from '@/components/Header.jsx';
 import { RHome, RLogin } from '@/rout/Routes.jsx';
-import { Action, actionStr } from '@/entities/Action.js';
 
 export default function TestModelDetailPage() {
     const { id } = useParams();
@@ -59,7 +59,6 @@ export default function TestModelDetailPage() {
                     }
                 },
                 data => {
-                    console.log(data)
                     setModel(data);
                     setStatus('loaded');
                 }
@@ -75,28 +74,6 @@ export default function TestModelDetailPage() {
         );
     }, [available, model, search]);
 
-    const removeQ = async qid => {
-        await modifyQ(Action.REMOVE, qid);
-    };
-
-    const openAdd = async () => {
-        setAddOpen(true);
-        await authenticatedReq(
-            Endpoints.Questions.Base,
-            'GET',
-            null,
-            auth.accessToken,
-            (t, m) => toast.error(m),
-            data => setAvailable(data.map(q => ({ id: q.id, name: q.body })))
-        );
-    };
-
-    const addQ = async qid => {
-        setAdding(true);
-        await modifyQ(Action.ADD, qid);
-        setAdding(false);
-    };
-
     const modifyQ = async (action, qid) => {
         const patchBody = { action: actionStr(action), questionId: qid };
         await authenticatedReq(
@@ -111,11 +88,37 @@ export default function TestModelDetailPage() {
                     navigate(RLogin);
                 }
             },
-            testModel => {
-                setModel(testModel);
-                toast.success('Added');
+            updatedModel => {
+                setModel(updatedModel);
             }
         );
+    };
+
+    const removeQ = async qid => modifyQ(Action.REMOVE, qid);
+
+    const openAdd = async () => {
+        setAddOpen(true);
+        await authenticatedReq(
+            Endpoints.Questions.Base,
+            'GET',
+            null,
+            auth.accessToken,
+            (t, m) => toast.error(m),
+            data =>
+                setAvailable(
+                    data.map(q => ({
+                        id: q.id,
+                        name: q.body,
+                        validated: q.validated,
+                        createdAt: q.createdAt,
+                    }))
+                )
+        );
+    };
+
+    const addQ = async qid => {
+        setAdding(true);
+        await modifyQ(Action.ADD, qid);
         setAdding(false);
     };
 
@@ -127,24 +130,21 @@ export default function TestModelDetailPage() {
             <Header page={null} setPage={p => navigate(`${RHome}/${p}`)} />
 
             <div className="p-4 grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6 flex-1 overflow-hidden">
+                {/* Left: Model Info only */}
                 <Card className="flex flex-col">
                     <CardHeader>
                         <CardTitle>Test Model Details</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <p><strong>Name:</strong> {model.name}</p>
-                            <p><strong>ID:</strong> {model.id}</p>
-                            <p><strong>Created:</strong> {new Date(model.createdAt).toLocaleString()}</p>
-                        </div>
-                        <div className="flex space-x-2">
-                            <Button variant="outline" onClick={openAdd} leftIcon={<Plus />}>
-                                Add Question
-                            </Button>
-                            <Button onClick={() => setCreateOpen(true)}>
-                                Create Actual Test
-                            </Button>
-                        </div>
+                    <CardContent className="space-y-2">
+                        <p>
+                            <strong>Name:</strong> {model.name}
+                        </p>
+                        <p>
+                            <strong>ID:</strong> {model.id}
+                        </p>
+                        <p>
+                            <strong>Created:</strong> {new Date(model.createdAt).toLocaleString()}
+                        </p>
                     </CardContent>
                 </Card>
 
@@ -153,16 +153,22 @@ export default function TestModelDetailPage() {
                     <CardHeader>
                         <CardTitle>Questions in Model</CardTitle>
                     </CardHeader>
-                    <CardContent className="flex flex-col flex-1 overflow-hidden">
-                        {model.questions.length === 0 ? (
-                            <p className="text-sm text-gray-500">No questions added yet.</p>
-                        ) : (
-                            <ScrollArea className="flex-1">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <CardContent className="flex flex-col flex-1 overflow-hidden relative">
+                        <ScrollArea className="flex-1">
+                            {model.questions.length === 0 ? (
+                                <p className="text-sm text-gray-500 p-4">No questions added yet.</p>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
                                     {model.questions.map(q => (
-                                        <Card key={q.id} className="cursor-pointer" onClick={() => navigate(`/questions/${q.id}`)}>
+                                        <Card
+                                            key={q.id}
+                                            className="relative group hover:bg-gray-50 cursor-pointer"
+                                            onClick={() => navigate(`/questions/${q.id}`)}
+                                        >
                                             <CardHeader className="flex justify-between items-center">
-                                                <span className="font-medium text-sm">{q.body || q.name}</span>
+                                                <span className="font-medium text-sm">
+                                                    {q.body || q.name}
+                                                </span>
                                                 {q.validated ? (
                                                     <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded-full text-xs">
                                                         Validated
@@ -175,29 +181,46 @@ export default function TestModelDetailPage() {
                                             </CardHeader>
                                             <CardContent className="pt-0">
                                                 <p className="text-muted-foreground text-sm">
-                                                    Created: {new Date(q.createdAt).toLocaleString()}
+                                                    Created:{' '}
+                                                    {new Date(q.createdAt).toLocaleString()}
                                                 </p>
                                             </CardContent>
                                             <Button
                                                 size="icon"
                                                 variant="ghost"
-                                                className="absolute top-2 right-2"
-                                                onClick={e => { e.stopPropagation(); removeQ(q.id); }}
+                                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={e => {
+                                                    e.stopPropagation();
+                                                    removeQ(q.id);
+                                                }}
                                             >
                                                 <Trash2 />
                                             </Button>
                                         </Card>
                                     ))}
                                 </div>
-                            </ScrollArea>
-                        )}
+                            )}
+                        </ScrollArea>
+                        {/* Add Question Button glued to bottom */}
+                        <div className="border-t p-4 bg-white sticky bottom-0">
+                            <Button
+                                width="full"
+                                variant="outline"
+                                onClick={openAdd}
+                                leftIcon={<Plus />}
+                            >
+                                Add Question
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
 
             {/* Add Question Dialog */}
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
-                <DialogTrigger asChild><div /></DialogTrigger>
+                <DialogTrigger asChild>
+                    <div />
+                </DialogTrigger>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle>Add a Question</DialogTitle>
@@ -216,7 +239,18 @@ export default function TestModelDetailPage() {
                                     key={q.id}
                                     className="flex justify-between items-center p-2 hover:bg-gray-50 rounded"
                                 >
-                                    <span>{q.name}</span>
+                                    <div className="flex items-center space-x-2">
+                                        <span>{q.name}</span>
+                                        {q.validated ? (
+                                            <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded-full text-xs inline-flex items-center">
+                                                <CheckCircle className="w-4 h-4" />
+                                            </span>
+                                        ) : (
+                                            <span className="px-2 py-0.5 bg-red-100 text-red-800 rounded-full text-xs inline-flex items-center">
+                                                <XCircle className="w-4 h-4" />
+                                            </span>
+                                        )}
+                                    </div>
                                     <Button
                                         size="icon"
                                         variant="outline"
@@ -239,7 +273,9 @@ export default function TestModelDetailPage() {
 
             {/* Create Test Dialog */}
             <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-                <DialogTrigger asChild><div /></DialogTrigger>
+                <DialogTrigger asChild>
+                    <div />
+                </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Create Actual Test</DialogTitle>

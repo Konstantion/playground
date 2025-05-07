@@ -27,12 +27,13 @@ open class TestModelEntity {
 
   @Column(name = "name", nullable = false) open var name: String? = null
 
-  @ManyToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+  @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
     name = "test_models_questions",
     joinColumns = [JoinColumn(name = "test_model_id")],
     inverseJoinColumns = [JoinColumn(name = "question_id")]
   )
+  @OnDelete(action = OnDeleteAction.CASCADE)
   open var questions: MutableList<QuestionEntity> = mutableListOf()
 
   @Column(name = "created_at", nullable = false) open var createdAt: Instant = Instant.now()
