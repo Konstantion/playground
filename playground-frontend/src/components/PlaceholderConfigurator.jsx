@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.js';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.js';
-import { Action, actionStr } from '@/entities/Action.js';
+import { Action, actionStr, userStr } from '@/entities/Action.js';
 import { PlaceholderDefinition, PlaceholderIdentifier } from '@/entities/Placeholder.js';
 import { Label } from '@/components/ui/label.js';
 import {
@@ -169,6 +169,11 @@ export default function PlaceholderConfigurator({ id, question, setQuestion }) {
                             `Violation error for ${key}, ${value.join('and ').toLowerCase()}.`,
                             { closeButton: true }
                         );
+                    });
+                } else {
+                    toast.success(`Placeholder successfully ${userStr(action)}.`, {
+                        closeButton: true,
+                        duration: 5_000,
                     });
                 }
             }

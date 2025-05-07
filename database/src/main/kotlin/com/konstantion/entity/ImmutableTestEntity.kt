@@ -27,8 +27,8 @@ open class ImmutableTestEntity {
 
   @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
   @JoinTable(
-    name = "test_models_questions",
-    joinColumns = [JoinColumn(name = "test_model_id")],
+    name = "immutable_test_questions",
+    joinColumns = [JoinColumn(name = "immutable_test_id")],
     inverseJoinColumns = [JoinColumn(name = "question_id")]
   )
   open var questions: MutableList<QuestionEntity> = mutableListOf()

@@ -122,12 +122,12 @@ data class ImmutableTestService(
         Maybe.None -> return Either.left(UnexpectedAction("Test model not found: $testModelId"))
       }
 
-    if (!user.isAdmin() || user.id() != testModel.creator?.id()) {
+    if (!user.isAdmin() && user.id() != testModel.creator?.id()) {
       return Forbidden.asEither("User is not allowed to create immutable test.")
     }
 
     if (!testModel.questions.all { entity -> entity.validated() }) {
-      return Either.left(UnexpectedAction("Test model is not validated: $testModelId"))
+      return Either.left(UnexpectedAction("Not all questions are validated: $testModelId"))
     }
 
     if (testModel.questions().isEmpty()) {

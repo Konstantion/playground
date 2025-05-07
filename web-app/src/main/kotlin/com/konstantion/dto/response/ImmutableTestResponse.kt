@@ -1,9 +1,9 @@
 package com.konstantion.dto.response
 
 import com.konstantion.dto.response.QuestionResponse.Companion.asResponse
+import com.konstantion.dto.response.UserResponse.Companion.asResponse
 import com.konstantion.dto.response.UserTestResponse.Companion.asResponse
 import com.konstantion.entity.ImmutableTestEntity
-import com.konstantion.entity.UserEntity
 import java.util.UUID
 
 data class ImmutableTestResponse(
@@ -14,7 +14,7 @@ data class ImmutableTestResponse(
   val shuffleQuestions: Boolean,
   val shuffleVariants: Boolean,
   val createdAt: Long,
-  val creator: UserEntity? = null,
+  val creator: UserResponse? = null,
   val expiresAfter: Long?,
   val userTests: List<UserTestResponse>
 ) {
@@ -28,7 +28,7 @@ data class ImmutableTestResponse(
         shuffleQuestions = shuffleQuestions(),
         shuffleVariants = shuffleVariants(),
         createdAt = createdAt().toEpochMilli(),
-        creator = creator(),
+        creator = creator()?.asResponse(),
         expiresAfter = expiresAfter()?.toEpochMilli(),
         userTests = userTests().map { userTest -> userTest.asResponse() }
       )

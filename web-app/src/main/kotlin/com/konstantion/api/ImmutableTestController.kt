@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/immutable_test_model")
+@RequestMapping("/api/immutable_test")
 data class ImmutableTestController(
   private val immutableTestService: ImmutableTestService,
   private val userTestService: UserTestService

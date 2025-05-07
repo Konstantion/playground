@@ -11,3 +11,12 @@ export const actionStr = action => {
             return 'REMOVE';
     }
 };
+
+export const userStr = action => {
+    switch (action) {
+        case Action.ADD:
+            return 'added';
+        case Action.REMOVE:
+            return 'removed';
+    }
+};

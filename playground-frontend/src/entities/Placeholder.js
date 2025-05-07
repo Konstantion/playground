@@ -71,7 +71,7 @@ export const prettierStr = definition => {
         case PlaceholderDefinition.StrRandomOneOf.name:
             return `RandomOneOf<string>(${definition.options.join(', ')})`;
         case PlaceholderDefinition.Int32Range.name:
-            return `Range<number>(${definition.min}, ${definition.max})`;
+            return `Range<number>(${definition.start}, ${definition.end})`;
         case PlaceholderDefinition.Int32Value.name:
             return `Value<number>(${definition.value})`;
         case PlaceholderDefinition.StrValue.name:
