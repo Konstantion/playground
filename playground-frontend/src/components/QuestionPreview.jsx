@@ -1,12 +1,12 @@
-import React, {useMemo, useState} from 'react';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {ScrollArea} from '@/components/ui/scroll-area';
-import {CheckCircle, Edit, Trash2, XCircle} from 'lucide-react';
-import {CodeBlock} from '@/components/code/CodeBlock.jsx';
-import {Badge} from '@/components/ui/badge';
-import {prettierStr} from '@/entities/Placeholder.js';
-import {Input} from '@/components/ui/input.js';
-import {Editor} from '@monaco-editor/react';
+import React, { useMemo, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { CheckCircle, Edit, Trash2, XCircle } from 'lucide-react';
+import { CodeBlock } from '@/components/code/CodeBlock.jsx';
+import { Badge } from '@/components/ui/badge';
+import { prettierStr } from '@/entities/Placeholder.js';
+import { Input } from '@/components/ui/input.js';
+import { Editor } from '@monaco-editor/react';
 import {
     Dialog,
     DialogContent,
@@ -16,16 +16,17 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog.js';
-import {Button} from '@/components/ui/button.js';
-import {authenticatedReq} from '@/utils/Requester.js';
-import {Endpoints} from '@/utils/Endpoints.js';
-import {useAuth} from '@/hooks/useAuth.jsx';
-import {useNavigate} from 'react-router-dom';
-import {toast} from 'sonner';
-import {ErrorType} from '@/utils/ErrorType.js';
-import {RHome, Routes as RRoutes} from '@/rout/Routes.jsx';
-import {sNotEmpty} from '@/utils/ObjectUtils.js';
-import {QuestionsPage} from '@/pages/Pages.js';
+import { Button } from '@/components/ui/button.js';
+import { authenticatedReq } from '@/utils/Requester.js';
+import { Endpoints } from '@/utils/Endpoints.js';
+import { useAuth } from '@/hooks/useAuth.jsx';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { ErrorType } from '@/utils/ErrorType.js';
+import { RHome, Routes as RRoutes } from '@/rout/Routes.jsx';
+import { sNotEmpty } from '@/utils/ObjectUtils.js';
+import { QuestionsPage } from '@/pages/Pages.js';
+import { between } from '@/utils/Strings.js';
 
 export default function QuestionPreview({ question, className, setQuestion }) {
     const { auth, logout } = useAuth();
@@ -40,7 +41,12 @@ export default function QuestionPreview({ question, className, setQuestion }) {
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
     const placeholderRegex = useMemo(() => {
-        const keys = Object.keys(question.placeholderDefinitions).join('|');
+        const placeholderKeys = Object.keys(question.placeholderDefinitions);
+        if (placeholderKeys.length === 0) {
+            return null;
+        }
+
+        const keys = placeholderKeys.join('|');
         return new RegExp(`\\b(${keys})\\b`, 'g');
     }, [question.placeholderDefinitions]);
 
@@ -72,11 +78,31 @@ export default function QuestionPreview({ question, className, setQuestion }) {
     };
 
     const onNameSave = async newName => {
+        if (!between(newName, 1, 50)) {
+            toast.error('Question name must be between 1 and 50 characters.', {
+                closeButton: true,
+            });
+            return;
+        }
         await doUpdateReq({ action: 'ADD', body: newName });
         setIsNameOpen(false);
     };
 
     const onFormatAndCodeSave = async (format, code) => {
+        if (!between(code, 1, 300)) {
+            toast.error('Code must be between 1 and 300 characters.', {
+                closeButton: true,
+            });
+            return;
+        }
+
+        if (!between(format, 1, 50)) {
+            toast.error('Format must be between 1 and 50 characters.', {
+                closeButton: true,
+            });
+            return;
+        }
+
         await doUpdateReq({ action: 'ADD', formatAndCodeDto: { format, code } });
         setIsFCOpen(false);
     };
@@ -211,9 +237,10 @@ export default function QuestionPreview({ question, className, setQuestion }) {
                                                             const ranges = [];
                                                             let match;
                                                             while (
+                                                                placeholderRegex != null &&
                                                                 (match =
                                                                     placeholderRegex.exec(text)) !==
-                                                                null
+                                                                    null
                                                             ) {
                                                                 const startPos =
                                                                     model.getPositionAt(

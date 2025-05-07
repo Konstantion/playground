@@ -1,7 +1,7 @@
 import LoginPage from '../pages/LoginPage.jsx';
 import HomePage from '../pages/HomePage.jsx';
 import QuestionDetailPage from '@/pages/QuestionDetailPage.jsx';
-import {StatisticsPage} from '@/pages/StatisticsPage.jsx';
+import { StatisticsPage } from '@/pages/StatisticsPage.jsx';
 import TestModelDetailPage from '@/pages/TestModelDetailPage.jsx';
 
 export const RHome = '/home';

@@ -7,10 +7,10 @@ import {
 } from '@/pages/Pages.js';
 import QuestionsPage from '@/pages/QuestionsPage.jsx';
 
-import {useNavigate, useParams} from 'react-router-dom';
-import {RHome} from '@/rout/Routes.jsx';
+import { useNavigate, useParams } from 'react-router-dom';
+import { RHome } from '@/rout/Routes.jsx';
 import NotFound from '@/components/NotFound.jsx';
-import {StatisticsPage} from '@/pages/StatisticsPage.jsx';
+import { StatisticsPage } from '@/pages/StatisticsPage.jsx';
 import TestModelsPage from '@/pages/TestModelsPage.jsx';
 
 export default function HomePage() {

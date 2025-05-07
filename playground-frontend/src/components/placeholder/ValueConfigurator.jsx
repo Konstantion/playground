@@ -1,6 +1,6 @@
-import React, {useEffect, useState} from 'react';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {Input} from '@/components/ui/input';
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 export function ValueConfigurator({ type = 'number', initialValue = '', onChange }) {
     const [value, setValue] = useState(initialValue);

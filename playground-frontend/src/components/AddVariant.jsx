@@ -1,20 +1,20 @@
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import EEditor from '@/components/code/EEditor.jsx';
-import {Checkbox} from '@/components/ui/checkbox.js';
-import {Label} from '@/components/ui/label.js';
-import {parse} from '@/entities/Placeholder.js';
-import {InlineCode} from '@/components/code/InlineCode.jsx';
-import {useMemo, useState} from 'react';
-import {useAuth} from '@/hooks/useAuth.jsx';
-import {useNavigate} from 'react-router-dom';
-import {authenticatedReq} from '@/utils/Requester.js';
-import {Endpoints} from '@/utils/Endpoints.js';
-import {ErrorType} from '@/utils/ErrorType.js';
-import {Routes as RRoutes} from '@/rout/Routes.jsx';
-import {toast} from 'sonner';
-import {Action, actionStr} from '@/entities/Action.js';
-import {Button} from '@/components/ui/button.js';
-import {sNotEmpty} from '@/utils/ObjectUtils.js';
+import { Checkbox } from '@/components/ui/checkbox.js';
+import { Label } from '@/components/ui/label.js';
+import { parse } from '@/entities/Placeholder.js';
+import { InlineCode } from '@/components/code/InlineCode.jsx';
+import { useMemo, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth.jsx';
+import { useNavigate } from 'react-router-dom';
+import { authenticatedReq } from '@/utils/Requester.js';
+import { Endpoints } from '@/utils/Endpoints.js';
+import { ErrorType } from '@/utils/ErrorType.js';
+import { Routes as RRoutes } from '@/rout/Routes.jsx';
+import { toast } from 'sonner';
+import { Action, actionStr } from '@/entities/Action.js';
+import { Button } from '@/components/ui/button.js';
+import { sNotEmpty } from '@/utils/ObjectUtils.js';
 
 const buildSignature = question => {
     if (question.lang === 'python') {
