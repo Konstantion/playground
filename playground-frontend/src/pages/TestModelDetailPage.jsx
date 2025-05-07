@@ -42,19 +42,20 @@ import {
     Shuffle,
     Clock,
     Settings2,
-    Link as LinkIcon,
     Search,
     FileWarning,
     Copy,
+    AlertTriangle, Loader2, // Import AlertTriangle for delete dialog
 } from 'lucide-react';
 import Loading from '@/components/Loading.jsx';
 import NotFound from '@/components/NotFound.jsx';
 import Header from '@/components/Header.jsx';
-import { RHome, RLogin, RQuestions } from '@/rout/Routes.jsx';
+import { RHome, RLogin, RQuestions, RTestModels } from '@/rout/Routes.jsx'; // Import RTestModels
 import { between } from '@/utils/Strings.js';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { TestModelsPage } from '@/pages/Pages.js'; // Import TestModelsPage key
 
 export default function TestModelDetailPage() {
     const { id } = useParams();
@@ -79,6 +80,11 @@ export default function TestModelDetailPage() {
 
     const [isImmutableTestCreatedDialogOpen, setIsImmutableTestCreatedDialogOpen] = useState(false);
     const [createdImmutableTestId, setCreatedImmutableTestId] = useState(null);
+
+    // --- State for Delete Confirmation ---
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    // -----------------------------------
 
     useEffect(() => {
         if (!id) {
@@ -105,7 +111,7 @@ export default function TestModelDetailPage() {
                 data => {
                     setModel(data);
                     setDraftModelName(data.name || '');
-
+                    // Initialize config states from fetched data if available (assuming they might be part of the model in future)
                     setExpiresAfter(data.expiresAfter ? String(data.expiresAfter / 60000) : '');
                     setShuffleQuestions(data.shuffleQuestions || false);
                     setShuffleVariants(data.shuffleVariants || false);
@@ -116,6 +122,8 @@ export default function TestModelDetailPage() {
         };
         fetchModelData();
     }, [id, auth.accessToken, logout, navigate]);
+
+    // ... (filteredAvailableQuestions, updateModelDetails, handleSaveModelName, handleCreateImmutableTest, modifyQuestionInModel, fetchAvailableQuestionsForDialog, handleOpenAddQuestionDialog, copyToClipboard remain the same) ...
 
     const filteredAvailableQuestions = useMemo(() => {
         if (!model || !Array.isArray(availableQuestions)) return [];
@@ -130,8 +138,9 @@ export default function TestModelDetailPage() {
     }, [availableQuestions, model, searchAvailable]);
 
     const updateModelDetails = async (patchBody, successMessage, failureMessage) => {
-        setIsSavingConfiguration(true);
-        const result = await authenticatedReq(
+        setIsSavingConfiguration(true); // Use a general saving state or specific ones if needed
+        let success = false;
+        await authenticatedReq(
             `${Endpoints.TestModel.Base}/${id}`,
             'PATCH',
             patchBody,
@@ -144,19 +153,17 @@ export default function TestModelDetailPage() {
                     logout();
                     navigate(RLogin);
                 }
-                setIsSavingConfiguration(false);
-                return false;
+                success = false;
             },
             updatedModel => {
                 setModel(updatedModel);
-
                 if (patchBody.name) setDraftModelName(updatedModel.name || '');
                 toast.success(successMessage || 'Model updated successfully!', { duration: 3000 });
-                setIsSavingConfiguration(false);
-                return true;
+                success = true;
             }
         );
-        return result;
+        setIsSavingConfiguration(false);
+        return success;
     };
 
     const handleSaveModelName = async () => {
@@ -180,7 +187,7 @@ export default function TestModelDetailPage() {
                 : null;
 
         const body = {
-            testModelId: id,
+            testId: id, // Use the current model ID
             expiresAfter: expiresValueMs,
             shuffleQuestions: shuffleQuestions,
             shuffleVariants: shuffleVariants,
@@ -207,7 +214,6 @@ export default function TestModelDetailPage() {
                 });
                 setCreatedImmutableTestId(immutableTest.id);
                 setIsImmutableTestCreatedDialogOpen(true);
-
                 setIsSavingConfiguration(false);
             }
         );
@@ -237,8 +243,12 @@ export default function TestModelDetailPage() {
                     { duration: 3000 }
                 );
                 if (actionType === Action.ADD) {
+                    // Update available questions list immediately after adding
                     setAvailableQuestions(prev => prev.filter(q => q.id !== questionId));
                     setIsAddingQuestionToModel(false);
+                } else {
+                    // If removing, potentially refetch available questions or add back to list
+                    // For simplicity now, we don't add it back immediately.
                 }
             }
         );
@@ -246,10 +256,12 @@ export default function TestModelDetailPage() {
 
     const fetchAvailableQuestionsForDialog = async () => {
         if (availableQuestions.length > 0 && isAddQuestionDialogOpen) {
+            // Avoid refetching if dialog is already open and questions are loaded,
+            // unless a question was just removed from the model (might need refresh)
             return;
         }
         await authenticatedReq(
-            Endpoints.Questions.GetAll,
+            Endpoints.Questions.Base, // Use the endpoint that gets *all* questions the user can see
             'GET',
             null,
             auth.accessToken,
@@ -267,7 +279,7 @@ export default function TestModelDetailPage() {
                 setAvailableQuestions(
                     questionsData.map(q => ({
                         id: q.id,
-                        name: q.body || `Question ID: ${q.id}`,
+                        name: q.body || `Question ID: ${q.id}`, // Use body as name
                         validated: q.validated,
                         createdAt: q.createdAt,
                         lang: q.lang,
@@ -279,7 +291,7 @@ export default function TestModelDetailPage() {
 
     const handleOpenAddQuestionDialog = () => {
         setIsAddQuestionDialogOpen(true);
-        fetchAvailableQuestionsForDialog();
+        fetchAvailableQuestionsForDialog(); // Fetch or refetch when dialog opens
     };
 
     const copyToClipboard = text => {
@@ -292,6 +304,36 @@ export default function TestModelDetailPage() {
                 toast.error('Failed to copy Test ID.', { duration: 2000 });
             });
     };
+
+    // --- Delete Handler ---
+    const handleDeleteModel = async () => {
+        setIsDeleting(true);
+        await authenticatedReq(
+            `${Endpoints.TestModel.Base}/${id}`,
+            'DELETE',
+            null,
+            auth.accessToken,
+            (type, message) => {
+                toast.error(`Failed to delete model: ${message || 'Unknown error'}`, {
+                    duration: 4000,
+                });
+                if (type === ErrorType.TokenExpired) {
+                    logout();
+                    navigate(RLogin);
+                }
+                setIsDeleting(false);
+                setIsDeleteDialogOpen(false); // Close dialog on error too
+            },
+            _deletedId => {
+                toast.success(`Test Model "${model?.name || id}" deleted successfully!`);
+                setIsDeleting(false);
+                setIsDeleteDialogOpen(false);
+                navigate(`${RHome}/${TestModelsPage}`); // Navigate back to the list page
+            }
+        );
+    };
+    // ----------------------
+
 
     if (status === 'loading')
         return (
@@ -334,52 +376,106 @@ export default function TestModelDetailPage() {
                                             </CardDescription>
                                         </div>
                                     </div>
-                                    <Dialog
-                                        open={isEditNameDialogOpen}
-                                        onOpenChange={setIsEditNameDialogOpen}
-                                    >
-                                        <DialogTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-slate-500 hover:text-sky-600 dark:hover:text-sky-500 h-8 w-8 rounded-full"
-                                            >
-                                                <Edit size={16} />
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="dark:bg-slate-800">
-                                            <DialogHeader>
-                                                <DialogTitle className="dark:text-slate-100">
-                                                    Edit Model Name
-                                                </DialogTitle>
-                                            </DialogHeader>
-                                            <Input
-                                                value={draftModelName}
-                                                onChange={e => setDraftModelName(e.target.value)}
-                                                className="my-4 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600"
-                                                placeholder="Enter new model name"
-                                                maxLength={50}
-                                            />
-                                            <DialogFooter>
-                                                <DialogClose asChild>
-                                                    <Button
-                                                        variant="outline"
-                                                        className="dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
-                                                    >
-                                                        Cancel
-                                                    </Button>
-                                                </DialogClose>
+                                    {/* Edit and Delete Buttons */}
+                                    <div className="flex items-center space-x-1">
+                                        <Dialog
+                                            open={isEditNameDialogOpen}
+                                            onOpenChange={setIsEditNameDialogOpen}
+                                        >
+                                            <DialogTrigger asChild>
                                                 <Button
-                                                    onClick={handleSaveModelName}
-                                                    className="bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-slate-500 hover:text-sky-600 dark:hover:text-sky-500 h-8 w-8 rounded-full"
+                                                    title="Edit model name"
                                                 >
-                                                    Save Name
+                                                    <Edit size={16} />
                                                 </Button>
-                                            </DialogFooter>
-                                        </DialogContent>
-                                    </Dialog>
+                                            </DialogTrigger>
+                                            {/* Edit Name Dialog Content */}
+                                            <DialogContent className="dark:bg-slate-800">
+                                                <DialogHeader>
+                                                    <DialogTitle className="dark:text-slate-100">
+                                                        Edit Model Name
+                                                    </DialogTitle>
+                                                </DialogHeader>
+                                                <Input
+                                                    value={draftModelName}
+                                                    onChange={e => setDraftModelName(e.target.value)}
+                                                    className="my-4 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600"
+                                                    placeholder="Enter new model name"
+                                                    maxLength={50}
+                                                />
+                                                <DialogFooter>
+                                                    <DialogClose asChild>
+                                                        <Button
+                                                            variant="outline"
+                                                            className="dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                    </DialogClose>
+                                                    <Button
+                                                        onClick={handleSaveModelName}
+                                                        className="bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white"
+                                                        disabled={isSavingConfiguration} // Disable while saving
+                                                    >
+                                                        {isSavingConfiguration ? 'Saving...' : 'Save Name'}
+                                                    </Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                        {/* Delete Button Trigger */}
+                                        <Dialog
+                                            open={isDeleteDialogOpen}
+                                            onOpenChange={setIsDeleteDialogOpen}
+                                        >
+                                            <DialogTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-slate-500 hover:text-red-600 dark:hover:text-red-500 h-8 w-8 rounded-full"
+                                                    title="Delete test model"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </Button>
+                                            </DialogTrigger>
+                                            {/* Delete Confirmation Dialog Content */}
+                                            <DialogContent className="dark:bg-slate-800">
+                                                <DialogHeader>
+                                                    <DialogTitle className="flex items-center text-red-600 dark:text-red-500">
+                                                        <AlertTriangle className="mr-2" size={20}/> Confirm Deletion
+                                                    </DialogTitle>
+                                                    <DialogDescription className="dark:text-slate-400 pt-2">
+                                                        Are you sure you want to delete the test model{' '}
+                                                        <span className="font-semibold text-slate-700 dark:text-slate-200">"{model.name}"</span>?
+                                                        This action cannot be undone. Associated immutable tests might also be affected or orphaned.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <DialogFooter className="mt-4">
+                                                    <DialogClose asChild>
+                                                        <Button
+                                                            variant="outline"
+                                                            className="dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
+                                                            disabled={isDeleting}
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                    </DialogClose>
+                                                    <Button
+                                                        variant="destructive"
+                                                        onClick={handleDeleteModel}
+                                                        disabled={isDeleting}
+                                                    >
+                                                        {isDeleting ? 'Deleting...' : 'Delete Model'}
+                                                    </Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
                                 </div>
                             </CardHeader>
+                            {/* ... rest of CardContent ... */}
                             <CardContent className="space-y-2.5 text-sm text-slate-700 dark:text-slate-300 pt-0">
                                 <div className="flex items-center">
                                     <CalendarDays
@@ -400,6 +496,7 @@ export default function TestModelDetailPage() {
 
                         {/* Test Configuration Card */}
                         <Card className="shadow-xl rounded-xl dark:bg-slate-800 border dark:border-slate-700/50">
+                            {/* ... (Test Configuration Card content remains the same) ... */}
                             <CardHeader className="pb-4">
                                 <div className="flex items-center">
                                     <Settings2
@@ -433,7 +530,7 @@ export default function TestModelDetailPage() {
                                         type="number"
                                         value={expiresAfter}
                                         onChange={e => setExpiresAfter(e.target.value)}
-                                        placeholder="e.g., 60 (0 for no limit)"
+                                        placeholder="e.g., 60 (0 or empty for no limit)" // Updated placeholder
                                         className="mt-1.5 w-full dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500"
                                         min="0"
                                     />
@@ -499,6 +596,7 @@ export default function TestModelDetailPage() {
                     {/* Right Column: Questions in Model */}
                     <div className="xl:col-span-8">
                         <Card className="shadow-xl rounded-xl dark:bg-slate-800 border dark:border-slate-700/50 flex flex-col min-h-[calc(100vh-180px)] md:min-h-0">
+                            {/* ... (Questions in Model Card content remains the same) ... */}
                             <CardHeader className="pb-4 border-b dark:border-slate-700/50">
                                 <div className="flex justify-between items-center">
                                     <div className="flex items-center">
@@ -636,6 +734,7 @@ export default function TestModelDetailPage() {
 
             {/* Dialog for Adding Questions to Model */}
             <Dialog open={isAddQuestionDialogOpen} onOpenChange={setIsAddQuestionDialogOpen}>
+                {/* ... (Add Question Dialog content remains the same) ... */}
                 <DialogContent className="max-w-2xl w-[95vw] sm:w-full dark:bg-slate-800 rounded-lg">
                     <DialogHeader className="pb-3">
                         <DialogTitle className="text-lg font-medium text-slate-900 dark:text-slate-50">
@@ -724,9 +823,9 @@ export default function TestModelDetailPage() {
                                     {searchAvailable
                                         ? 'No matching questions found.'
                                         : availableQuestions.length === 0 &&
-                                            model.questions.length > 0
-                                          ? 'All available questions are in the model.'
-                                          : 'No questions available or all are added.'}
+                                        model.questions.length > 0
+                                            ? 'All available questions are in the model.'
+                                            : 'No questions available or all are added.'}
                                 </p>
                                 <p className="text-xs mt-1">
                                     {searchAvailable
@@ -754,6 +853,7 @@ export default function TestModelDetailPage() {
                 open={isImmutableTestCreatedDialogOpen}
                 onOpenChange={setIsImmutableTestCreatedDialogOpen}
             >
+                {/* ... (Immutable Test Created Dialog content remains the same) ... */}
                 <DialogContent className="dark:bg-slate-800">
                     <DialogHeader>
                         <DialogTitle className="flex items-center text-green-600 dark:text-green-400">

@@ -197,4 +197,35 @@ data class TestModelServiceImpl(
       Forbidden.asEither("User is not allowed to update test models.")
     }
   }
-}
+
+  override fun deleteTestModel(user: UserEntity, id: UUID): Either<ServiceIssue, TestModelEntity> {
+    log.info("DeleteTestModel[userId={}, username={}, id={}]", user.id(), user.username(), id)
+
+    val maybeTestModel = testPort.sqlAction { findById(id).asMaybe() }
+
+    return maybeTestModel.flatMap { maybeTest ->
+      when (maybeTest) {
+        is Maybe.Just -> {
+          val testModel = maybeTest.value
+          if (testModel.creator?.id() == user.id() || user.isAdmin()) {
+            when (val result: Either<ServiceIssue, Unit> = testPort.sqlAction { deleteById(id) }) {
+              is Either.Left -> Either.left(result.value)
+              is Either.Right -> Either.right(testModel)
+            }
+          } else {
+            log.warn(
+              "User {} attempted to delete test model {} without permission.",
+              user.id(),
+              id
+            )
+            Forbidden.asEither("User is not allowed to delete this test model.")
+          }
+        }
+        Maybe.None -> {
+          log.warn("Attempted to delete non-existent test model id={}", id)
+          Either.left(UnexpectedAction("Test model not found: $id"))
+        }
+      }
+    }
+  }
+  }

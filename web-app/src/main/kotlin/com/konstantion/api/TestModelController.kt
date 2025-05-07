@@ -12,6 +12,7 @@ import com.konstantion.utils.Either
 import java.util.UUID
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -74,6 +75,20 @@ data class TestModelController(private val testModelService: TestModelService) {
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.entity.asResponse())
+    }
+  }
+
+  @DeleteMapping("/{id}")
+  fun deleteTestModel(
+    @AuthenticationPrincipal userEntity: UserEntity,
+    @PathVariable("id") id: UUID
+  ): ResponseEntity<*> {
+    return when (
+      val result: Either<ServiceIssue, TestModelEntity> =
+        testModelService.deleteTestModel(userEntity, id)
+    ) {
+      is Either.Left -> result.value.asError()
+      is Either.Right -> ResponseEntity.ok(result.value.id())
     }
   }
 }

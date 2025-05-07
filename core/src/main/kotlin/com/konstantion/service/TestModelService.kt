@@ -23,6 +23,8 @@ interface TestModelService {
     params: UpdateTestModelParams
   ): Either<ServiceIssue, UpdateResult>
 
+  fun deleteTestModel(user: UserEntity, id: UUID): Either<ServiceIssue, TestModelEntity>
+
   data class CreateTestModelParams(val name: String)
 
   data class UpdateTestModelParams(val action: Action, val name: String?, val questionId: UUID?) {
