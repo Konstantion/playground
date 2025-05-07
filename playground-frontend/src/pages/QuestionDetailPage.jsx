@@ -16,7 +16,7 @@ import PlaceholderConfigurator from '@/components/PlaceholderConfigurator.jsx';
 import CallArgsConfigurator from '@/components/CallArgsConfigurator.jsx';
 import AddVariant from '@/components/AddVariant.jsx';
 import { VariantsCarousel } from '@/components/VariantsCarousel.jsx';
-import ValidateCard from '@/components/ValidateVard.jsx';
+import ValidateCard from '@/components/ValidateCard.jsx';
 
 const State = Object.freeze({
     Loading: 'Loading',
