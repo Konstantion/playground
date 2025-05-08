@@ -9,6 +9,7 @@ import com.konstantion.entity.VariantEntity
 import com.konstantion.service.ServiceIssue
 import com.konstantion.service.VariantService
 import com.konstantion.utils.Either
+import com.konstantion.utils.TransactionsHelper
 import java.util.UUID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/variant")
 data class VariantController(
   private val variantService: VariantService,
+  private val transactionsHelper: TransactionsHelper,
 ) {
   private val log: Logger = LoggerFactory.getLogger(javaClass)
 
@@ -35,7 +37,10 @@ data class VariantController(
     @PathVariable("id") id: UUID,
   ): ResponseEntity<*> {
     log.info("Fetching variant with ID: {}", id)
-    return when (val result: Either<ServiceIssue, VariantEntity> = variantService.getById(id)) {
+    return when (
+      val result: Either<ServiceIssue, VariantEntity> =
+        transactionsHelper.tx { variantService.getById(id) }
+    ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
     }
@@ -49,7 +54,7 @@ data class VariantController(
     log.info("Creating variant with request: {}", request)
     return when (
       val result: Either<ServiceIssue, VariantEntity> =
-        variantService.create(userEntity, request.asParams())
+        transactionsHelper.tx { variantService.create(userEntity, request.asParams()) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
@@ -65,7 +70,7 @@ data class VariantController(
     log.info("Updating variant with ID: {} and request: {}", id, request)
     return when (
       val result: Either<ServiceIssue, VariantEntity> =
-        variantService.update(userEntity, request.asParams(id))
+        transactionsHelper.tx { variantService.update(userEntity, request.asParams(id)) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
@@ -79,7 +84,8 @@ data class VariantController(
   ): ResponseEntity<*> {
     log.info("Deleting variant with ID: {}", id)
     return when (
-      val result: Either<ServiceIssue, VariantEntity> = variantService.delete(userEntity, id)
+      val result: Either<ServiceIssue, VariantEntity> =
+        transactionsHelper.tx { variantService.delete(userEntity, id) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())

@@ -6,6 +6,8 @@ import com.konstantion.entity.ImmutableTestStatus
 import com.konstantion.entity.QuestionEntity
 import com.konstantion.entity.TestModelEntity
 import com.konstantion.entity.UserEntity
+import com.konstantion.entity.UserTestEntity
+import com.konstantion.entity.UserTestStatus
 import com.konstantion.entity.VariantEntity
 import com.konstantion.executor.TestModelExecutor
 import com.konstantion.repository.CodeRepository
@@ -18,9 +20,13 @@ import com.konstantion.repository.UserTestRepository
 import com.konstantion.repository.VariantRepository
 import com.konstantion.service.SqlHelper.sqlAction
 import com.konstantion.service.SqlHelper.sqlOptionalAction
+import com.konstantion.utils.CommonScheduler
 import com.konstantion.utils.Either
 import com.konstantion.utils.Maybe
 import com.konstantion.utils.Maybe.Companion.asMaybe
+import com.konstantion.utils.TransactionsHelper
+import jakarta.annotation.PostConstruct
+import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 import org.slf4j.Logger
@@ -38,8 +44,108 @@ data class ImmutableTestService(
   private val testMetadataRepository: TestMetadataRepository,
   private val userTestRepository: UserTestRepository,
   private val testModelExecutor: TestModelExecutor,
+  private val transactionHelper: TransactionsHelper,
 ) {
   private val log: Logger = LoggerFactory.getLogger(javaClass)
+
+  @PostConstruct
+  fun scheduleTasks() {
+    log.info("Scheduling background tasks for ImmutableTestService")
+    CommonScheduler.loopWithDelay(Duration.ofSeconds(30)) {
+      transactionHelper.tx(::expireTestsTask)
+    }
+    log.info("Scheduled expireTestsTask to run every 30 seconds")
+  }
+
+  fun expireTestsTask(): Either<ServiceIssue, Unit> {
+    val now = Instant.now()
+    log.debug("Running expireTestsTask at {}", now)
+
+    val expiredTestsResult: Either<ServiceIssue, List<ImmutableTestEntity>> =
+      immutableTestRepository.sqlAction {
+        findByStatusAndExpiresAfterBefore(ImmutableTestStatus.ACTIVE, now)
+      }
+
+    val expiredTests =
+      when (expiredTestsResult) {
+        is Either.Left -> {
+          log.error("Failed to query for expired tests: {}", expiredTestsResult.value.message())
+          return Either.left(expiredTestsResult.value)
+        }
+        is Either.Right -> expiredTestsResult.value
+      }
+
+    if (expiredTests.isEmpty()) {
+      log.debug("No active tests found past their expiration time.")
+      return Either.right(Unit)
+    }
+
+    log.info("Found {} active tests past their expiration time. Processing...", expiredTests.size)
+
+    val userTestsToExpire = mutableListOf<UserTestEntity>()
+
+    expiredTests.forEach { immutableTest ->
+      log.info(
+        "Processing expired test ID: {}, Name: '{}', Expires: {}",
+        immutableTest.id(),
+        immutableTest.name(),
+        immutableTest.expiresAfter,
+      )
+
+      val testsInProgress =
+        immutableTest.userTests().filter { userTest ->
+          userTest.status() == UserTestStatus.IN_PROGRESS ||
+            userTest.status() == UserTestStatus.NOT_STARTED
+        }
+
+      if (testsInProgress.isNotEmpty()) {
+        log.info(
+          "Found {} IN_PROGRESS user tests for expired test {}. Marking as EXPIRED.",
+          testsInProgress.size,
+          immutableTest.id(),
+        )
+        testsInProgress.forEach { userTest ->
+          userTest.status = UserTestStatus.EXPIRED
+          userTest.completedAt = immutableTest.expiresAfter
+          userTestsToExpire.add(userTest)
+        }
+      }
+      immutableTest.status = ImmutableTestStatus.ARCHIVED
+      log.info("Marking ImmutableTest {} as ARCHIVED.", immutableTest.id())
+
+      if (userTestsToExpire.isNotEmpty()) {
+        when (
+          val saveUserTestsResult: Either<ServiceIssue, MutableList<UserTestEntity>> =
+            userTestRepository.sqlAction { saveAllAndFlush(userTestsToExpire) }
+        ) {
+          is Either.Left -> {
+            log.error("Failed to save expired user tests: {}", saveUserTestsResult.value.message())
+
+            return Either.left(saveUserTestsResult.value)
+          }
+          is Either.Right ->
+            log.info("Successfully marked {} user tests as EXPIRED.", userTestsToExpire.size)
+        }
+      }
+    }
+
+    when (
+      val saveImmutableTestsResult: Either<ServiceIssue, MutableList<ImmutableTestEntity>> =
+        immutableTestRepository.sqlAction { saveAllAndFlush(expiredTests) }
+    ) {
+      is Either.Left -> {
+        log.error(
+          "Failed to save archived immutable tests: {}",
+          saveImmutableTestsResult.value.message()
+        )
+        return Either.left(saveImmutableTestsResult.value)
+      }
+      is Either.Right ->
+        log.info("Successfully marked {} immutable tests as ARCHIVED.", expiredTests.size)
+    }
+    log.debug("Finished expireTestsTask run.")
+    return Either.right(Unit)
+  }
 
   fun findAllByCreator(user: UserEntity): Either<ServiceIssue, List<ImmutableTestEntity>> {
     log.info(
@@ -167,6 +273,82 @@ data class ImmutableTestService(
 
     val immutableEntity = immutableTestRepository.saveAndFlush(immutableTest)
     return Either.right(immutableEntity)
+  }
+
+  fun archiveTest(
+    user: UserEntity,
+    id: UUID,
+  ): Either<ServiceIssue, ImmutableTestEntity> {
+    log.info("ArchiveTest[userId={}, username={}, id={}]", user.id(), user.username(), id)
+
+    if (user.isStudent()) {
+      return Forbidden.asEither("Students cannot archive tests.")
+    }
+
+    val immutableTestResult: Either<ServiceIssue, ImmutableTestEntity> =
+      immutableTestRepository.sqlOptionalAction { findById(id) }
+    val immutableTest =
+      when (immutableTestResult) {
+        is Either.Left -> return Either.left(immutableTestResult.value)
+        is Either.Right -> immutableTestResult.value
+      }
+
+    if (!user.isAdmin() && immutableTest.creator?.id() != user.id()) {
+      log.warn("User {} permission denied to archive ImmutableTest {}", user.id(), id)
+      return Forbidden.asEither("User does not have permission to archive this test.")
+    }
+
+    if (immutableTest.status() == ImmutableTestStatus.ARCHIVED) {
+      return Either.left(UnexpectedAction("Test is already archived: $id"))
+    }
+
+    val now = Instant.now()
+    val userTestsToCancel =
+      userTestRepository.findAll().filter {
+        it.immutableTest().id() == id && it.status() == UserTestStatus.IN_PROGRESS
+      }
+
+    if (userTestsToCancel.isNotEmpty()) {
+      log.info(
+        "Archiving test {}: Found {} IN_PROGRESS user tests to cancel.",
+        id,
+        userTestsToCancel.size
+      )
+      userTestsToCancel.forEach { userTest ->
+        userTest.status = UserTestStatus.CANCELLED
+        userTest.completedAt = now
+      }
+
+      when (
+        val saveUserTestsResult: Either<ServiceIssue, MutableList<UserTestEntity>> =
+          userTestRepository.sqlAction { saveAllAndFlush(userTestsToCancel) }
+      ) {
+        is Either.Left -> {
+          log.error(
+            "Failed to update user tests status during archive for immutable test {}: {}",
+            id,
+            saveUserTestsResult.value
+          )
+
+          return Either.left(saveUserTestsResult.value)
+        }
+        is Either.Right ->
+          log.info(
+            "Successfully cancelled {} IN_PROGRESS user tests for archived test {}",
+            userTestsToCancel.size,
+            id,
+          )
+      }
+    } else {
+      log.info("Archiving test {}: No IN_PROGRESS user tests found to cancel.", id)
+    }
+
+    immutableTest.status = ImmutableTestStatus.ARCHIVED
+
+    return immutableTestRepository
+      .sqlAction { saveAndFlush(immutableTest) }
+      .ifLeft { log.error("Failed to archive immutable test {}: {}", id, it) }
+      .ifRight { log.info("Successfully archived ImmutableTest: {}", it.id()) }
   }
 
   private fun deepCloneTestModel(original: TestModelEntity): TestModelEntity {

@@ -10,10 +10,12 @@ import com.konstantion.service.ImmutableTestService
 import com.konstantion.service.ServiceIssue
 import com.konstantion.service.UserTestService
 import com.konstantion.utils.Either
+import com.konstantion.utils.TransactionsHelper
 import java.util.UUID
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController
 data class ImmutableTestController(
   private val immutableTestService: ImmutableTestService,
   private val userTestService: UserTestService,
+  private val transactionsHelper: TransactionsHelper,
 ) {
   @GetMapping
   fun findAll(
@@ -32,7 +35,7 @@ data class ImmutableTestController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, List<ImmutableTestEntity>> =
-        immutableTestService.findAllByCreator(userEntity)
+        transactionsHelper.tx { immutableTestService.findAllByCreator(userEntity) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right ->
@@ -46,7 +49,7 @@ data class ImmutableTestController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, ImmutableTestEntity> =
-        immutableTestService.findById(userEntity, id)
+        transactionsHelper.tx { immutableTestService.findById(userEntity, id) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
@@ -59,9 +62,25 @@ data class ImmutableTestController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, ImmutableTestEntity> =
-        immutableTestService.createImmutableTest(userEntity, request.asParams())
+        transactionsHelper.tx {
+          immutableTestService.createImmutableTest(userEntity, request.asParams())
+        }
     ) {
       is Either.Left -> result.value.asError()
+      is Either.Right -> ResponseEntity.ok(result.value.asResponse())
+    }
+
+  @PatchMapping("/{id}/archive")
+  fun archive(
+    @AuthenticationPrincipal userEntity: UserEntity,
+    @PathVariable("id") id: UUID,
+  ): ResponseEntity<*> =
+    when (
+      val result: Either<ServiceIssue, ImmutableTestEntity> =
+        transactionsHelper.tx { immutableTestService.archiveTest(userEntity, id) }
+    ) {
+      is Either.Left -> result.value.asError()
+      // Return the updated test (now archived)
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
     }
 }

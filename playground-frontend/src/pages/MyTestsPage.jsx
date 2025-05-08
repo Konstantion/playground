@@ -1,50 +1,43 @@
 // playground-frontend/src/pages/MyTestsPage.jsx
 
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { authenticatedReq } from '@/utils/Requester.js';
-import { Endpoints } from '@/utils/Endpoints.js';
-import { useAuth } from '@/hooks/useAuth.jsx';
-import { ErrorType } from '@/utils/ErrorType.js';
-import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
-import { Routes as RRoutes, RTest, RHome } from '@/rout/Routes.jsx'; // Import RTest and RHome
+import React, {useCallback, useEffect, useState} from 'react';
+import {Input} from '@/components/ui/input';
+import {Button} from '@/components/ui/button';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle,} from '@/components/ui/card';
+import {ScrollArea} from '@/components/ui/scroll-area';
+import {authenticatedReq} from '@/utils/Requester.js';
+import {Endpoints} from '@/utils/Endpoints.js';
+import {useAuth} from '@/hooks/useAuth.jsx';
+import {ErrorType} from '@/utils/ErrorType.js';
+import {toast} from 'sonner';
+import {useNavigate} from 'react-router-dom';
+import {RTest, RUserTestResult} from '@/rout/Routes.jsx'; // Import RTest and RHome
 import Loading from '@/components/Loading.jsx';
 import {
-    FileText,
-    PlusCircle,
-    CheckCircle,
-    PlayCircle,
-    FileWarning,
     AlertCircle,
-    Loader2,
-    RotateCcw,
+    CheckCircle,
+    FileText,
+    FileWarning,
     Info,
+    Loader2,
+    PlayCircle,
+    PlusCircle,
+    RotateCcw,
     XCircle,
 } from 'lucide-react'; // Added/updated icons
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import {Badge} from '@/components/ui/badge';
+import {cn} from '@/lib/utils';
 import {
     Dialog,
+    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-    DialogClose,
 } from '@/components/ui/dialog.js';
-import { Label } from '@/components/ui/label';
+import {Label} from '@/components/ui/label';
 
 // Define Status constants matching backend enum
 const UserTestStatus = {
@@ -396,8 +389,8 @@ export default function MyTestsPage() {
                                                         variant="ghost"
                                                         className="text-xs text-sky-600 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-700/30 w-[90px] justify-center" // Fixed width
                                                         onClick={() =>
-                                                            toast.info(
-                                                                `Viewing results for ${test.id} (Pending)`
+                                                            navigate(
+                                                                `${RUserTestResult}/${test.id}`
                                                             )
                                                         }
                                                     >

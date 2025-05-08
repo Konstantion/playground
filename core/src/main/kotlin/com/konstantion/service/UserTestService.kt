@@ -106,11 +106,16 @@ data class UserTestService(
       )
     }
 
+    var questionsToProcess = immutableTestEntityDb.questions().toList()
+    if (immutableTestEntityDb.shuffleQuestions()) {
+      questionsToProcess = questionsToProcess.shuffled()
+    }
+
     val testModel =
       TestModel(
         id = immutableTestEntityDb.id(),
         name = immutableTestEntityDb.name(),
-        questions = immutableTestEntityDb.questions().map { it.toModel() },
+        questions = questionsToProcess.map { it.toModel() }, // Use potentially shuffled list
       )
     val generatedMetadata: TestModelMetadata =
       when (
@@ -139,12 +144,20 @@ data class UserTestService(
               ),
             )
 
+        var currentCorrectAnswersDto = generatedQuestionMetadata.correctAnswers
+        var currentIncorrectAnswersDto = generatedQuestionMetadata.incorrectAnswers
+
+        if (immutableTestEntityDb.shuffleVariants()) {
+          currentCorrectAnswersDto = currentCorrectAnswersDto.shuffled()
+          currentIncorrectAnswersDto = currentIncorrectAnswersDto.shuffled()
+        }
+
         val transientCorrectAnswers =
-          generatedQuestionMetadata.correctAnswers.map { answerDto ->
+          currentCorrectAnswersDto.map { answerDto ->
             toAnswerEntity(answerDto, originalQuestionEntity)
           }
         val transientIncorrectAnswers =
-          generatedQuestionMetadata.incorrectAnswers.map { answerDto ->
+          currentIncorrectAnswersDto.map { answerDto ->
             toAnswerEntity(answerDto, originalQuestionEntity)
           }
 
@@ -572,6 +585,6 @@ data class UserTestService(
 
   data class UserAnswerParams(
     val testId: UUID,
-    val answers: Map<UUID, List<UUID>>,
+    val answers: Map<UUID, List<UUID>>, // QuestionMetadataID to list of chosen AnswerIDs
   )
 }

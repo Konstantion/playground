@@ -1,32 +1,26 @@
 // playground-frontend/src/components/PlaceholderConfigurator.jsx
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.js';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.js';
-import { Action, actionStr, userStr } from '@/entities/Action.js';
-import { PlaceholderDefinition, PlaceholderIdentifier } from '@/entities/Placeholder.js';
-import { Label } from '@/components/ui/label.js';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select.js';
-import { I32RangeConfigurator } from '@/components/placeholder/I32RangeConfigurator.jsx';
-import { RandomOneOfConfigurator } from '@/components/placeholder/RandomOneOfConfigurator.jsx';
-import { ValueConfigurator } from '@/components/placeholder/ValueConfigurator.jsx';
-import { Button } from '@/components/ui/button.js';
-import { ScrollArea } from '@/components/ui/scroll-area.js';
-import { useAuth } from '@/hooks/useAuth.jsx';
-import { authenticatedReq } from '@/utils/Requester.js';
-import { Endpoints } from '@/utils/Endpoints.js';
-import { sNotEmpty } from '@/utils/ObjectUtils.js';
-import { toast } from 'sonner';
-import { ErrorType } from '@/utils/ErrorType.js';
-import { Routes as RRoutes } from '@/rout/Routes.jsx';
-import { useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { MinusCircle, PlusCircle, SlidersHorizontal } from 'lucide-react';
+import React, {useState} from 'react';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card.js';
+import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs.js';
+import {Action, actionStr, userStr} from '@/entities/Action.js';
+import {PlaceholderDefinition, PlaceholderIdentifier} from '@/entities/Placeholder.js';
+import {Label} from '@/components/ui/label.js';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from '@/components/ui/select.js';
+import {I32RangeConfigurator} from '@/components/placeholder/I32RangeConfigurator.jsx';
+import {RandomOneOfConfigurator} from '@/components/placeholder/RandomOneOfConfigurator.jsx';
+import {ValueConfigurator} from '@/components/placeholder/ValueConfigurator.jsx';
+import {Button} from '@/components/ui/button.js';
+import {ScrollArea} from '@/components/ui/scroll-area.js';
+import {useAuth} from '@/hooks/useAuth.jsx';
+import {authenticatedReq} from '@/utils/Requester.js';
+import {Endpoints} from '@/utils/Endpoints.js';
+import {sNotEmpty} from '@/utils/ObjectUtils.js';
+import {toast} from 'sonner';
+import {ErrorType} from '@/utils/ErrorType.js';
+import {Routes as RRoutes} from '@/rout/Routes.jsx';
+import {useNavigate} from 'react-router-dom';
+import {cn} from '@/lib/utils';
+import {MinusCircle, PlusCircle, SlidersHorizontal} from 'lucide-react';
 
 // Added isEditable prop
 export default function PlaceholderConfigurator({

@@ -1,31 +1,21 @@
 // playground-frontend/src/components/VariantsCarousel.jsx
-import { useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Editor } from '@monaco-editor/react';
-import {
-    AlertCircle,
-    Check,
-    ChevronLeft,
-    ChevronRight,
-    Edit,
-    FileText,
-    Lock,
-    Trash2,
-    X,
-} from 'lucide-react';
+import {useEffect, useState} from 'react';
+import {cn} from '@/lib/utils';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
+import {Button} from '@/components/ui/button';
+import {Editor} from '@monaco-editor/react';
+import {AlertCircle, Check, ChevronLeft, ChevronRight, Edit, FileText, Lock, Trash2, X,} from 'lucide-react';
 // ... other imports ...
-import { authenticatedReq } from '@/utils/Requester.js';
-import { Endpoints } from '@/utils/Endpoints.js';
-import { Action, actionStr } from '@/entities/Action.js';
-import { useAuth } from '@/hooks/useAuth.jsx';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { ErrorType } from '@/utils/ErrorType.js';
-import { Routes as RRoutes } from '@/rout/Routes.jsx';
-import { sNotEmpty } from '@/utils/ObjectUtils.js';
-import { Badge } from '@/components/ui/badge.js';
+import {authenticatedReq} from '@/utils/Requester.js';
+import {Endpoints} from '@/utils/Endpoints.js';
+import {Action, actionStr} from '@/entities/Action.js';
+import {useAuth} from '@/hooks/useAuth.jsx';
+import {useNavigate} from 'react-router-dom';
+import {toast} from 'sonner';
+import {ErrorType} from '@/utils/ErrorType.js';
+import {Routes as RRoutes} from '@/rout/Routes.jsx';
+import {sNotEmpty} from '@/utils/ObjectUtils.js';
+import {Badge} from '@/components/ui/badge.js';
 import {
     Dialog,
     DialogClose,

@@ -13,10 +13,10 @@ import com.konstantion.service.QuestionService.StatusResponse
 import com.konstantion.service.QuestionService.UpdateResult
 import com.konstantion.service.ServiceIssue
 import com.konstantion.utils.Either
+import com.konstantion.utils.TransactionsHelper
 import java.util.UUID
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/questions")
 data class QuestionController(
   private val questionService: QuestionService,
-  private val transactionTemplate: TransactionTemplate,
+  private val transactionsHelper: TransactionsHelper,
 ) {
   @GetMapping
   fun getPublicQuestions(
@@ -39,7 +39,7 @@ data class QuestionController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, List<QuestionEntity>> =
-        questionService.getPublicQuestions(userEntity)
+        transactionsHelper.tx { questionService.getPublicQuestions(userEntity) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
@@ -51,7 +51,7 @@ data class QuestionController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, List<QuestionEntity>> =
-        questionService.getAllQuestion(userEntity)
+        transactionsHelper.tx { questionService.getAllQuestion(userEntity) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
@@ -63,7 +63,8 @@ data class QuestionController(
     @PathVariable("id") id: UUID,
   ): ResponseEntity<*> =
     when (
-      val result: Either<ServiceIssue, QuestionEntity> = questionService.getQuestion(userEntity, id)
+      val result: Either<ServiceIssue, QuestionEntity> =
+        transactionsHelper.tx { questionService.getQuestion(userEntity, id) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> {
@@ -78,7 +79,7 @@ data class QuestionController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, QuestionService.ValidationId> =
-        questionService.validateQuestion(userEntity, id)
+        transactionsHelper.tx { questionService.validateQuestion(userEntity, id) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.taskId)
@@ -91,7 +92,7 @@ data class QuestionController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, StatusResponse> =
-        questionService.validationStatus(userEntity, id)
+        transactionsHelper.tx { questionService.validationStatus(userEntity, id) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
@@ -104,7 +105,7 @@ data class QuestionController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, QuestionEntity> =
-        questionService.createQuestion(userEntity, request.asParams())
+        transactionsHelper.tx { questionService.createQuestion(userEntity, request.asParams()) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
@@ -118,7 +119,7 @@ data class QuestionController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, UpdateResult<QuestionEntity>> =
-        questionService.updateQuestion(userEntity, id, request.asParams())
+        transactionsHelper.tx { questionService.updateQuestion(userEntity, id, request.asParams()) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> {
@@ -136,7 +137,7 @@ data class QuestionController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, QuestionEntity> =
-        questionService.deleteQuestion(userEntity, id)
+        transactionsHelper.tx { questionService.deleteQuestion(userEntity, id) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.id())

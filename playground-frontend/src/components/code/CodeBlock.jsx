@@ -1,7 +1,7 @@
 import React from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area.js';
-import { cn } from '@/lib/utils.js';
-import { Highlight, themes } from 'prism-react-renderer';
+import {ScrollArea} from '@/components/ui/scroll-area.js';
+import {cn} from '@/lib/utils.js';
+import {Highlight, themes} from 'prism-react-renderer';
 
 const theme = themes.vsDark;
 

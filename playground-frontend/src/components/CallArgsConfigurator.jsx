@@ -1,28 +1,22 @@
 // playground-frontend/src/components/CallArgsConfigurator.jsx
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.js';
-import { Action, actionStr, userStr } from '@/entities/Action.js';
-import { Label } from '@/components/ui/label.js';
-import { CallArgs, PlaceholderIdentifier } from '@/entities/Placeholder.js';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select.js';
-import { Button } from '@/components/ui/button.js';
-import { authenticatedReq } from '@/utils/Requester.js';
-import { Endpoints } from '@/utils/Endpoints.js';
-import { toast } from 'sonner';
-import { ErrorType } from '@/utils/ErrorType.js';
-import { Routes as RRoutes } from '@/rout/Routes.jsx';
-import { sNotEmpty } from '@/utils/ObjectUtils.js';
-import { useAuth } from '@/hooks/useAuth.jsx';
-import { useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { Link2, MinusCircle, PlusCircle, Settings2 } from 'lucide-react';
+import React, {useState} from 'react';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
+import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs.js';
+import {Action, actionStr, userStr} from '@/entities/Action.js';
+import {Label} from '@/components/ui/label.js';
+import {CallArgs, PlaceholderIdentifier} from '@/entities/Placeholder.js';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from '@/components/ui/select.js';
+import {Button} from '@/components/ui/button.js';
+import {authenticatedReq} from '@/utils/Requester.js';
+import {Endpoints} from '@/utils/Endpoints.js';
+import {toast} from 'sonner';
+import {ErrorType} from '@/utils/ErrorType.js';
+import {Routes as RRoutes} from '@/rout/Routes.jsx';
+import {sNotEmpty} from '@/utils/ObjectUtils.js';
+import {useAuth} from '@/hooks/useAuth.jsx';
+import {useNavigate} from 'react-router-dom';
+import {cn} from '@/lib/utils';
+import {Link2, MinusCircle, PlusCircle, Settings2} from 'lucide-react';
 
 // Added isEditable prop
 export default function CallArgsConfigurator({ id, question, setQuestion, className, isEditable }) {

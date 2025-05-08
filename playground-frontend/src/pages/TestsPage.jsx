@@ -1,32 +1,38 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { authenticatedReq } from '@/utils/Requester.js';
-import { Endpoints } from '@/utils/Endpoints.js';
-import { useAuth } from '@/hooks/useAuth.jsx';
-import { ErrorType } from '@/utils/ErrorType.js';
-import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
-import { Routes as RRoutes, RTests } from '@/rout/Routes.jsx';
+import React, {useCallback, useEffect, useMemo, useState} from 'react'; // Added useCallback
+import {Input} from '@/components/ui/input';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
+import {ScrollArea} from '@/components/ui/scroll-area';
+import {authenticatedReq} from '@/utils/Requester.js';
+import {Endpoints} from '@/utils/Endpoints.js';
+import {useAuth} from '@/hooks/useAuth.jsx';
+import {ErrorType} from '@/utils/ErrorType.js';
+import {toast} from 'sonner';
+import {useNavigate} from 'react-router-dom';
+import {RTests} from '@/rout/Routes.jsx';
 import Loading from '@/components/Loading.jsx';
 import {
-    Search,
+    Archive,
     CalendarDays,
+    CheckCircle,
+    ClipboardList,
     Clock,
     FileWarning,
-    ClipboardList,
-    Archive,
-    CheckCircle,
-} from 'lucide-react'; // Added Archive, CheckCircle
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+    Filter,
+    Loader2,
+    RefreshCw,
+    Search,
+} from 'lucide-react';
+import {Badge} from '@/components/ui/badge';
+import {cn} from '@/lib/utils';
+import {Button} from '@/components/ui/button'; // Assuming Button component exists
 
+// Status definitions based on backend (ImmutableTestStatus)
 const ImmutableTestStatus = {
     ACTIVE: 'ACTIVE',
     ARCHIVED: 'ARCHIVED',
 };
 
+// Helper to get display properties for each status
 const getStatusProps = status => {
     switch (status) {
         case ImmutableTestStatus.ACTIVE:
@@ -38,86 +44,149 @@ const getStatusProps = status => {
     }
 };
 
+// Filter options for the UI
+const filterOptions = [
+    { value: 'ALL', label: 'All Statuses' },
+    { value: ImmutableTestStatus.ACTIVE, label: 'Active' },
+    { value: ImmutableTestStatus.ARCHIVED, label: 'Archived' },
+];
+
 export default function TestsPage() {
     const { auth, logout } = useAuth();
     const navigate = useNavigate();
 
-    const [tests, setTests] = useState([]);
+    const [allTests, setAllTests] = useState([]); // Renamed from 'tests' for clarity
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
+    const [currentFilter, setCurrentFilter] = useState('ALL'); // State for the selected status filter
 
+    // Fetch tests function using useCallback
+    const fetchTests = useCallback(async () => {
+        setLoading(true);
+        await authenticatedReq(
+            Endpoints.ImmutableTest.Base,
+            'GET',
+            null,
+            auth.accessToken,
+            (type, message) => {
+                setLoading(false);
+                toast.error(message || 'Failed to load tests.', {
+                    closeButton: true,
+                    duration: 5000,
+                });
+                if (type === ErrorType.TokenExpired) logout();
+            },
+            data => {
+                const testsData = Array.isArray(data) ? data : [];
+                // Map data to ensure consistent structure
+                setAllTests(
+                    testsData.map(t => ({
+                        id: t.id,
+                        name: t.name,
+                        status: t.status,
+                        createdAt: t.createdAt,
+                        expiresAfter: t.expiresAfter,
+                    }))
+                );
+                setLoading(false);
+            }
+        );
+    }, [auth.accessToken, logout]); // Dependencies for useCallback
+
+    // Fetch tests on mount
     useEffect(() => {
-        const fetchTests = async () => {
-            setLoading(true);
-            await authenticatedReq(
-                Endpoints.ImmutableTest.Base,
-                'GET',
-                null,
-                auth.accessToken,
-                (type, message) => {
-                    setLoading(false);
-                    toast.error(message || 'Failed to load tests.', {
-                        closeButton: true,
-                        duration: 5000,
-                    });
-                    if (type === ErrorType.TokenExpired) logout();
-                },
-                data => {
-                    const testsData = Array.isArray(data) ? data : [];
-                    setTests(
-                        testsData.map(t => ({
-                            id: t.id,
-                            name: t.name,
-                            status: t.status, // Use status field
-                            createdAt: t.createdAt,
-                            expiresAfter: t.expiresAfter,
-                        }))
-                    );
-                    setLoading(false);
-                }
-            );
-        };
         fetchTests();
-    }, [auth.accessToken, logout, navigate]);
+    }, [fetchTests]); // fetchTests is now stable due to useCallback
 
-    const filteredTests = useMemo(
-        () => tests.filter(t => t.name.toLowerCase().includes(search.toLowerCase())),
-        [tests, search]
-    );
+    // Apply search and status filters
+    const filteredTests = useMemo(() => {
+        return allTests.filter(t => {
+            const matchesSearch = t.name.toLowerCase().includes(search.toLowerCase());
+            const matchesFilter = currentFilter === 'ALL' || t.status === currentFilter;
+            return matchesSearch && matchesFilter;
+        });
+    }, [allTests, search, currentFilter]); // Re-filter when tests, search, or filter changes
 
     return (
-        <div className="grid grid-cols-1 gap-6 xl:gap-8">
+        <div className="grid grid-cols-1 gap-6 xl:gap-8 p-4 md:p-6">
+            {' '}
+            {/* Added padding */}
             <div className="col-span-1">
                 <Card className="shadow-lg rounded-xl dark:bg-slate-800 border dark:border-slate-700/50">
-                    <CardHeader className="pb-4">
-                        <div className="flex items-center">
-                            <ClipboardList
-                                size={24}
-                                className="mr-3 text-sky-600 dark:text-sky-500"
-                            />
-                            <div>
-                                <CardTitle className="text-xl font-semibold text-slate-800 dark:text-slate-100">
-                                    Tests
-                                </CardTitle>
-                                <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
-                                    Browse previously generated tests. ({filteredTests.length}{' '}
-                                    found)
-                                </CardDescription>
+                    <CardHeader className="pb-4 border-b dark:border-slate-700">
+                        {' '}
+                        {/* Added border */}
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div className="flex items-center">
+                                <ClipboardList
+                                    size={24}
+                                    className="mr-3 text-sky-600 dark:text-sky-500 flex-shrink-0" // Added flex-shrink-0
+                                />
+                                <div>
+                                    <CardTitle className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+                                        Tests
+                                    </CardTitle>
+                                    <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
+                                        Browse previously generated tests. ({filteredTests.length}{' '}
+                                        found)
+                                    </CardDescription>
+                                </div>
                             </div>
+                            {/* Refresh Button */}
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={fetchTests}
+                                disabled={loading}
+                                aria-label="Refresh tests"
+                                className="dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-300 dark:border-slate-600"
+                            >
+                                {loading ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <RefreshCw className="h-4 w-4" />
+                                )}
+                            </Button>
                         </div>
                     </CardHeader>
-                    <CardContent>
-                        <div className="relative mb-4">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 dark:text-slate-500" />
-                            <Input
-                                type="search"
-                                placeholder="Search tests by name..."
-                                value={search}
-                                onChange={e => setSearch(e.target.value)}
-                                className="w-full pl-10 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500"
-                            />
+                    <CardContent className="p-4 md:p-6">
+                        {/* Search and Filter Row */}
+                        <div className="flex flex-col md:flex-row gap-4 mb-4">
+                            {/* Search Input */}
+                            <div className="relative flex-grow">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 dark:text-slate-500" />
+                                <Input
+                                    type="search"
+                                    placeholder="Search tests by name..."
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                    className="w-full pl-10 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500"
+                                />
+                            </div>
+                            {/* Filter Buttons */}
+                            <div className="flex items-center flex-wrap gap-2">
+                                <Filter className="w-5 h-5 text-slate-500 dark:text-slate-400 mr-1 hidden sm:block" />
+                                {filterOptions.map(option => (
+                                    <Button
+                                        key={option.value}
+                                        variant={
+                                            currentFilter === option.value ? 'default' : 'outline'
+                                        }
+                                        size="sm"
+                                        onClick={() => setCurrentFilter(option.value)}
+                                        className={cn(
+                                            'transition-colors',
+                                            currentFilter !== option.value &&
+                                                'dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-300 dark:border-slate-600'
+                                        )}
+                                    >
+                                        {option.label}
+                                    </Button>
+                                ))}
+                            </div>
                         </div>
 
+                        {/* Test List Area */}
                         {loading ? (
                             <Loading message="Loading tests..." />
                         ) : filteredTests.length === 0 ? (
@@ -128,26 +197,29 @@ export default function TestsPage() {
                                 />
                                 <p className="font-semibold text-lg">No Tests Found</p>
                                 <p className="text-sm mt-1">
-                                    {search
-                                        ? 'Try adjusting your search term.'
+                                    {search || currentFilter !== 'ALL'
+                                        ? 'Try adjusting your search or filter.'
                                         : 'Generate tests from the Test Models page.'}
                                 </p>
                             </div>
                         ) : (
-                            <ScrollArea className="h-[calc(100vh-310px)] min-h-[400px] pr-1">
+                            <ScrollArea className="h-[calc(100vh-380px)] min-h-[400px] pr-1">
+                                {' '}
+                                {/* Adjusted height */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                                     {filteredTests.map(item => {
-                                        const statusProps = getStatusProps(item.status); // Get status display props
+                                        const statusProps = getStatusProps(item.status);
                                         return (
                                             <Card
                                                 key={item.id}
                                                 className="cursor-pointer hover:shadow-lg transition-shadow duration-200 dark:bg-slate-850 dark:hover:bg-slate-700/70 border dark:border-slate-700 rounded-lg overflow-hidden flex flex-col"
-                                                onClick={() => navigate(`${RTests}/${item.id}`)}
+                                                onClick={() => navigate(`${RTests}/${item.id}`)} // Navigate on click
+                                                aria-label={`View details for test ${item.name}`}
                                             >
                                                 <CardHeader className="p-4">
                                                     <CardTitle
                                                         className="text-md font-semibold text-sky-700 dark:text-sky-500 truncate"
-                                                        title={item.name}
+                                                        title={item.name} // Tooltip for long names
                                                     >
                                                         {item.name}
                                                     </CardTitle>
@@ -159,7 +231,7 @@ export default function TestsPage() {
                                                     <div className="flex items-center text-slate-600 dark:text-slate-300">
                                                         <CalendarDays
                                                             size={13}
-                                                            className="mr-1.5 text-slate-500 dark:text-slate-400"
+                                                            className="mr-1.5 text-slate-500 dark:text-slate-400 flex-shrink-0"
                                                         />
                                                         Created:{' '}
                                                         {new Date(
@@ -186,7 +258,7 @@ export default function TestsPage() {
                                                         <div className="flex items-center text-slate-600 dark:text-slate-300">
                                                             <Clock
                                                                 size={13}
-                                                                className="mr-1.5 text-slate-500 dark:text-slate-400"
+                                                                className="mr-1.5 text-slate-500 dark:text-slate-400 flex-shrink-0"
                                                             />
                                                             Expires:{' '}
                                                             {new Date(

@@ -1,38 +1,20 @@
-// playground-frontend/src/pages/TestTakingPage.jsx
-
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { authenticatedReq } from '@/utils/Requester';
-import { Endpoints } from '@/utils/Endpoints';
-import { ErrorType } from '@/utils/ErrorType';
-import { toast } from 'sonner';
-import { Routes as RRoutes, RHome } from '@/rout/Routes'; // Import RHome
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
+import {useAuth} from '@/hooks/useAuth';
+import {authenticatedReq} from '@/utils/Requester';
+import {Endpoints} from '@/utils/Endpoints';
+import {ErrorType} from '@/utils/ErrorType';
+import {toast} from 'sonner';
+import {RHome} from '@/rout/Routes'; // Import RHome
 import Loading from '@/components/Loading';
 import NotFound from '@/components/NotFound';
-import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    CardFooter,
-    CardDescription,
-} from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import {
-    AlertCircle,
-    Check,
-    CheckCircle,
-    ChevronLeft,
-    ChevronRight,
-    Clock,
-    Send,
-    Timer,
-} from 'lucide-react';
+import {Button} from '@/components/ui/button';
+import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from '@/components/ui/card';
+import {RadioGroup, RadioGroupItem} from '@/components/ui/radio-group';
+import {Checkbox} from '@/components/ui/checkbox';
+import {Label} from '@/components/ui/label';
+import {Progress} from '@/components/ui/progress';
+import {CheckCircle, ChevronLeft, ChevronRight, Send, Timer,} from 'lucide-react';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -79,6 +61,11 @@ export default function TestTakingPage() {
     const [userAnswers, setUserAnswers] = useState({});
     const [timeLeft, setTimeLeft] = useState(null);
     const timerIntervalRef = useRef(null);
+
+    // NEW: Callback for the top-left button
+    const handleTopLeftButtonClick = useCallback(() => {
+        navigate(`${RHome}/Tests`);
+    }, [navigate, RHome, userTestId]); // Add dependencies used within the callback
 
     // Submission handler (memoized)
     const handleSubmit = useCallback(
@@ -339,16 +326,26 @@ export default function TestTakingPage() {
 
     return (
         <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-900">
-            {/* Test Header */}
             <header className="sticky top-0 z-40 bg-white dark:bg-slate-800 shadow-md px-4 sm:px-6 py-3 border-b dark:border-slate-700">
                 <div className="flex justify-between items-center max-w-5xl mx-auto">
-                    <h1
-                        className="text-lg sm:text-xl font-semibold text-slate-800 dark:text-slate-100 truncate"
-                        title={testData.testMetadata?.name}
-                    >
-                        {testData.testMetadata?.name || 'Test'}
-                    </h1>
-                    {timeLeft !== null && ( // Only show timer if timeLeft is not null
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                        <Button
+                            variant="outline" // Or "ghost" for a less prominent look
+                            size="icon" // Makes it a small square button, good for an icon
+                            onClick={handleTopLeftButtonClick}
+                            aria-label="Back to tests" // For accessibility
+                            className="dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
+                        >
+                            <ChevronLeft className="h-5 w-5" />
+                        </Button>
+                        <h1
+                            className="text-lg sm:text-xl font-semibold text-slate-800 dark:text-slate-100 truncate"
+                            title={testData.testMetadata?.name}
+                        >
+                            {testData.testMetadata?.name || 'Test'}
+                        </h1>
+                    </div>
+                    {timeLeft !== null && (
                         <div className="flex items-center space-x-2 text-sm font-medium text-red-600 dark:text-red-400">
                             <Timer className="h-5 w-5" />
                             <span>{formatTime(timeLeft)}</span>
@@ -358,7 +355,6 @@ export default function TestTakingPage() {
                 <Progress value={progressValue} className="mt-2 h-1.5" />
             </header>
 
-            {/* Test Content Area */}
             <main className="flex-1 w-full max-w-3xl mx-auto p-4 sm:p-6 lg:p-8">
                 <Card className="shadow-lg rounded-lg dark:bg-slate-800 border dark:border-slate-700/50">
                     <CardHeader className="pb-4">

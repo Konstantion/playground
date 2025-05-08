@@ -10,6 +10,7 @@ import com.konstantion.entity.UserTestStatus
 import com.konstantion.service.ServiceIssue
 import com.konstantion.service.UserTestService
 import com.konstantion.utils.Either
+import com.konstantion.utils.TransactionsHelper
 import java.util.UUID
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -25,12 +26,13 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/user_test")
 class UserTestController(
   private val userTestService: UserTestService,
+  private val transactionsHelper: TransactionsHelper,
 ) {
   @GetMapping
   fun getMyTests(
     @AuthenticationPrincipal user: UserEntity,
   ): ResponseEntity<*> =
-    when (val result = userTestService.getTestsForUser(user)) {
+    when (val result = transactionsHelper.tx { userTestService.getTestsForUser(user) }) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.map { test -> test.asResponse() })
     }
@@ -42,10 +44,20 @@ class UserTestController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, UserTestEntity> =
-        userTestService.createTestForUser(user, request.immutableTestId)
+        transactionsHelper.tx { userTestService.createTestForUser(user, request.immutableTestId) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
+    }
+
+  @GetMapping("/{userTestId}")
+  fun getUserTestById(
+    @AuthenticationPrincipal user: UserEntity,
+    @PathVariable userTestId: UUID,
+  ): ResponseEntity<*> =
+    when (val result = transactionsHelper.tx { userTestService.getTestForUser(user, userTestId) }) {
+      is Either.Left -> result.value.asError()
+      is Either.Right -> ResponseEntity.ok(result.value.asResponse()) // Use existing response DTO
     }
 
   @PutMapping("/{userTestId}/start")
@@ -53,7 +65,7 @@ class UserTestController(
     @AuthenticationPrincipal user: UserEntity,
     @PathVariable userTestId: UUID,
   ): ResponseEntity<*> =
-    when (val result = userTestService.startTest(user, userTestId)) {
+    when (val result = transactionsHelper.tx { userTestService.startTest(user, userTestId) }) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
     }
@@ -63,7 +75,9 @@ class UserTestController(
     @AuthenticationPrincipal user: UserEntity,
     @PathVariable userTestId: UUID,
   ): ResponseEntity<*> {
-    return when (val result = userTestService.getTestForUser(user, userTestId)) {
+    return when (
+      val result = transactionsHelper.tx { userTestService.getTestForUser(user, userTestId) }
+    ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> {
         val userTest = result.value
@@ -87,7 +101,7 @@ class UserTestController(
     @AuthenticationPrincipal user: UserEntity,
     @RequestBody request: UserTestService.UserAnswerParams,
   ): ResponseEntity<*> =
-    when (val result = userTestService.submitUserAnswer(user, request)) {
+    when (val result = transactionsHelper.tx { userTestService.submitUserAnswer(user, request) }) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
     }

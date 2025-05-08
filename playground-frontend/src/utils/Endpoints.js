@@ -1,4 +1,4 @@
-import { deepFreeze } from './ObjectUtils';
+import {deepFreeze} from './ObjectUtils';
 
 const BACKEND_URL = 'http://localhost:8079';
 const BACKEND_API_URL = `${BACKEND_URL}/api`;

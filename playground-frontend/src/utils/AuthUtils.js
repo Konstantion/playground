@@ -1,5 +1,5 @@
-import { Endpoints } from './Endpoints';
-import { ErrorType, errorTypeOf } from './ErrorType';
+import {Endpoints} from './Endpoints';
+import {ErrorType, errorTypeOf} from './ErrorType';
 
 export const fetchJwt = async (username, password, onUserAndToken, onError) => {
     try {

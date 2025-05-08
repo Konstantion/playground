@@ -1,33 +1,26 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import React, {useEffect, useMemo, useState} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
+import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from '@/components/ui/card';
+import {Button} from '@/components/ui/button';
 import {
     Dialog,
+    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-    DialogClose,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { authenticatedReq } from '@/utils/Requester.js';
-import { Endpoints } from '@/utils/Endpoints.js';
-import { useAuth } from '@/hooks/useAuth.jsx';
-import { ErrorType } from '@/utils/ErrorType.js';
-import { toast } from 'sonner';
-import { Action, actionStr } from '@/entities/Action.js';
+import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
+import {Checkbox} from '@/components/ui/checkbox';
+import {authenticatedReq} from '@/utils/Requester.js';
+import {Endpoints} from '@/utils/Endpoints.js';
+import {useAuth} from '@/hooks/useAuth.jsx';
+import {ErrorType} from '@/utils/ErrorType.js';
+import {toast} from 'sonner';
+import {Action, actionStr} from '@/entities/Action.js';
 import {
     AlertTriangle,
     Briefcase,
@@ -45,19 +38,19 @@ import {
     Search,
     Settings2,
     Shuffle,
+    TextCursorInput,
     Trash2,
     XCircle,
-    TextCursorInput, // Import icon for name input
 } from 'lucide-react';
 import Loading from '@/components/Loading.jsx';
 import NotFound from '@/components/NotFound.jsx';
 import Header from '@/components/Header.jsx';
-import { RHome, RLogin, RQuestions, RTestModels } from '@/rout/Routes.jsx';
-import { between, blank } from '@/utils/Strings.js'; // Import blank
-import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { TestModelsPage } from '@/pages/Pages.js';
+import {RHome, RLogin, RQuestions} from '@/rout/Routes.jsx';
+import {between, blank} from '@/utils/Strings.js'; // Import blank
+import {cn} from '@/lib/utils';
+import {ScrollArea} from '@/components/ui/scroll-area';
+import {Badge} from '@/components/ui/badge';
+import {TestModelsPage} from '@/pages/Pages.js';
 
 export default function TestModelDetailPage() {
     const { id } = useParams();
@@ -138,7 +131,7 @@ export default function TestModelDetailPage() {
         setIsSavingConfiguration(true);
         const expiresValueMs =
             expiresAfter && parseInt(expiresAfter, 10) > 0
-                ? parseInt(expiresAfter, 10) * 60000 // Convert minutes to milliseconds
+                ? parseInt(expiresAfter, 10) * 60000 + Date.now() // Convert minutes to milliseconds
                 : null;
 
         const body = {

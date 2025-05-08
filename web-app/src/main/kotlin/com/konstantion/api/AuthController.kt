@@ -9,6 +9,7 @@ import com.konstantion.entity.UserEntity
 import com.konstantion.service.AuthService
 import com.konstantion.service.ServiceIssue
 import com.konstantion.utils.Either
+import com.konstantion.utils.TransactionsHelper
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/auth")
 data class AuthController(
   private val authService: AuthService,
+  private val transactionsHelper: TransactionsHelper,
 ) {
   @PostMapping("/login")
   fun login(
@@ -26,7 +28,7 @@ data class AuthController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, AuthService.UserAndToken> =
-        authService.login(request.asParams())
+        transactionsHelper.tx { authService.login(request.asParams()) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right ->
@@ -40,7 +42,8 @@ data class AuthController(
     @RequestBody request: RegisterRequest,
   ): ResponseEntity<*> =
     when (
-      val result: Either<ServiceIssue, UserEntity> = authService.register(null, request.asParams())
+      val result: Either<ServiceIssue, UserEntity> =
+        transactionsHelper.tx { authService.register(null, request.asParams()) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(UserResponse.fromEntity(result.value))

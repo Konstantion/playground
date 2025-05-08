@@ -1,18 +1,18 @@
 // playground-frontend/src/components/ValidateCard.jsx
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.js';
-import { Button } from '@/components/ui/button.js';
-import { AlertTriangle, CheckCircle, Info, Loader2, ShieldCheck } from 'lucide-react';
-import { toast } from 'sonner';
-import { useAuth } from '@/hooks/useAuth.jsx';
-import { authenticatedReq } from '@/utils/Requester.js';
-import { Endpoints } from '@/utils/Endpoints.js';
-import { ErrorType } from '@/utils/ErrorType.js';
-import { Routes as RRoutes } from '@/rout/Routes.jsx';
-import { cn } from '@/lib/utils';
-import { Label } from '@/components/ui/label.js';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card.js';
+import {Button} from '@/components/ui/button.js';
+import {AlertTriangle, CheckCircle, Info, Loader2, ShieldCheck} from 'lucide-react';
+import {toast} from 'sonner';
+import {useAuth} from '@/hooks/useAuth.jsx';
+import {authenticatedReq} from '@/utils/Requester.js';
+import {Endpoints} from '@/utils/Endpoints.js';
+import {ErrorType} from '@/utils/ErrorType.js';
+import {Routes as RRoutes} from '@/rout/Routes.jsx';
+import {cn} from '@/lib/utils';
+import {Label} from '@/components/ui/label.js';
 
 const intervalMs = 2500;
 

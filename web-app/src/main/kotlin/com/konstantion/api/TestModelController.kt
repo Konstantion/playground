@@ -9,6 +9,7 @@ import com.konstantion.entity.UserEntity
 import com.konstantion.service.ServiceIssue
 import com.konstantion.service.TestModelService
 import com.konstantion.utils.Either
+import com.konstantion.utils.TransactionsHelper
 import java.util.UUID
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/test_model")
 data class TestModelController(
   private val testModelService: TestModelService,
+  private val transactionsHelper: TransactionsHelper,
 ) {
   @GetMapping
   fun getAllTestModels(
@@ -32,7 +34,7 @@ data class TestModelController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, List<TestModelEntity>> =
-        testModelService.getTestModels(userEntity)
+        transactionsHelper.tx { testModelService.getTestModels(userEntity) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.map { entity -> entity.asResponse() })
@@ -45,7 +47,7 @@ data class TestModelController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, TestModelEntity> =
-        testModelService.getTestModelById(userEntity, id)
+        transactionsHelper.tx { testModelService.getTestModelById(userEntity, id) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
@@ -58,7 +60,7 @@ data class TestModelController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, TestModelEntity> =
-        testModelService.createTestModel(userEntity, request.asParams())
+        transactionsHelper.tx { testModelService.createTestModel(userEntity, request.asParams()) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
@@ -72,7 +74,9 @@ data class TestModelController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, TestModelService.UpdateResult> =
-        testModelService.updateTestModel(userEntity, id, request.asParams())
+        transactionsHelper.tx {
+          testModelService.updateTestModel(userEntity, id, request.asParams())
+        }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.entity.asResponse())
@@ -85,7 +89,7 @@ data class TestModelController(
   ): ResponseEntity<*> =
     when (
       val result: Either<ServiceIssue, TestModelEntity> =
-        testModelService.deleteTestModel(userEntity, id)
+        transactionsHelper.tx { testModelService.deleteTestModel(userEntity, id) }
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.id())

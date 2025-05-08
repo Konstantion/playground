@@ -20,6 +20,15 @@ public sealed interface Either<L, R> {
         r -> this);
   }
 
+  default Either<L, R> ifRight(Consumer<? super R> consumer) {
+    return match(
+        l -> this,
+        r -> {
+          consumer.accept(r);
+          return this;
+        });
+  }
+
   record Left<L, R>(L value) implements Either<L, R> {
     @Override
     public <T, E extends Exception> T match(

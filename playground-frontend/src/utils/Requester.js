@@ -1,5 +1,5 @@
-import { ErrorType, errorTypeOf, toReadableMsg } from '@/utils/ErrorType.js';
-import { blank } from '@/utils/Strings.js';
+import {ErrorType, errorTypeOf, toReadableMsg} from '@/utils/ErrorType.js';
+import {blank} from '@/utils/Strings.js';
 
 export const authenticatedReq = async (url, method, body, token, onError, onData) => {
     const headers = {
