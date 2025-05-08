@@ -8,14 +8,13 @@ import com.konstantion.model.PlaceholderDefinition
 import com.konstantion.model.PlaceholderDefinition.Value
 import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
-import com.konstantion.model.PlaceholderValue
-import com.konstantion.model.PlaceholderValue.Str
 import com.konstantion.model.TaskId
 import com.konstantion.sandbox.GroupId
 import com.konstantion.sandbox.UserBasedSandbox
 import com.konstantion.utils.CmdHelper
 import com.konstantion.utils.Either
 import java.util.LinkedList
+import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
@@ -216,10 +215,10 @@ class UserBasedSandboxTest {
     }
 
   private fun codeBool(rawCode: String): Code<Lang.Python, Code.Output.Bool> =
-    Code(rawCode, Lang.Python, Code.Output.Bool::class.java)
+    Code(UUID.randomUUID(), rawCode, Lang.Python, Code.Output.Bool::class.java)
 
   private fun codeStr(rawCode: String): Code<Lang.Python, Code.Output.Str> =
-    Code(rawCode, Lang.Python, Code.Output.Str::class.java)
+    Code(UUID.randomUUID(), rawCode, Lang.Python, Code.Output.Str::class.java)
 
   private fun placeholdersAndDefinitions():
     Pair<LinkedList<PlaceholderLabel>, Map<PlaceholderIdentifier, PlaceholderDefinition<*>>> {
@@ -232,10 +231,10 @@ class UserBasedSandboxTest {
       mapOf(
         PlaceholderIdentifier.P_1 to
           PlaceholderDefinition.RandomOneOf.of(
-            listOf(PlaceholderValue.I32(10), PlaceholderValue.I32(20)),
+            listOf(10, 20),
           ),
         PlaceholderIdentifier.P_2 to PlaceholderDefinition.I32Range(5, 10),
-        PlaceholderIdentifier.P_3 to Value.of(Str("haha")),
+        PlaceholderIdentifier.P_3 to Value.of("haha"),
       )
     return placeholders to definitions
   }

@@ -103,11 +103,20 @@ data class ImmutableTestService(
       createParams,
     )
 
+    if (createParams.name.isBlank()) {
+      return Either.left(UnexpectedAction("Immutable test name cannot be blank."))
+    }
+
+    if (createParams.name.length > 100) {
+      return Either.left(UnexpectedAction("Immutable test name cannot exceed 100 characters."))
+    }
+
     if (user.isStudent()) {
       return Forbidden.asEither("User is not allowed to create immutable test.")
     }
 
-    val (testModelId, expiresAfterParam, shuffleQuestionsParam, shuffleVariantsParam) = createParams
+    val (testModelId, name, expiresAfterParam, shuffleQuestionsParam, shuffleVariantsParam) =
+      createParams
     val expiresAfterInstant: Instant? = expiresAfterParam?.run(Instant::ofEpochMilli)
     val maybeQuestion =
       when (
@@ -146,7 +155,7 @@ data class ImmutableTestService(
     val userEntity = userRepository.findById(user.id()).orElseThrow()
     val immutableTest =
       ImmutableTestEntity().apply {
-        this.name = deepClone.name
+        this.name = name
         this.status = ImmutableTestStatus.ACTIVE
         this.createdAt = Instant.now()
         this.questions = deepClone.questions
@@ -237,6 +246,7 @@ data class ImmutableTestService(
 
   data class CreateImmutableParams(
     val testModelId: UUID,
+    val name: String,
     val expiresAfter: Long?,
     val shuffleQuestions: Boolean,
     val shuffleVariants: Boolean,

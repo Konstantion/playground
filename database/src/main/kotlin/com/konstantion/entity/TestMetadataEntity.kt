@@ -20,7 +20,7 @@ open class TestMetadataEntity {
   @Id @GeneratedValue(strategy = GenerationType.UUID) open var id: UUID? = null
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "immutable_test_id", nullable = false) // Renamed for clarity
+  @JoinColumn(name = "immutable_test_id", nullable = false)
   open var immutableTestEntity: ImmutableTestEntity? = null
 
   @Column(name = "name", nullable = false) open var name: String? = null

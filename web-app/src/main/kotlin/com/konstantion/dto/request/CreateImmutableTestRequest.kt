@@ -5,6 +5,7 @@ import java.util.UUID
 
 data class CreateImmutableTestRequest(
   val testId: UUID,
+  val name: String,
   val expiresAfter: Long? = null,
   val shuffleQuestions: Boolean,
   val shuffleVariants: Boolean,
@@ -12,6 +13,7 @@ data class CreateImmutableTestRequest(
   fun asParams(): ImmutableTestService.CreateImmutableParams =
     ImmutableTestService.CreateImmutableParams(
       testModelId = testId,
+      name = name,
       expiresAfter = expiresAfter,
       shuffleQuestions = shuffleQuestions,
       shuffleVariants = shuffleVariants,

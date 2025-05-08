@@ -23,7 +23,16 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { AlertCircle, Check, ChevronLeft, ChevronRight, Clock, Send, Timer } from 'lucide-react';
+import {
+    AlertCircle,
+    Check,
+    CheckCircle,
+    ChevronLeft,
+    ChevronRight,
+    Clock,
+    Send,
+    Timer,
+} from 'lucide-react';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -35,7 +44,6 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { cn } from '@/lib/utils'; // Import cn if not already
 
 // Define Status constants matching backend enum
 const UserTestStatus = {

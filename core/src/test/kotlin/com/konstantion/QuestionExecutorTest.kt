@@ -10,7 +10,6 @@ import com.konstantion.model.Lang
 import com.konstantion.model.PlaceholderDefinition
 import com.konstantion.model.PlaceholderIdentifier
 import com.konstantion.model.PlaceholderLabel
-import com.konstantion.model.PlaceholderValue
 import com.konstantion.model.Question
 import com.konstantion.model.QuestionMetadata
 import com.konstantion.sandbox.GroupId
@@ -144,7 +143,7 @@ class QuestionExecutorTest {
       formatAndCode = FormatAndCode("java", "asd"),
       placeholderDefinitions =
         mapOf(
-          PlaceholderIdentifier.P_1 to PlaceholderDefinition.Value.of(PlaceholderValue.I32(10)),
+          PlaceholderIdentifier.P_1 to PlaceholderDefinition.Value.of(10),
           PlaceholderIdentifier.P_2 to PlaceholderDefinition.I32Range(10, 20),
         ),
       callArgs =

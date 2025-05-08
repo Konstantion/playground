@@ -403,7 +403,9 @@ data class UserTestService(
       if (questionMetadataDb.testMetadata().id() != testDb.testMetadata().id()) {
         return Either.left(
           UnexpectedAction(
-            "Question metadata $questionMetadataId does not belong to test metadata ${testDb.testMetadata().id()}",
+            "Question metadata $questionMetadataId does not belong to test metadata ${
+                            testDb.testMetadata().id()
+                        }",
           ),
         )
       }
@@ -440,9 +442,12 @@ data class UserTestService(
         is Either.Right -> result.value
       }
 
-    testDb.questionAnswers = userAnswersDb
-    testDb.status = UserTestStatus.COMPLETED
-    testDb.completedAt = Instant.now()
+    testDb.questionAnswers().clear()
+    testDb.questionAnswers().addAll(userAnswersDb)
+    if (testDb.status != UserTestStatus.EXPIRED) {
+      testDb.status = UserTestStatus.COMPLETED
+      testDb.completedAt = Instant.now()
+    }
     testDb.score = calculateScore(testDb)
 
     val updatedUserTest =

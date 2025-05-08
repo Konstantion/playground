@@ -23,7 +23,6 @@ enum class UserTestStatus {
   NOT_STARTED,
   IN_PROGRESS,
   COMPLETED,
-  ABANDONED,
   EXPIRED,
   CANCELLED,
 }
@@ -37,11 +36,7 @@ open class UserTestEntity {
   @JoinColumn(name = "immutable_test_id", nullable = false)
   open var immutableTest: ImmutableTestEntity? = null
 
-  @OneToOne(
-    cascade = [CascadeType.ALL],
-    fetch = FetchType.EAGER,
-    orphanRemoval = true,
-  ) // Added orphanRemoval
+  @OneToOne(cascade = [CascadeType.ALL], fetch = FetchType.EAGER, orphanRemoval = true)
   @JoinColumn(name = "test_metadata_id", nullable = false, unique = true)
   open var testMetadata: TestMetadataEntity? = null
 
@@ -53,10 +48,7 @@ open class UserTestEntity {
   @JoinTable(
     name = "user_test_question_answers_mapping",
     joinColumns = [JoinColumn(name = "user_test_id")],
-    inverseJoinColumns =
-      [
-        JoinColumn(name = "user_question_answer_id", unique = true),
-      ], // Ensure answer mapping is unique if needed
+    inverseJoinColumns = [JoinColumn(name = "user_question_answer_id", unique = true)],
   )
   open var questionAnswers: MutableList<UserQuestionAnswerEntity> = mutableListOf()
 
@@ -70,7 +62,6 @@ open class UserTestEntity {
 
   @Column(name = "score", nullable = true) open var score: Double? = null
 
-  // --- Getters ---
   fun id(): UUID = FieldUtils.nonNull(id)
 
   fun immutableTest(): ImmutableTestEntity = FieldUtils.nonNull(immutableTest)
@@ -79,7 +70,7 @@ open class UserTestEntity {
 
   fun user(): UserEntity = FieldUtils.nonNull(user)
 
-  fun questionAnswers(): List<UserQuestionAnswerEntity> = FieldUtils.nonNull(questionAnswers)
+  fun questionAnswers(): MutableList<UserQuestionAnswerEntity> = FieldUtils.nonNull(questionAnswers)
 
   fun status(): UserTestStatus = FieldUtils.nonNull(status)
 

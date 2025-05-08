@@ -11,13 +11,13 @@ import {
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
-    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    DialogClose,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -47,16 +47,17 @@ import {
     Shuffle,
     Trash2,
     XCircle,
+    TextCursorInput, // Import icon for name input
 } from 'lucide-react';
 import Loading from '@/components/Loading.jsx';
 import NotFound from '@/components/NotFound.jsx';
 import Header from '@/components/Header.jsx';
-import { RHome, RLogin, RQuestions } from '@/rout/Routes.jsx'; // Import RTestModels
-import { between } from '@/utils/Strings.js';
+import { RHome, RLogin, RQuestions, RTestModels } from '@/rout/Routes.jsx';
+import { between, blank } from '@/utils/Strings.js'; // Import blank
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { TestModelsPage } from '@/pages/Pages.js'; // Import TestModelsPage key
+import { TestModelsPage } from '@/pages/Pages.js';
 
 export default function TestModelDetailPage() {
     const { id } = useParams();
@@ -74,6 +75,7 @@ export default function TestModelDetailPage() {
     const [isEditNameDialogOpen, setIsEditNameDialogOpen] = useState(false);
     const [draftModelName, setDraftModelName] = useState('');
 
+    const [immutableTestName, setImmutableTestName] = useState(''); // State for the new test name
     const [expiresAfter, setExpiresAfter] = useState('');
     const [shuffleQuestions, setShuffleQuestions] = useState(false);
     const [shuffleVariants, setShuffleVariants] = useState(false);
@@ -82,10 +84,8 @@ export default function TestModelDetailPage() {
     const [isImmutableTestCreatedDialogOpen, setIsImmutableTestCreatedDialogOpen] = useState(false);
     const [createdImmutableTestId, setCreatedImmutableTestId] = useState(null);
 
-    // --- State for Delete Confirmation ---
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    // -----------------------------------
 
     useEffect(() => {
         if (!id) {
@@ -112,10 +112,8 @@ export default function TestModelDetailPage() {
                 data => {
                     setModel(data);
                     setDraftModelName(data.name || '');
-                    // Initialize config states from fetched data if available (assuming they might be part of the model in future)
-                    setExpiresAfter(data.expiresAfter ? String(data.expiresAfter / 60000) : '');
-                    setShuffleQuestions(data.shuffleQuestions || false);
-                    setShuffleVariants(data.shuffleVariants || false);
+                    setImmutableTestName(data.name ? `${data.name} - Instance` : ''); // Default immutable name based on model name
+                    // Initialize other states if needed
                     setStatus('loaded');
                     document.title = `${data.name || 'Test Model'} - Playground`;
                 }
@@ -124,7 +122,58 @@ export default function TestModelDetailPage() {
         fetchModelData();
     }, [id, auth.accessToken, logout, navigate]);
 
-    // ... (filteredAvailableQuestions, updateModelDetails, handleSaveModelName, handleCreateImmutableTest, modifyQuestionInModel, fetchAvailableQuestionsForDialog, handleOpenAddQuestionDialog, copyToClipboard remain the same) ...
+    // --- Create Immutable Test Handler ---
+    const handleCreateImmutableTest = async () => {
+        // Validate the new name
+        if (blank(immutableTestName)) {
+            toast.error('Please provide a name for the generated test.', { duration: 3000 });
+            return;
+        }
+        if (!between(immutableTestName.trim(), 1, 100)) {
+            // Use between for length check
+            toast.error('Generated test name must be 1-100 characters.', { duration: 3000 });
+            return;
+        }
+
+        setIsSavingConfiguration(true);
+        const expiresValueMs =
+            expiresAfter && parseInt(expiresAfter, 10) > 0
+                ? parseInt(expiresAfter, 10) * 60000 // Convert minutes to milliseconds
+                : null;
+
+        const body = {
+            testId: id,
+            name: immutableTestName.trim(), // Include the name
+            expiresAfter: expiresValueMs,
+            shuffleQuestions: shuffleQuestions,
+            shuffleVariants: shuffleVariants,
+        };
+
+        await authenticatedReq(
+            Endpoints.ImmutableTest.Base,
+            'POST',
+            body,
+            auth.accessToken,
+            (type, message) => {
+                toast.error(`Failed to create immutable test: ${message || 'Unknown error'}`, {
+                    duration: 5000,
+                });
+                if (type === ErrorType.TokenExpired) {
+                    logout();
+                    navigate(RLogin);
+                }
+                setIsSavingConfiguration(false);
+            },
+            immutableTest => {
+                toast.success(`Immutable Test "${immutableTest.name}" created successfully!`, {
+                    duration: 4000,
+                });
+                setCreatedImmutableTestId(immutableTest.id);
+                setIsImmutableTestCreatedDialogOpen(true);
+                setIsSavingConfiguration(false);
+            }
+        );
+    };
 
     const filteredAvailableQuestions = useMemo(() => {
         if (!model || !Array.isArray(availableQuestions)) return [];
@@ -180,46 +229,6 @@ export default function TestModelDetailPage() {
         if (success) setIsEditNameDialogOpen(false);
     };
 
-    const handleCreateImmutableTest = async () => {
-        setIsSavingConfiguration(true);
-        const expiresValueMs =
-            expiresAfter && parseInt(expiresAfter, 10) > 0
-                ? parseInt(expiresAfter, 10) * 60000
-                : null;
-
-        const body = {
-            testId: id, // Use the current model ID
-            expiresAfter: expiresValueMs,
-            shuffleQuestions: shuffleQuestions,
-            shuffleVariants: shuffleVariants,
-        };
-
-        await authenticatedReq(
-            Endpoints.ImmutableTest.Base,
-            'POST',
-            body,
-            auth.accessToken,
-            (type, message) => {
-                toast.error(`Failed to create immutable test: ${message || 'Unknown error'}`, {
-                    duration: 5000,
-                });
-                if (type === ErrorType.TokenExpired) {
-                    logout();
-                    navigate(RLogin);
-                }
-                setIsSavingConfiguration(false);
-            },
-            immutableTest => {
-                toast.success(`Immutable Test (ID: ${immutableTest.id}) created successfully!`, {
-                    duration: 4000,
-                });
-                setCreatedImmutableTestId(immutableTest.id);
-                setIsImmutableTestCreatedDialogOpen(true);
-                setIsSavingConfiguration(false);
-            }
-        );
-    };
-
     const modifyQuestionInModel = async (actionType, questionId) => {
         if (actionType === Action.ADD) setIsAddingQuestionToModel(true);
 
@@ -244,12 +253,8 @@ export default function TestModelDetailPage() {
                     { duration: 3000 }
                 );
                 if (actionType === Action.ADD) {
-                    // Update available questions list immediately after adding
                     setAvailableQuestions(prev => prev.filter(q => q.id !== questionId));
                     setIsAddingQuestionToModel(false);
-                } else {
-                    // If removing, potentially refetch available questions or add back to list
-                    // For simplicity now, we don't add it back immediately.
                 }
             }
         );
@@ -257,12 +262,10 @@ export default function TestModelDetailPage() {
 
     const fetchAvailableQuestionsForDialog = async () => {
         if (availableQuestions.length > 0 && isAddQuestionDialogOpen) {
-            // Avoid refetching if dialog is already open and questions are loaded,
-            // unless a question was just removed from the model (might need refresh)
             return;
         }
         await authenticatedReq(
-            Endpoints.Questions.Base, // Use the endpoint that gets *all* questions the user can see
+            Endpoints.Questions.Base, // Use base endpoint to get user's questions
             'GET',
             null,
             auth.accessToken,
@@ -280,7 +283,7 @@ export default function TestModelDetailPage() {
                 setAvailableQuestions(
                     questionsData.map(q => ({
                         id: q.id,
-                        name: q.body || `Question ID: ${q.id}`, // Use body as name
+                        name: q.body || `Question ID: ${q.id}`,
                         validated: q.validated,
                         createdAt: q.createdAt,
                         lang: q.lang,
@@ -292,7 +295,7 @@ export default function TestModelDetailPage() {
 
     const handleOpenAddQuestionDialog = () => {
         setIsAddQuestionDialogOpen(true);
-        fetchAvailableQuestionsForDialog(); // Fetch or refetch when dialog opens
+        fetchAvailableQuestionsForDialog();
     };
 
     const copyToClipboard = text => {
@@ -306,7 +309,6 @@ export default function TestModelDetailPage() {
             });
     };
 
-    // --- Delete Handler ---
     const handleDeleteModel = async () => {
         setIsDeleting(true);
         await authenticatedReq(
@@ -323,18 +325,18 @@ export default function TestModelDetailPage() {
                     navigate(RLogin);
                 }
                 setIsDeleting(false);
-                setIsDeleteDialogOpen(false); // Close dialog on error too
+                setIsDeleteDialogOpen(false);
             },
             _deletedId => {
                 toast.success(`Test Model "${model?.name || id}" deleted successfully!`);
                 setIsDeleting(false);
                 setIsDeleteDialogOpen(false);
-                navigate(`${RHome}/${TestModelsPage}`); // Navigate back to the list page
+                navigate(`${RHome}/${TestModelsPage}`);
             }
         );
     };
-    // ----------------------
 
+    // --- Loading / Not Found States ---
     if (status === 'loading')
         return (
             <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col">
@@ -349,6 +351,7 @@ export default function TestModelDetailPage() {
                 <NotFound message="Test model not found." />
             </div>
         );
+    // --- End Loading / Not Found States ---
 
     return (
         <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col selection:bg-sky-500 selection:text-white">
@@ -360,6 +363,7 @@ export default function TestModelDetailPage() {
                     <div className="xl:col-span-4 flex flex-col gap-6 xl:gap-8">
                         {/* Model Details Card */}
                         <Card className="shadow-xl rounded-xl dark:bg-slate-800 border dark:border-slate-700/50">
+                            {/* ... (Model Details Card content remains the same, including Edit/Delete buttons) ... */}
                             <CardHeader className="pb-4">
                                 <div className="flex justify-between items-start">
                                     <div className="flex items-center">
@@ -487,7 +491,6 @@ export default function TestModelDetailPage() {
                                     </div>
                                 </div>
                             </CardHeader>
-                            {/* ... rest of CardContent ... */}
                             <CardContent className="space-y-2.5 text-sm text-slate-700 dark:text-slate-300 pt-0">
                                 <div className="flex items-center">
                                     <CalendarDays
@@ -508,7 +511,6 @@ export default function TestModelDetailPage() {
 
                         {/* Test Configuration Card */}
                         <Card className="shadow-xl rounded-xl dark:bg-slate-800 border dark:border-slate-700/50">
-                            {/* ... (Test Configuration Card content remains the same) ... */}
                             <CardHeader className="pb-4">
                                 <div className="flex items-center">
                                     <Settings2
@@ -517,15 +519,39 @@ export default function TestModelDetailPage() {
                                     />
                                     <div>
                                         <CardTitle className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                                            Test Configuration
+                                            Generate Immutable Test
                                         </CardTitle>
                                         <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
-                                            Settings for generating an immutable test.
+                                            Create a shareable, non-editable test instance.
                                         </CardDescription>
                                     </div>
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-4 text-sm">
+                                {/* --- New Input for Immutable Test Name --- */}
+                                <div>
+                                    <Label
+                                        htmlFor="immutableTestName"
+                                        className="font-medium text-slate-700 dark:text-slate-300 flex items-center"
+                                    >
+                                        <TextCursorInput
+                                            size={14}
+                                            className="mr-1.5 text-slate-500 dark:text-slate-400"
+                                        />
+                                        Generated Test Name
+                                    </Label>
+                                    <Input
+                                        id="immutableTestName"
+                                        type="text"
+                                        value={immutableTestName}
+                                        onChange={e => setImmutableTestName(e.target.value)}
+                                        placeholder="e.g., Midterm Exam - Fall 2025"
+                                        className="mt-1.5 w-full dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500"
+                                        maxLength={100}
+                                    />
+                                </div>
+                                {/* --- End New Input --- */}
+
                                 <div>
                                     <Label
                                         htmlFor="expiresAfter"
@@ -534,7 +560,7 @@ export default function TestModelDetailPage() {
                                         <Clock
                                             size={14}
                                             className="mr-1.5 text-slate-500 dark:text-slate-400"
-                                        />{' '}
+                                        />
                                         Duration (minutes)
                                     </Label>
                                     <Input
@@ -542,7 +568,7 @@ export default function TestModelDetailPage() {
                                         type="number"
                                         value={expiresAfter}
                                         onChange={e => setExpiresAfter(e.target.value)}
-                                        placeholder="e.g., 60 (0 or empty for no limit)" // Updated placeholder
+                                        placeholder="e.g., 60 (0 or empty for no limit)"
                                         className="mt-1.5 w-full dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 focus:ring-sky-500 focus:border-sky-500"
                                         min="0"
                                     />
@@ -561,7 +587,7 @@ export default function TestModelDetailPage() {
                                         <Shuffle
                                             size={14}
                                             className="mr-1.5 text-slate-500 dark:text-slate-400"
-                                        />{' '}
+                                        />
                                         Shuffle Questions
                                     </Label>
                                 </div>
@@ -579,7 +605,7 @@ export default function TestModelDetailPage() {
                                         <Shuffle
                                             size={14}
                                             className="mr-1.5 text-slate-500 dark:text-slate-400"
-                                        />{' '}
+                                        />
                                         Shuffle Variants
                                     </Label>
                                 </div>
