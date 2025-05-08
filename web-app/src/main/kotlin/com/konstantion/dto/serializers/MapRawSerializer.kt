@@ -5,11 +5,10 @@ import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.SerializerProvider
 
 class MapRawSerializer : JsonSerializer<Map<String, String>>() {
-
   override fun serialize(
     value: Map<String, String>?,
     gen: JsonGenerator,
-    serializers: SerializerProvider
+    serializers: SerializerProvider,
   ) {
     if (value == null) {
       gen.writeNull()

@@ -4,6 +4,8 @@ import com.konstantion.utils.FieldUtils
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -18,6 +20,11 @@ import java.util.UUID
 import org.hibernate.annotations.OnDelete
 import org.hibernate.annotations.OnDeleteAction
 
+enum class ImmutableTestStatus {
+  ACTIVE,
+  ARCHIVED,
+}
+
 @Entity
 @Table(name = "immutable_test_models")
 open class ImmutableTestEntity {
@@ -25,15 +32,17 @@ open class ImmutableTestEntity {
 
   @Column(name = "name", nullable = false) open var name: String? = null
 
-  @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+  @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, orphanRemoval = true)
   @JoinTable(
     name = "immutable_test_questions",
     joinColumns = [JoinColumn(name = "immutable_test_id")],
-    inverseJoinColumns = [JoinColumn(name = "question_id")]
+    inverseJoinColumns = [JoinColumn(name = "question_id")],
   )
   open var questions: MutableList<QuestionEntity> = mutableListOf()
 
-  @Column(name = "active", nullable = false) open var active: Boolean = true
+  @Enumerated(EnumType.STRING)
+  @Column(name = "status", nullable = false)
+  open var status: ImmutableTestStatus = ImmutableTestStatus.ACTIVE
 
   @Column(name = "shuffle_questions", nullable = false) open var shuffleQuestions: Boolean = false
 
@@ -46,10 +55,14 @@ open class ImmutableTestEntity {
   @OnDelete(action = OnDeleteAction.SET_NULL)
   open var creator: UserEntity? = null
 
-  /** The time when the test model expires. If null, the test model does not expire. */
   @Column(name = "expires_after", nullable = true) open var expiresAfter: Instant? = null
 
-  @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+  @OneToMany(
+    mappedBy = "immutableTest",
+    cascade = [CascadeType.ALL],
+    fetch = FetchType.LAZY,
+    orphanRemoval = true,
+  )
   open var userTests: MutableList<UserTestEntity> = mutableListOf()
 
   fun id(): UUID = FieldUtils.nonNull(id)
@@ -58,11 +71,17 @@ open class ImmutableTestEntity {
 
   fun questions(): List<QuestionEntity> = FieldUtils.nonNull(questions)
 
-  fun active(): Boolean = active
+  fun status(): ImmutableTestStatus = FieldUtils.nonNull(status)
+
   fun shuffleQuestions(): Boolean = shuffleQuestions
+
   fun shuffleVariants(): Boolean = shuffleVariants
+
   fun createdAt(): Instant = FieldUtils.nonNull(createdAt)
+
   fun creator(): UserEntity? = creator
+
   fun expiresAfter(): Instant? = expiresAfter
+
   fun userTests(): List<UserTestEntity> = FieldUtils.nonNull(userTests)
 }

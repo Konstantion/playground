@@ -18,10 +18,11 @@ interface QuestionRepository : JpaRepository<QuestionEntity, UUID>, QuestionPort
       LEFT JOIN q.incorrectVariants iv
      WHERE cv.id = :vid
         OR iv.id = :vid
-  """
+  """,
   )
-  fun findAllByVariantId(@Param("vid") variantId: UUID): List<QuestionEntity>
-  override fun save(entry: QuestionEntity): QuestionEntity {
-    return saveAndFlush(entry)
-  }
+  fun findAllByVariantId(
+    @Param("vid") variantId: UUID,
+  ): List<QuestionEntity>
+
+  override fun save(entry: QuestionEntity): QuestionEntity = saveAndFlush(entry)
 }

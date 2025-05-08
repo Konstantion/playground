@@ -1,7 +1,10 @@
 package com.konstantion
 
 @ConsistentCopyVisibility
-data class Image internal constructor(val name: String) {
+data class Image
+internal constructor(
+  val name: String,
+) {
   companion object {
     @JvmField val PYTHON_3_9 = of("python:3.9")
 

@@ -8,7 +8,7 @@ data class VariantResponse(
   val id: UUID,
   val code: CodeResponse,
   val createdAt: Long,
-  val public: Boolean
+  val public: Boolean,
 ) {
   companion object {
     fun VariantEntity.asResponse() =
@@ -16,7 +16,7 @@ data class VariantResponse(
         id = id(),
         code = code().asResponse(),
         createdAt = createdAt().toEpochMilli(),
-        public = public()
+        public = public(),
       )
   }
 }

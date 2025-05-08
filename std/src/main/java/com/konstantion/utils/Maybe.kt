@@ -4,8 +4,10 @@ import java.util.Optional
 import java.util.function.Consumer
 
 sealed interface Maybe<out T> {
-
-  @JvmRecord data class Just<out T>(val value: T) : Maybe<T>
+  @JvmRecord
+  data class Just<out T>(
+    val value: T,
+  ) : Maybe<T>
 
   data object None : Maybe<Nothing>
 
@@ -80,9 +82,10 @@ sealed interface Maybe<out T> {
       None -> None
     }
 
-  fun <U, V> zip(other: Maybe<U>, combine: (T, U) -> V): Maybe<V> = flatMap { t ->
-    other.map { u -> combine(t, u) }
-  }
+  fun <U, V> zip(
+    other: Maybe<U>,
+    combine: (T, U) -> V,
+  ): Maybe<V> = flatMap { t -> other.map { u -> combine(t, u) } }
 
   fun filter(predicate: (T) -> Boolean): Maybe<T> =
     when (this) {

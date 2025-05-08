@@ -40,8 +40,8 @@ class UserBasedSandboxTest {
                   pass
                 result = c - z
                 return str(result) + d
-            """
-          .trimIndent()
+                """
+          .trimIndent(),
       )
 
     sandbox.subscribe(groupId, listener(latch, log))
@@ -51,7 +51,7 @@ class UserBasedSandboxTest {
         groupId,
         code,
         placeholders,
-        definitions.mapValues { (_, definition) -> definition.value() }
+        definitions.mapValues { (_, definition) -> definition.value() },
       )
 
     latch.await()
@@ -78,10 +78,10 @@ class UserBasedSandboxTest {
     val code =
       codeStr(
         """
-            data = "x" * 60_000_000  # ~60MB in characters
-            time.sleep(10) 
-           """
-          .trimIndent()
+                data = "x" * 60_000_000  # ~60MB in characters
+                time.sleep(10) 
+                """
+          .trimIndent(),
       )
 
     sandbox.subscribe(groupId, listener(latch, log))
@@ -91,7 +91,7 @@ class UserBasedSandboxTest {
         groupId,
         code,
         placeholders,
-        definitions.mapValues { (_, definition) -> definition.value() }
+        definitions.mapValues { (_, definition) -> definition.value() },
       )
 
     latch.await()
@@ -116,12 +116,12 @@ class UserBasedSandboxTest {
     val code =
       codeBool(
         """
-        c = x * y
-        z *= 2
-        result = c + z
-        return str(result) + d
-        """
-          .trimIndent()
+                c = x * y
+                z *= 2
+                result = c + z
+                return str(result) + d
+                """
+          .trimIndent(),
       )
 
     sandbox.subscribe(groupId, listener(latch, log))
@@ -131,7 +131,7 @@ class UserBasedSandboxTest {
         groupId,
         code,
         placeholders,
-        definitions.mapValues { (_, definition) -> definition.value() }
+        definitions.mapValues { (_, definition) -> definition.value() },
       )
 
     latch.await()
@@ -160,12 +160,12 @@ class UserBasedSandboxTest {
     val code =
       codeStr(
         """
-        c = x * y
-        z *= 2
-        result = c + z
-        return str(result) + d
-        """
-          .trimIndent()
+                c = x * y
+                z *= 2
+                result = c + z
+                return str(result) + d
+                """
+          .trimIndent(),
       )
 
     sandbox.subscribe(groupId, listener(latch, log))
@@ -175,7 +175,7 @@ class UserBasedSandboxTest {
         groupId,
         code,
         placeholders,
-        definitions.mapValues { (_, definition) -> definition.value() }
+        definitions.mapValues { (_, definition) -> definition.value() },
       )
 
     latch.await()
@@ -191,27 +191,35 @@ class UserBasedSandboxTest {
     }
   }
 
-  private fun listener(latch: CountDownLatch, log: Logger): CodeExecutor.Listener<GroupId> {
-    return object : CodeExecutor.Listener<GroupId> {
-      override fun onSuccess(groupId: GroupId, taskId: TaskId, output: Code.Output) {
+  private fun listener(
+    latch: CountDownLatch,
+    log: Logger,
+  ): CodeExecutor.Listener<GroupId> =
+    object : CodeExecutor.Listener<GroupId> {
+      override fun onSuccess(
+        groupId: GroupId,
+        taskId: TaskId,
+        output: Code.Output,
+      ) {
         log.info("Success groupId={}, taskId={}, output={}.", groupId, taskId, output)
         latch.countDown()
       }
 
-      override fun onError(groupId: GroupId, taskId: TaskId, issue: CodeExecutor.Issue) {
+      override fun onError(
+        groupId: GroupId,
+        taskId: TaskId,
+        issue: CodeExecutor.Issue,
+      ) {
         log.info("Error groupId={}, taskId={}, issue={}.", groupId, taskId, issue)
         latch.countDown()
       }
     }
-  }
 
-  private fun codeBool(rawCode: String): Code<Lang.Python, Code.Output.Bool> {
-    return Code(rawCode, Lang.Python, Code.Output.Bool::class.java)
-  }
+  private fun codeBool(rawCode: String): Code<Lang.Python, Code.Output.Bool> =
+    Code(rawCode, Lang.Python, Code.Output.Bool::class.java)
 
-  private fun codeStr(rawCode: String): Code<Lang.Python, Code.Output.Str> {
-    return Code(rawCode, Lang.Python, Code.Output.Str::class.java)
-  }
+  private fun codeStr(rawCode: String): Code<Lang.Python, Code.Output.Str> =
+    Code(rawCode, Lang.Python, Code.Output.Str::class.java)
 
   private fun placeholdersAndDefinitions():
     Pair<LinkedList<PlaceholderLabel>, Map<PlaceholderIdentifier, PlaceholderDefinition<*>>> {
@@ -224,21 +232,20 @@ class UserBasedSandboxTest {
       mapOf(
         PlaceholderIdentifier.P_1 to
           PlaceholderDefinition.RandomOneOf.of(
-            listOf(PlaceholderValue.I32(10), PlaceholderValue.I32(20))
+            listOf(PlaceholderValue.I32(10), PlaceholderValue.I32(20)),
           ),
         PlaceholderIdentifier.P_2 to PlaceholderDefinition.I32Range(5, 10),
-        PlaceholderIdentifier.P_3 to Value.of(Str("haha"))
+        PlaceholderIdentifier.P_3 to Value.of(Str("haha")),
       )
     return placeholders to definitions
   }
 
-  private fun sandbox(): UserBasedSandbox<Lang.Python> {
-    return UserBasedSandbox(
+  private fun sandbox(): UserBasedSandbox<Lang.Python> =
+    UserBasedSandbox(
       LoggerFactory::getLogger,
       Lang.Python,
       "kostia",
       CmdHelper.Python3File,
-      PythonCodeInterpreter
+      PythonCodeInterpreter,
     )
-  }
 }

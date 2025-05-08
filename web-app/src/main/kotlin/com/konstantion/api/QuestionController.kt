@@ -31,37 +31,38 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/questions")
 data class QuestionController(
   private val questionService: QuestionService,
-  private val transactionTemplate: TransactionTemplate
+  private val transactionTemplate: TransactionTemplate,
 ) {
-
   @GetMapping
-  fun getPublicQuestions(@AuthenticationPrincipal userEntity: UserEntity): ResponseEntity<*> {
-    return when (
+  fun getPublicQuestions(
+    @AuthenticationPrincipal userEntity: UserEntity,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, List<QuestionEntity>> =
         questionService.getPublicQuestions(userEntity)
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
     }
-  }
 
   @GetMapping("/all")
-  fun getAllQuestions(@AuthenticationPrincipal userEntity: UserEntity): ResponseEntity<*> {
-    return when (
+  fun getAllQuestions(
+    @AuthenticationPrincipal userEntity: UserEntity,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, List<QuestionEntity>> =
         questionService.getAllQuestion(userEntity)
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
     }
-  }
 
   @GetMapping("/{id}")
   fun getQuestionById(
     @AuthenticationPrincipal userEntity: UserEntity,
-    @PathVariable("id") id: UUID
-  ): ResponseEntity<*> {
-    return when (
+    @PathVariable("id") id: UUID,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, QuestionEntity> = questionService.getQuestion(userEntity, id)
     ) {
       is Either.Left -> result.value.asError()
@@ -69,57 +70,53 @@ data class QuestionController(
         ResponseEntity.ok(result.value.asResponse())
       }
     }
-  }
 
   @PutMapping("/{id}/validate")
   fun validateQuestionById(
     @AuthenticationPrincipal userEntity: UserEntity,
-    @PathVariable("id") id: UUID
-  ): ResponseEntity<*> {
-    return when (
+    @PathVariable("id") id: UUID,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, QuestionService.ValidationId> =
         questionService.validateQuestion(userEntity, id)
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.taskId)
     }
-  }
 
   @GetMapping("/{id}/status")
   fun getValidationStatusById(
     @AuthenticationPrincipal userEntity: UserEntity,
-    @PathVariable("id") id: UUID
-  ): ResponseEntity<*> {
-    return when (
+    @PathVariable("id") id: UUID,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, StatusResponse> =
         questionService.validationStatus(userEntity, id)
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
     }
-  }
 
   @PostMapping
   fun createQuestion(
     @AuthenticationPrincipal userEntity: UserEntity,
-    @RequestBody request: CreateQuestionRequest
-  ): ResponseEntity<*> {
-    return when (
+    @RequestBody request: CreateQuestionRequest,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, QuestionEntity> =
         questionService.createQuestion(userEntity, request.asParams())
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
     }
-  }
 
   @PatchMapping("/{id}")
   fun updateQuestion(
     @AuthenticationPrincipal userEntity: UserEntity,
     @PathVariable("id") id: UUID,
-    @RequestBody request: UpdateQuestionRequest
-  ): ResponseEntity<*> {
-    return when (
+    @RequestBody request: UpdateQuestionRequest,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, UpdateResult<QuestionEntity>> =
         questionService.updateQuestion(userEntity, id, request.asParams())
     ) {
@@ -127,23 +124,21 @@ data class QuestionController(
       is Either.Right -> {
         val updateResult = result.value
         ResponseEntity.ok(
-          UpdateQuestionResponse(updateResult.violations, updateResult.entity.asResponse())
+          UpdateQuestionResponse(updateResult.violations, updateResult.entity.asResponse()),
         )
       }
     }
-  }
 
   @DeleteMapping("/{id}")
   fun deleteQuestion(
     @AuthenticationPrincipal userEntity: UserEntity,
-    @PathVariable("id") id: UUID
-  ): ResponseEntity<*> {
-    return when (
+    @PathVariable("id") id: UUID,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, QuestionEntity> =
         questionService.deleteQuestion(userEntity, id)
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.id())
     }
-  }
 }

@@ -21,7 +21,7 @@ data class TestMetadataResponse(
         id = id(),
         testId = immutableTestEntity().id(),
         name = name(),
-        questionMetadata = questionMetadata.map { metadata -> metadata.asResponse() }
+        questionMetadata = questionMetadata.map { metadata -> metadata.asResponse() },
       )
   }
 }
@@ -45,7 +45,7 @@ data class QuestionMetadataResponse(
             FormatAndCodeDto(format, code)
           },
         correctAnswers = correctAnswers().map { answer -> answer.asResponse() },
-        incorrectAnswers = incorrectAnswers().map { answer -> answer.asResponse() }
+        incorrectAnswers = incorrectAnswers().map { answer -> answer.asResponse() },
       )
   }
 }

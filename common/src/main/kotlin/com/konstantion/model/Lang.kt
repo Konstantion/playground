@@ -10,12 +10,11 @@ sealed interface Lang {
   data object Python : Lang
 
   companion object {
-    fun fromString(lang: String): Lang {
-      return when (lang.lowercase()) {
+    fun fromString(lang: String): Lang =
+      when (lang.lowercase()) {
         "javascript" -> JavaScript
         "python" -> Python
         else -> error("Unknown lang: $lang")
       }
-    }
   }
 }

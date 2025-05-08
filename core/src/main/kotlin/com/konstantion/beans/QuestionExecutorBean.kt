@@ -14,17 +14,15 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class QuestionExecutorBean {
   @Bean(destroyMethod = "close")
-  fun pythonExecutor(): QuestionExecutor<Lang.Python> {
-    return NaiveQuestionExecutor(pythonSandbox(), GroupId(0L))
-  }
+  fun pythonExecutor(): QuestionExecutor<Lang.Python> =
+    NaiveQuestionExecutor(pythonSandbox(), GroupId(0L))
 
-  private fun pythonSandbox(): UserBasedSandbox<Lang.Python> {
-    return UserBasedSandbox(
+  private fun pythonSandbox(): UserBasedSandbox<Lang.Python> =
+    UserBasedSandbox(
       LoggerFactory::getLogger,
       Lang.Python,
       "kostia",
       CmdHelper.Python3File,
-      PythonCodeInterpreter
+      PythonCodeInterpreter,
     )
-  }
 }

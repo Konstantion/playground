@@ -12,7 +12,7 @@ data class SandboxConfig(
     val DEFAULT =
       SandboxConfig(
         Duration.ofSeconds(2),
-        MemoryUtils.convert(50, MemoryMeasure.Megabytes, MemoryMeasure.Kilobytes)
+        MemoryUtils.convert(50, MemoryMeasure.Megabytes, MemoryMeasure.Kilobytes),
       )
   }
 }

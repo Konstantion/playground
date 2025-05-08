@@ -19,26 +19,30 @@ import kotlin.io.path.writeText
 
 private val BASE_PATH = Path.of("temp", "files")
 
-enum class FileType(val type: String) {
-  PY("py");
+enum class FileType(
+  val type: String,
+) {
+  PY("py"),
+  ;
 
   companion object {
-    fun of(lang: Lang): FileType {
-      return when (lang) {
+    fun of(lang: Lang): FileType =
+      when (lang) {
         Lang.JavaScript -> TODO()
         Lang.Python -> PY
       }
-    }
   }
 }
 
 sealed interface DeleteStrategy {
-  data class WithInterval(val delay: Duration) : DeleteStrategy
+  data class WithInterval(
+    val delay: Duration,
+  ) : DeleteStrategy
 }
 
 class TempFileStorage<Id>(
   dirName: String,
-  deleteStrategy: DeleteStrategy = DeleteStrategy.WithInterval(Duration.ofSeconds(5))
+  deleteStrategy: DeleteStrategy = DeleteStrategy.WithInterval(Duration.ofSeconds(5)),
 ) where Id : Any {
   private val toDelete: MutableSet<Path> = ConcurrentHashMap.newKeySet()
 
@@ -69,14 +73,18 @@ class TempFileStorage<Id>(
       }
     }
 
-  fun save(id: Id, content: String, type: FileType): Either<IOException, Path> {
+  fun save(
+    id: Id,
+    content: String,
+    type: FileType,
+  ): Either<IOException, Path> {
     try {
       val filePath = storagePath.resolve("$id.${type.type}")
       filePath.writeText(
         content,
         Charset.defaultCharset(),
         StandardOpenOption.CREATE,
-        StandardOpenOption.TRUNCATE_EXISTING
+        StandardOpenOption.TRUNCATE_EXISTING,
       )
       return Either.right(filePath.toAbsolutePath())
     } catch (ioError: IOException) {
@@ -84,7 +92,10 @@ class TempFileStorage<Id>(
     }
   }
 
-  fun resolve(id: Id, type: FileType): Either<IOException, Path> {
+  fun resolve(
+    id: Id,
+    type: FileType,
+  ): Either<IOException, Path> {
     try {
       val filePath = storagePath.resolve("$id.${type.type}")
       if (filePath.notExists()) {
@@ -96,7 +107,10 @@ class TempFileStorage<Id>(
     }
   }
 
-  fun delete(id: Id, type: FileType): Either<IOException, Path> {
+  fun delete(
+    id: Id,
+    type: FileType,
+  ): Either<IOException, Path> {
     try {
       val filePath = storagePath.resolve("$id.${type.type}")
       if (filePath.notExists()) {
@@ -109,7 +123,10 @@ class TempFileStorage<Id>(
     }
   }
 
-  fun scheduleDeletion(id: Id, type: FileType) {
+  fun scheduleDeletion(
+    id: Id,
+    type: FileType,
+  ) {
     when (val result = resolve(id, type)) {
       is Either.Left -> {}
       is Either.Right -> toDelete.add(result.value)

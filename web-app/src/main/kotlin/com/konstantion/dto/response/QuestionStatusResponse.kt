@@ -2,7 +2,9 @@ package com.konstantion.dto.response
 
 import com.konstantion.service.QuestionService
 
-data class QuestionStatusResponse(val status: String) {
+data class QuestionStatusResponse(
+  val status: String,
+) {
   companion object {
     fun QuestionService.StatusResponse.asResponse(): QuestionStatusResponse {
       val status: String =

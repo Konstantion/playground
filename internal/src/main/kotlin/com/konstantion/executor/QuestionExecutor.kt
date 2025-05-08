@@ -13,10 +13,13 @@ interface QuestionExecutor<L> : AutoCloseable where L : Lang {
   fun run(question: Question<L>): Either<Issue, QuestionMetadata>
 
   sealed interface Issue {
-    data class Multiple(val issues: List<Issue>) : Issue
+    data class Multiple(
+      val issues: List<Issue>,
+    ) : Issue
+
     data class VariantExecution(
       val variant: Question.Variant<*>,
-      val underlying: CodeExecutor.Issue
+      val underlying: CodeExecutor.Issue,
     ) : Issue
   }
 

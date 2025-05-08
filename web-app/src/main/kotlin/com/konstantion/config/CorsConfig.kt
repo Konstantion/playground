@@ -26,7 +26,7 @@ class CorsConfig {
         "Origin, Accept",
         "X-Requested-With",
         "Access-Control-Request-Method",
-        "Access-Control-Request-Headers"
+        "Access-Control-Request-Headers",
       )
     corsConfig.exposedHeaders =
       listOf(
@@ -38,7 +38,7 @@ class CorsConfig {
         "Access-Control-Allow-Origin",
         "Access-Control-Allow-Origin",
         "Access-Control-Allow-Credentials",
-        "File-Name"
+        "File-Name",
       )
     corsConfig.allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
     configSource.registerCorsConfiguration("/**", corsConfig)

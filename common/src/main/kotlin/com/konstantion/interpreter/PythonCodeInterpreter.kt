@@ -15,7 +15,7 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
   override fun <R : Code.Output> toExecutableCode(
     code: Code<Lang.Python, R>,
     callArgs: List<PlaceholderLabel>,
-    placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderValue>
+    placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderValue>,
   ): Either<InterpreterIssue, String> {
     val codeBuilder: StringBuilder = StringBuilder()
 
@@ -34,7 +34,7 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
 
   private fun StringBuilder.initVariables(
     callArgs: List<PlaceholderLabel>,
-    placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderValue>
+    placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderValue>,
   ): Maybe<InterpreterIssue.Variables> {
     if (callArgs.toSet().size != callArgs.size) {
       return Maybe.just(InterpreterIssue.Variables("variable names should be unique."))
@@ -44,12 +44,12 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
       val placeholderValue =
         placeholderDefinitions[placeholder.identifier]
           ?: return Maybe.just(
-            InterpreterIssue.Variables("variable definition missing for $placeholder")
+            InterpreterIssue.Variables("variable definition missing for $placeholder"),
           )
 
       if (placeholderValue.javaClass !in SUPPORTED_VALUE_TYPES) {
         return Maybe.just(
-          InterpreterIssue.Variables("unsupported variable type ${placeholderValue.javaClass}")
+          InterpreterIssue.Variables("unsupported variable type ${placeholderValue.javaClass}"),
         )
       }
 
@@ -68,7 +68,7 @@ object PythonCodeInterpreter : CodeInterpreter<Lang.Python> {
 
   private fun <R> StringBuilder.initFunction(
     callArgs: List<PlaceholderLabel>,
-    code: Code<Lang.Python, R>
+    code: Code<Lang.Python, R>,
   ) where R : Code.Output {
     this.append("def $USER_FUNCTION_NAME(")
     val argsLine = callArgs.joinToString(", ") { label -> label.name }

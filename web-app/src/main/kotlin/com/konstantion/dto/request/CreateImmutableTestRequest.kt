@@ -9,12 +9,11 @@ data class CreateImmutableTestRequest(
   val shuffleQuestions: Boolean,
   val shuffleVariants: Boolean,
 ) {
-  fun asParams(): ImmutableTestService.CreateImmutableParams {
-    return ImmutableTestService.CreateImmutableParams(
+  fun asParams(): ImmutableTestService.CreateImmutableParams =
+    ImmutableTestService.CreateImmutableParams(
       testModelId = testId,
       expiresAfter = expiresAfter,
       shuffleQuestions = shuffleQuestions,
-      shuffleVariants = shuffleVariants
+      shuffleVariants = shuffleVariants,
     )
-  }
 }

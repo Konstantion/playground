@@ -16,21 +16,19 @@ import kotlinx.serialization.json.Json
 @Entity
 @Table(name = "codes")
 open class CodeEntity {
-
   @Id @GeneratedValue(strategy = GenerationType.UUID) open var id: UUID? = null
 
   @Column(name = "code", nullable = false) open var code: String? = null
 
   @Column(name = "output_type", nullable = false) open var outputType: String? = null
 
-  fun <L> toModel(lang: L): Code<L, *> where L : Lang {
-    return Code(
+  fun <L> toModel(lang: L): Code<L, *> where L : Lang =
+    Code(
       id,
       nonNull(code),
       lang,
-      Json.decodeFromString(OutputTypeSerializer, nonNull(outputType))
+      Json.decodeFromString(OutputTypeSerializer, nonNull(outputType)),
     )
-  }
 
   fun id(): UUID = nonNull(id)
 
@@ -38,17 +36,14 @@ open class CodeEntity {
 
   fun outputType(): String = nonNull(outputType)
 
-  override fun toString(): String {
-    return "CodeEntity(id=$id, code=$code, outputType=$outputType)"
-  }
+  override fun toString(): String = "CodeEntity(id=$id, code=$code, outputType=$outputType)"
 
   companion object {
-    fun fromModel(code: Code<*, *>): CodeEntity {
-      return CodeEntity().apply {
+    fun fromModel(code: Code<*, *>): CodeEntity =
+      CodeEntity().apply {
         id = code.identifier
         this.code = code.code
         outputType = Json.encodeToString(OutputTypeSerializer, code.outputType)
       }
-    }
   }
 }

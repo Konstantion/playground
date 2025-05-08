@@ -8,7 +8,5 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface CodeRepository : JpaRepository<CodeEntity, UUID>, CodePort<CodeEntity> {
-  override fun save(entry: CodeEntity): CodeEntity {
-    return saveAndFlush(entry)
-  }
+  override fun save(entry: CodeEntity): CodeEntity = saveAndFlush(entry)
 }

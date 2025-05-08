@@ -13,7 +13,10 @@ object OutputTypeSerializer : KSerializer<Class<out Code.Output>> {
   override val descriptor: SerialDescriptor =
     PrimitiveSerialDescriptor("OutputType", PrimitiveKind.STRING)
 
-  override fun serialize(encoder: Encoder, value: Class<out Code.Output>) {
+  override fun serialize(
+    encoder: Encoder,
+    value: Class<out Code.Output>,
+  ) {
     when {
       value.isAssignableFrom(Code.Output.Str::class.java) -> encoder.encodeString("Str")
       value.isAssignableFrom(Code.Output.Bool::class.java) -> encoder.encodeString("Bool")

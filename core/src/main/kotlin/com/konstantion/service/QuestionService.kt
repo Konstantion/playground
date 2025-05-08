@@ -14,7 +14,10 @@ import java.util.UUID
 import java.util.concurrent.Future
 
 interface QuestionService {
-  fun save(user: UserEntity, question: Question<Lang>): Either<ServiceIssue, QuestionEntity>
+  fun save(
+    user: UserEntity,
+    question: Question<Lang>,
+  ): Either<ServiceIssue, QuestionEntity>
 
   fun getQuestions(user: UserEntity): Either<ServiceIssue, List<QuestionEntity>>
 
@@ -22,28 +25,45 @@ interface QuestionService {
 
   fun getPublicQuestions(user: UserEntity): Either<ServiceIssue, List<QuestionEntity>>
 
-  fun getQuestion(user: UserEntity, id: UUID): Either<ServiceIssue, QuestionEntity>
+  fun getQuestion(
+    user: UserEntity,
+    id: UUID,
+  ): Either<ServiceIssue, QuestionEntity>
 
   fun createQuestion(
     user: UserEntity,
-    params: CreateQuestionParams
+    params: CreateQuestionParams,
   ): Either<ServiceIssue, QuestionEntity>
 
   fun updateQuestion(
     user: UserEntity,
     id: UUID,
-    params: UpdateQuestionParams
+    params: UpdateQuestionParams,
   ): Either<ServiceIssue, UpdateResult<QuestionEntity>>
 
-  fun deleteQuestion(user: UserEntity, id: UUID): Either<ServiceIssue, QuestionEntity>
+  fun deleteQuestion(
+    user: UserEntity,
+    id: UUID,
+  ): Either<ServiceIssue, QuestionEntity>
 
-  fun validateQuestion(user: UserEntity, id: UUID): Either<ServiceIssue, ValidationId>
+  fun validateQuestion(
+    user: UserEntity,
+    id: UUID,
+  ): Either<ServiceIssue, ValidationId>
 
-  fun validationStatus(user: UserEntity, id: UUID): Either<ServiceIssue, StatusResponse>
+  fun validationStatus(
+    user: UserEntity,
+    id: UUID,
+  ): Either<ServiceIssue, StatusResponse>
 
-  data class ValidationId(val taskId: TaskId)
+  data class ValidationId(
+    val taskId: TaskId,
+  )
 
-  data class CreateQuestionParams(val lang: Lang, val body: String)
+  data class CreateQuestionParams(
+    val lang: Lang,
+    val body: String,
+  )
 
   data class UpdateQuestionParams(
     val action: Action,
@@ -57,19 +77,29 @@ interface QuestionService {
     val correctVariantId: UUID? = null,
     val incorrectVariantId: UUID? = null,
   ) {
-
     enum class Action {
       ADD,
-      REMOVE
+      REMOVE,
     }
   }
 
-  data class UpdateResult<Entity>(val entity: Entity, val violations: Map<String, List<String>>)
+  data class UpdateResult<Entity>(
+    val entity: Entity,
+    val violations: Map<String, List<String>>,
+  )
 
   sealed interface StatusResponse {
     data object NotRegistered : StatusResponse
-    data class Submitted(val taskId: TaskId, val task: Future<*>) : StatusResponse
+
+    data class Submitted(
+      val taskId: TaskId,
+      val task: Future<*>,
+    ) : StatusResponse
+
     data object Success : StatusResponse
-    data class Error(val message: String) : StatusResponse
+
+    data class Error(
+      val message: String,
+    ) : StatusResponse
   }
 }

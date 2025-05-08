@@ -20,28 +20,29 @@ import org.springframework.web.bind.annotation.RestController
 data class AuthController(
   private val authService: AuthService,
 ) {
-
   @PostMapping("/login")
-  fun login(@RequestBody request: LoginRequest): ResponseEntity<*> {
-    return when (
+  fun login(
+    @RequestBody request: LoginRequest,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, AuthService.UserAndToken> =
         authService.login(request.asParams())
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right ->
         ResponseEntity.ok(
-          LoginResponse(result.value.token, UserResponse.fromEntity(result.value.user))
+          LoginResponse(result.value.token, UserResponse.fromEntity(result.value.user)),
         )
     }
-  }
 
   @PostMapping("/register")
-  fun register(@RequestBody request: RegisterRequest): ResponseEntity<*> {
-    return when (
+  fun register(
+    @RequestBody request: RegisterRequest,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, UserEntity> = authService.register(null, request.asParams())
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(UserResponse.fromEntity(result.value))
     }
-  }
 }

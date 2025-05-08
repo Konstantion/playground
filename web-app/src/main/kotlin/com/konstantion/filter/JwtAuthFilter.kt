@@ -25,7 +25,7 @@ data class JwtAuthFilter(
   override fun doFilterInternal(
     request: HttpServletRequest,
     response: HttpServletResponse,
-    filterChain: FilterChain
+    filterChain: FilterChain,
   ) {
     val authHeader: String? = request.getHeader("Authorization")
 
@@ -34,7 +34,7 @@ data class JwtAuthFilter(
       when (val result = authService.extractUser(token)) {
         is Either.Left -> {
           log.error(
-            "Error extracting user from token, code=${result.value.code()} message=${result.value.message()}"
+            "Error extracting user from token, code=${result.value.code()} message=${result.value.message()}",
           )
           SecurityContextHolder.clearContext()
           throw AuthenticationServiceException(result.value.message())

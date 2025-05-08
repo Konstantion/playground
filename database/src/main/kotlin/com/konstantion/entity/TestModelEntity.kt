@@ -29,7 +29,7 @@ open class TestModelEntity {
   @JoinTable(
     name = "test_models_questions",
     joinColumns = [JoinColumn(name = "test_model_id")],
-    inverseJoinColumns = [JoinColumn(name = "question_id")]
+    inverseJoinColumns = [JoinColumn(name = "question_id")],
   )
   @OnDelete(action = OnDeleteAction.CASCADE)
   open var questions: MutableList<QuestionEntity> = mutableListOf()
@@ -49,9 +49,8 @@ open class TestModelEntity {
 
   fun createdAt(): Instant = createdAt
 
-  fun toModel(): TestModel {
-    return TestModel(id = id(), name = name(), questions = questions.map(QuestionEntity::toModel))
-  }
+  fun toModel(): TestModel =
+    TestModel(id = id(), name = name(), questions = questions.map(QuestionEntity::toModel))
 
   companion object {
     fun fromModel(testModel: TestModel): TestModelEntity {

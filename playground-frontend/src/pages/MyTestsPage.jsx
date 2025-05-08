@@ -1,7 +1,16 @@
-import React, { useEffect, useState } from 'react';
+// playground-frontend/src/pages/MyTestsPage.jsx
+
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { authenticatedReq } from '@/utils/Requester.js';
 import { Endpoints } from '@/utils/Endpoints.js';
@@ -9,72 +18,112 @@ import { useAuth } from '@/hooks/useAuth.jsx';
 import { ErrorType } from '@/utils/ErrorType.js';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { Routes as RRoutes } from '@/rout/Routes.jsx'; // Assuming RTest is for taking a test
+import { Routes as RRoutes, RTest, RHome } from '@/rout/Routes.jsx'; // Import RTest and RHome
 import Loading from '@/components/Loading.jsx';
-import { CheckCircle, FileText, FileWarning, PlayCircle, PlusCircle } from 'lucide-react'; // Added icons
+import {
+    FileText,
+    PlusCircle,
+    CheckCircle,
+    PlayCircle,
+    FileWarning,
+    AlertCircle,
+    Loader2,
+    RotateCcw,
+    Info,
+    XCircle,
+} from 'lucide-react'; // Added/updated icons
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
     Dialog,
-    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    DialogClose,
 } from '@/components/ui/dialog.js';
 import { Label } from '@/components/ui/label';
+
+// Define Status constants matching backend enum
+const UserTestStatus = {
+    NOT_STARTED: 'NOT_STARTED',
+    IN_PROGRESS: 'IN_PROGRESS',
+    COMPLETED: 'COMPLETED',
+    EXPIRED: 'EXPIRED',
+    CANCELLED: 'CANCELLED',
+};
+
+// Helper to get display properties based on status
+const getStatusProps = status => {
+    switch (status) {
+        case UserTestStatus.NOT_STARTED:
+            // Using blue-ish color for not started
+            return { text: 'Ready to Start', icon: PlayCircle, color: 'sky', variant: 'outline' };
+        case UserTestStatus.IN_PROGRESS:
+            // Using amber/orange for in progress
+            return { text: 'In Progress', icon: RotateCcw, color: 'amber', variant: 'default' };
+        case UserTestStatus.COMPLETED:
+            return { text: 'Completed', icon: CheckCircle, color: 'green', variant: 'secondary' };
+        case UserTestStatus.EXPIRED:
+            return { text: 'Expired', icon: AlertCircle, color: 'red', variant: 'destructive' };
+        case UserTestStatus.CANCELLED:
+            return { text: 'Cancelled', icon: XCircle, color: 'gray', variant: 'outline' }; // Assuming XCircle exists
+        default:
+            return { text: 'Unknown', icon: Info, color: 'gray', variant: 'outline' };
+    }
+};
 
 export default function MyTestsPage() {
     const { auth, logout } = useAuth();
     const navigate = useNavigate();
 
-    const [userTests, setUserTests] = useState([]); // Renamed state
+    const [userTests, setUserTests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
     const [addTestId, setAddTestId] = useState('');
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [startingTestId, setStartingTestId] = useState(null); // Track which test is being started
 
     // Fetch student's tests
+    const fetchMyTests = useCallback(async () => {
+        // Wrap in useCallback
+        setLoading(true);
+        await authenticatedReq(
+            Endpoints.UserTest.Base, // Use the correct endpoint base
+            'GET',
+            null,
+            auth.accessToken,
+            (type, message) => {
+                setLoading(false);
+                toast.error(message || 'Failed to load your tests.', {
+                    closeButton: true,
+                    duration: 5000,
+                });
+                if (type === ErrorType.TokenExpired) logout();
+            },
+            data => {
+                const testsData = Array.isArray(data) ? data : [];
+                // Map the UserTestResponse structure, using the new status field
+                setUserTests(
+                    testsData.map(t => ({
+                        id: t.id, // This is the UserTest ID
+                        immutableTestId: t.testId, // ID of the source ImmutableTest
+                        name: t.testMetadata?.name || 'Unnamed Test', // Get name from metadata
+                        status: t.status, // Use the new status field
+                        score: t.score, // Include score
+                        // Add other fields like startedAt, completedAt if needed for display
+                    }))
+                );
+                setLoading(false);
+            }
+        );
+    }, [auth.accessToken, logout]); // Dependencies for useCallback
+
     useEffect(() => {
-        const fetchMyTests = async () => {
-            setLoading(true);
-            await authenticatedReq(
-                Endpoints.UserTest.Base, // Use the correct endpoint base
-                'GET',
-                null,
-                auth.accessToken,
-                (type, message) => {
-                    setLoading(false);
-                    toast.error(message || 'Failed to load your tests.', {
-                        closeButton: true,
-                        duration: 5000,
-                    });
-                    if (type === ErrorType.TokenExpired) {
-                        logout();
-                        navigate(RRoutes.Login.path);
-                    }
-                },
-                data => {
-                    const testsData = Array.isArray(data) ? data : [];
-                    // Map the UserTestResponse structure
-                    setUserTests(
-                        testsData.map(t => ({
-                            id: t.id, // This is the UserTest ID
-                            immutableTestId: t.testId, // ID of the source ImmutableTest
-                            name: t.testMetadata?.name || 'Unnamed Test', // Get name from metadata
-                            active: t.active, // Is the test attempt active/pending?
-                            // Add more fields from UserTestResponse/TestMetadataResponse as needed
-                            // e.g., createdAt: t.testMetadata?.createdAt
-                        }))
-                    );
-                    setLoading(false);
-                }
-            );
-        };
         fetchMyTests();
-    }, [auth.accessToken, logout, navigate]);
+    }, [fetchMyTests]); // Run fetchMyTests on mount
 
     // Handler for adding a new test by ID
     const handleAddTest = async () => {
@@ -83,7 +132,6 @@ export default function MyTestsPage() {
             toast.error('Please enter a Test ID.', { duration: 3000 });
             return;
         }
-        // Basic UUID validation (optional but recommended)
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (!uuidRegex.test(trimmedId)) {
             toast.error('Invalid Test ID format. Please check the ID.', { duration: 4000 });
@@ -105,10 +153,7 @@ export default function MyTestsPage() {
                         duration: 5000,
                     }
                 );
-                if (type === ErrorType.TokenExpired) {
-                    logout();
-                    navigate(RRoutes.Login.path);
-                }
+                if (type === ErrorType.TokenExpired) logout();
                 setIsAdding(false);
             },
             createdUserTest => {
@@ -117,26 +162,66 @@ export default function MyTestsPage() {
                     id: createdUserTest.id,
                     immutableTestId: createdUserTest.testId,
                     name: createdUserTest.testMetadata?.name || 'Unnamed Test',
-                    active: createdUserTest.active,
+                    status: createdUserTest.status, // Use status from response
+                    score: createdUserTest.score,
                 };
                 setUserTests(prev => [...prev, newTestEntry]);
                 toast.success(`Test "${newTestEntry.name}" added successfully!`, {
                     duration: 3000,
                 });
-                setAddTestId(''); // Clear input
-                setIsAddDialogOpen(false); // Close dialog
+                setAddTestId('');
+                setIsAddDialogOpen(false);
                 setIsAdding(false);
             }
         );
     };
 
-    // Handler to navigate to the test taking page (implementation needed later)
-    const handleStartTest = userTestId => {
-        // TODO: Implement navigation to the actual test-taking interface
-        // This might involve fetching the full UserTest details including questions/answers
-        // For now, just log or show a toast
-        toast.info(`Starting test with UserTest ID: ${userTestId}. (Implementation Pending)`);
-        // navigate(`${RTest}/${userTestId}`); // Example navigation
+    // Handler to start or continue a test
+    const handleStartOrContinueTest = async (userTestId, currentStatus) => {
+        setStartingTestId(userTestId); // Show loading on the button
+
+        // If the test is NOT_STARTED, call the start endpoint first
+        if (currentStatus === UserTestStatus.NOT_STARTED) {
+            await authenticatedReq(
+                `${Endpoints.UserTest.Base}/${userTestId}/start`, // Use the start endpoint
+                'PUT', // Use PUT method
+                null,
+                auth.accessToken,
+                (type, message) => {
+                    toast.error(`Failed to start test: ${message || 'Unknown error'}`, {
+                        duration: 4000,
+                    });
+                    if (type === ErrorType.TokenExpired) logout();
+                    setStartingTestId(null); // Reset loading state on error
+                },
+                updatedTestData => {
+                    // Update the local state for this test
+                    setUserTests(prev =>
+                        prev.map(t =>
+                            t.id === userTestId ? { ...t, status: updatedTestData.status } : t
+                        )
+                    );
+                    toast.success(
+                        `Starting test "${updatedTestData.testMetadata?.name || userTestId}"...`,
+                        { duration: 1500 }
+                    );
+                    // Navigate after successful start
+                    navigate(`${RTest}/${userTestId}`); // Navigate to the TestTakingPage
+                    // No need to reset startingTestId here as we navigate away
+                }
+            );
+        } else if (currentStatus === UserTestStatus.IN_PROGRESS) {
+            // If already in progress, just navigate
+            toast.info(`Resuming test...`, { duration: 1500 });
+            navigate(`${RTest}/${userTestId}`); // Navigate to the TestTakingPage
+            setStartingTestId(null); // Reset loading state immediately for resume
+        } else {
+            // Should not happen if button is disabled correctly, but handle anyway
+            toast.warning(`Cannot start or continue test with status: ${currentStatus}`, {
+                duration: 3000,
+            });
+            setStartingTestId(null);
+        }
     };
 
     return (
@@ -166,6 +251,7 @@ export default function MyTestsPage() {
                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Test by ID
                                 </Button>
                             </DialogTrigger>
+                            {/* Add Test Dialog Content */}
                             <DialogContent className="dark:bg-slate-800">
                                 <DialogHeader>
                                     <DialogTitle className="dark:text-slate-100">
@@ -229,72 +315,99 @@ export default function MyTestsPage() {
                     ) : (
                         <ScrollArea className="h-[calc(100vh-260px)] min-h-[400px]">
                             <ul className="divide-y dark:divide-slate-700/50">
-                                {userTests.map(test => (
-                                    <li
-                                        key={test.id}
-                                        className="flex justify-between items-center p-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
-                                    >
-                                        <div className="flex flex-col overflow-hidden mr-3">
-                                            <span
-                                                className="text-md font-medium text-slate-800 dark:text-slate-100 truncate"
-                                                title={test.name}
-                                            >
-                                                {test.name}
-                                            </span>
-                                            <span className="text-xs text-slate-500 dark:text-slate-400">
-                                                Test Attempt ID: {test.id}
-                                            </span>
-                                            {/* Optionally display source ImmutableTest ID */}
-                                            {/* <span className="text-xs text-slate-500 dark:text-slate-400">
-                                                Source ID: {test.immutableTestId}
-                                            </span> */}
-                                        </div>
-                                        <div className="flex items-center space-x-2 flex-shrink-0">
-                                            <Badge
-                                                variant={test.active ? 'default' : 'secondary'}
-                                                className={cn(
-                                                    'text-xs py-0.5 px-1.5',
-                                                    test.active
-                                                        ? 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300'
-                                                        : 'bg-slate-100 text-slate-600 dark:bg-slate-600 dark:text-slate-300'
-                                                )}
-                                            >
-                                                {test.active ? (
-                                                    <PlayCircle size={12} className="mr-1" />
-                                                ) : (
-                                                    <CheckCircle size={12} className="mr-1" />
-                                                )}
-                                                {test.active ? 'Ready / In Progress' : 'Completed'}
-                                            </Badge>
-                                            {test.active && (
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => handleStartTest(test.id)}
-                                                    className="text-xs dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700"
+                                {userTests.map(test => {
+                                    const statusProps = getStatusProps(test.status);
+                                    const isLoadingStart = startingTestId === test.id;
+                                    // Determine if the button should be enabled based on status
+                                    const canStartOrContinue =
+                                        test.status === UserTestStatus.NOT_STARTED ||
+                                        test.status === UserTestStatus.IN_PROGRESS;
+                                    const isCompleted =
+                                        test.status === UserTestStatus.COMPLETED ||
+                                        test.status === UserTestStatus.EXPIRED;
+
+                                    return (
+                                        <li
+                                            key={test.id}
+                                            className="flex justify-between items-center p-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+                                        >
+                                            <div className="flex flex-col overflow-hidden mr-3">
+                                                <span
+                                                    className="text-md font-medium text-slate-800 dark:text-slate-100 truncate"
+                                                    title={test.name}
                                                 >
-                                                    {/* Check if test is already in progress later */}
-                                                    Start / Continue
-                                                </Button>
-                                            )}
-                                            {!test.active && (
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="text-xs text-sky-600 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-700/30"
-                                                    // onClick={() => navigate(`/results/${test.id}`)} // Example navigation to results
-                                                    onClick={() =>
-                                                        toast.info(
-                                                            `Viewing results for ${test.id} (Pending)`
-                                                        )
-                                                    }
+                                                    {test.name}
+                                                </span>
+                                                <span className="text-xs text-slate-500 dark:text-slate-400">
+                                                    Attempt ID: {test.id}
+                                                </span>
+                                                {isCompleted && test.score !== null && (
+                                                    <span className="text-xs text-sky-600 dark:text-sky-400 font-semibold mt-0.5">
+                                                        Score: {test.score.toFixed(1)}%
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center space-x-2 flex-shrink-0">
+                                                <Badge
+                                                    variant={statusProps.variant}
+                                                    // Apply dynamic background/text/border colors based on status
+                                                    className={cn(
+                                                        'text-xs py-0.5 px-1.5',
+                                                        `bg-${statusProps.color}-100 text-${statusProps.color}-700 border-${statusProps.color}-300`,
+                                                        `dark:bg-${statusProps.color}-900/30 dark:text-${statusProps.color}-300 dark:border-${statusProps.color}-700/50`
+                                                    )}
                                                 >
-                                                    View Results
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </li>
-                                ))}
+                                                    <statusProps.icon size={12} className="mr-1" />
+                                                    {statusProps.text}
+                                                </Badge>
+                                                {canStartOrContinue && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            handleStartOrContinueTest(
+                                                                test.id,
+                                                                test.status
+                                                            )
+                                                        }
+                                                        disabled={isLoadingStart} // Disable only if this specific test is being started
+                                                        className="text-xs dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700 w-[90px] justify-center" // Fixed width
+                                                    >
+                                                        {isLoadingStart ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <>
+                                                                <PlayCircle
+                                                                    size={12}
+                                                                    className="mr-1"
+                                                                />
+                                                                {/* Change button text based on status */}
+                                                                {test.status ===
+                                                                UserTestStatus.NOT_STARTED
+                                                                    ? 'Start'
+                                                                    : 'Continue'}
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                )}
+                                                {isCompleted && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="text-xs text-sky-600 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-700/30 w-[90px] justify-center" // Fixed width
+                                                        onClick={() =>
+                                                            toast.info(
+                                                                `Viewing results for ${test.id} (Pending)`
+                                                            )
+                                                        }
+                                                    >
+                                                        View Results
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         </ScrollArea>
                     )}

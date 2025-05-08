@@ -23,72 +23,71 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/test_model")
-data class TestModelController(private val testModelService: TestModelService) {
+data class TestModelController(
+  private val testModelService: TestModelService,
+) {
   @GetMapping
-  fun getAllTestModels(@AuthenticationPrincipal userEntity: UserEntity): ResponseEntity<*> {
-    return when (
+  fun getAllTestModels(
+    @AuthenticationPrincipal userEntity: UserEntity,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, List<TestModelEntity>> =
         testModelService.getTestModels(userEntity)
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.map { entity -> entity.asResponse() })
     }
-  }
 
   @GetMapping("/{id}")
   fun getTestModelById(
     @AuthenticationPrincipal userEntity: UserEntity,
-    @PathVariable("id") id: UUID
-  ): ResponseEntity<*> {
-    return when (
+    @PathVariable("id") id: UUID,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, TestModelEntity> =
         testModelService.getTestModelById(userEntity, id)
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
     }
-  }
 
   @PostMapping
   fun createTestModel(
     @AuthenticationPrincipal userEntity: UserEntity,
-    @RequestBody request: CreateTestModelRequest
-  ): ResponseEntity<*> {
-    return when (
+    @RequestBody request: CreateTestModelRequest,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, TestModelEntity> =
         testModelService.createTestModel(userEntity, request.asParams())
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
     }
-  }
 
   @PatchMapping("/{id}")
   fun updateTestModel(
     @AuthenticationPrincipal userEntity: UserEntity,
     @PathVariable("id") id: UUID,
-    @RequestBody request: UpdateTestModelRequest
-  ): ResponseEntity<*> {
-    return when (
+    @RequestBody request: UpdateTestModelRequest,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, TestModelService.UpdateResult> =
         testModelService.updateTestModel(userEntity, id, request.asParams())
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.entity.asResponse())
     }
-  }
 
   @DeleteMapping("/{id}")
   fun deleteTestModel(
     @AuthenticationPrincipal userEntity: UserEntity,
-    @PathVariable("id") id: UUID
-  ): ResponseEntity<*> {
-    return when (
+    @PathVariable("id") id: UUID,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, TestModelEntity> =
         testModelService.deleteTestModel(userEntity, id)
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.id())
     }
-  }
 }

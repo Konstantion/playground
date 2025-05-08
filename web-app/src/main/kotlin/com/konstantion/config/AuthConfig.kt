@@ -13,8 +13,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 class AuthConfig {
   @Bean
-  fun securityFilterChain(http: HttpSecurity, jwtFilter: JwtAuthFilter): SecurityFilterChain {
-    return http
+  fun securityFilterChain(
+    http: HttpSecurity,
+    jwtFilter: JwtAuthFilter,
+  ): SecurityFilterChain =
+    http
       .authorizeHttpRequests { auth ->
         auth
           .requestMatchers("/api/auth/**")
@@ -27,7 +30,7 @@ class AuthConfig {
             "/swagger-resources/**",
             "/configuration/ui",
             "/configuration/security",
-            "/webjars/**"
+            "/webjars/**",
           )
           .permitAll()
           .anyRequest()
@@ -42,5 +45,4 @@ class AuthConfig {
       .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)
       .csrf { csrf -> csrf.disable() }
       .build()
-  }
 }

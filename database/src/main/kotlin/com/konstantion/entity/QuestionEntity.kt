@@ -47,7 +47,7 @@ open class QuestionEntity {
   @ElementCollection
   @CollectionTable(
     name = "question_placeholder_definitions",
-    joinColumns = [JoinColumn(name = "question_id")]
+    joinColumns = [JoinColumn(name = "question_id")],
   )
   @MapKeyColumn(name = "placeholder_key")
   @Column(name = "placeholder_value")
@@ -62,7 +62,7 @@ open class QuestionEntity {
   @JoinTable(
     name = "question_additional_check",
     joinColumns = [JoinColumn(name = "question_id")],
-    inverseJoinColumns = [JoinColumn(name = "code_id")]
+    inverseJoinColumns = [JoinColumn(name = "code_id")],
   )
   open var additionalCheck: CodeEntity? = null
 
@@ -70,7 +70,7 @@ open class QuestionEntity {
   @JoinTable(
     name = "question_correct_variants",
     joinColumns = [JoinColumn(name = "question_id")],
-    inverseJoinColumns = [JoinColumn(name = "variant_id")]
+    inverseJoinColumns = [JoinColumn(name = "variant_id")],
   )
   open var correctVariants: MutableList<VariantEntity> = mutableListOf()
 
@@ -78,7 +78,7 @@ open class QuestionEntity {
   @JoinTable(
     name = "question_incorrect_variants",
     joinColumns = [JoinColumn(name = "question_id")],
-    inverseJoinColumns = [JoinColumn(name = "variant_id")]
+    inverseJoinColumns = [JoinColumn(name = "variant_id")],
   )
   open var incorrectVariants: MutableList<VariantEntity> = mutableListOf()
 
@@ -123,9 +123,8 @@ open class QuestionEntity {
 
   fun createdAt(): Instant = nonNull(createdAt)
 
-  override fun toString(): String {
-    return "QuestionEntity(id=$id, lang=$lang, body=$body, formatAndCode=$formatAndCode, placeholderDefinitions=$placeholderDefinitions, callArgs=$callArgs, additionalCheck=$additionalCheck, correctVariants=$correctVariants, incorrectVariants=$incorrectVariants)"
-  }
+  override fun toString(): String =
+    "QuestionEntity(id=$id, lang=$lang, body=$body, formatAndCode=$formatAndCode, placeholderDefinitions=$placeholderDefinitions, callArgs=$callArgs, additionalCheck=$additionalCheck, correctVariants=$correctVariants, incorrectVariants=$incorrectVariants)"
 
   fun toModel(): Question<Lang> {
     val lang: Lang = Json.decodeFromString(nonNull(this.lang))
@@ -150,7 +149,7 @@ open class QuestionEntity {
       callArgs = callArgs,
       additionalCheck = additionalCheck,
       correctVariants = correctVariants,
-      incorrectVariants = incorrectVariants
+      incorrectVariants = incorrectVariants,
     )
   }
 
@@ -167,7 +166,7 @@ open class QuestionEntity {
           .mapValues { (_, definition) ->
             Json.encodeToString(
               PlaceholderDefinition.serializer(PlaceholderValue.serializer()),
-              refine(definition)
+              refine(definition),
             )
           }
           .toMutableMap()

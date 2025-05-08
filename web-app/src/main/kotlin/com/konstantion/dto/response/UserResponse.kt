@@ -13,13 +13,12 @@ data class UserResponse(
   companion object {
     fun UserEntity.asResponse(): UserResponse = fromEntity(this)
 
-    fun fromEntity(entity: UserEntity): UserResponse {
-      return UserResponse(
+    fun fromEntity(entity: UserEntity): UserResponse =
+      UserResponse(
         id = entity.id(),
         username = entity.username(),
         role = entity.role(),
         anonymous = entity.anonymous,
       )
-    }
   }
 }

@@ -31,19 +31,27 @@ fun main() {
       Lang.Python,
       "kostia",
       CmdHelper.Python3File,
-      PythonCodeInterpreter
+      PythonCodeInterpreter,
     )
   sandbox.subscribe(
     groupId,
     object : CodeExecutor.Listener<GroupId> {
-      override fun onSuccess(groupId: GroupId, taskId: TaskId, output: Code.Output) {
+      override fun onSuccess(
+        groupId: GroupId,
+        taskId: TaskId,
+        output: Code.Output,
+      ) {
         log.info("Success groupId={}, taskId={}, output={}.", groupId, taskId, output)
       }
 
-      override fun onError(groupId: GroupId, taskId: TaskId, issue: CodeExecutor.Issue) {
+      override fun onError(
+        groupId: GroupId,
+        taskId: TaskId,
+        issue: CodeExecutor.Issue,
+      ) {
         log.info("Error groupId={}, taskId={}, issue={}.", groupId, taskId, issue)
       }
-    }
+    },
   )
 
   val tasks = sandboxTest(sandbox, groupId)
@@ -61,7 +69,7 @@ fun main() {
 
 fun sandboxTest(
   sandbox: CodeExecutor<GroupId, Lang.Python>,
-  groupId: GroupId
+  groupId: GroupId,
 ): MutableList<CodeExecutor.Task<Code.Output.Str>> {
   val placeholders: LinkedList<PlaceholderLabel> = LinkedList()
   placeholders += PlaceholderLabel(PlaceholderIdentifier.P_1, "x")
@@ -73,7 +81,7 @@ fun sandboxTest(
       PlaceholderIdentifier.P_1 to
         RandomOneOf.of(listOf(PlaceholderValue.I32(10), PlaceholderValue.I32(20))),
       PlaceholderIdentifier.P_2 to PlaceholderDefinition.I32Range(5, 10),
-      PlaceholderIdentifier.P_3 to Value.of(Str("haha"))
+      PlaceholderIdentifier.P_3 to Value.of(Str("haha")),
     )
 
   val tasks: MutableList<CodeExecutor.Task<Code.Output.Str>> = mutableListOf()
@@ -82,18 +90,18 @@ fun sandboxTest(
     val rawCode: String =
       if (Random.nextBoolean()) {
         """
-          c = x * y
-          z *= 3
-          result = c - z
-          return str(result) + d
-              
-        """
+                c = x * y
+                z *= 3
+                result = c - z
+                return str(result) + d
+                    
+                """
           .trimIndent()
       } else {
         """
-          while True:
-            pass
-        """
+                while True:
+                  pass
+                """
           .trimIndent()
       }
 
@@ -104,7 +112,7 @@ fun sandboxTest(
         groupId,
         code,
         placeholders,
-        definitions.mapValues { (_, definitions) -> definitions.value() }
+        definitions.mapValues { (_, definitions) -> definitions.value() },
       )
   }
 

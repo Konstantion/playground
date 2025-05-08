@@ -22,9 +22,12 @@ import org.springframework.stereotype.Service
 @Service
 data class QuestionUpdateHelper(
   private val codePort: CodePort<CodeEntity>,
-  private val variantPort: VariantPort<VariantEntity>
+  private val variantPort: VariantPort<VariantEntity>,
 ) {
-  fun update(entity: QuestionEntity, params: UpdateQuestionParams): UpdateResult {
+  fun update(
+    entity: QuestionEntity,
+    params: UpdateQuestionParams,
+  ): UpdateResult {
     val shouldInvalidate =
       params.placeholders != null ||
         params.placeholderDefinitions != null ||
@@ -34,7 +37,10 @@ data class QuestionUpdateHelper(
         params.incorrectVariantId != null
     val validationErrors: MutableMap<String, MutableList<String>> = mutableMapOf()
 
-    fun putViolation(field: String, message: String) {
+    fun putViolation(
+      field: String,
+      message: String,
+    ) {
       validationErrors.computeIfAbsent(field) { mutableListOf() }.add(message)
     }
 
@@ -44,8 +50,9 @@ data class QuestionUpdateHelper(
       val newBody = params.body
       if (newBody.isBlank()) {
         putViolation("body", "Body cannot be blank")
-      } else if (newBody.length >= 400) putViolation("body", "Body is too long")
-      else {
+      } else if (newBody.length >= 400) {
+        putViolation("body", "Body is too long")
+      } else {
         entity.body = params.body
       }
     }
@@ -65,7 +72,7 @@ data class QuestionUpdateHelper(
             if (newDefinitions.remove(identifier) == null) {
               putViolation(
                 "placeholderDefinitions",
-                "Placeholder definition with identifier $identifier not found"
+                "Placeholder definition with identifier $identifier not found",
               )
             }
           }
@@ -76,7 +83,7 @@ data class QuestionUpdateHelper(
         if (newDefinitions.remove(identifier) == null) {
           putViolation(
             "placeholderDefinitions",
-            "Placeholder definition with identifier $identifier not found"
+            "Placeholder definition with identifier $identifier not found",
           )
         }
       }
@@ -87,7 +94,7 @@ data class QuestionUpdateHelper(
           .mapValues { (_, definition) ->
             Json.encodeToString(
               PlaceholderDefinition.serializer(PlaceholderValue.serializer()),
-              refine(definition)
+              refine(definition),
             )
           }
           .toMutableMap()
@@ -146,7 +153,7 @@ data class QuestionUpdateHelper(
             Maybe.None ->
               putViolation(
                 "additionalCheck",
-                "Additional check with id ${params.additionalCheckId} not found"
+                "Additional check with id ${params.additionalCheckId} not found",
               )
           }
       }
@@ -227,4 +234,7 @@ data class QuestionUpdateHelper(
   }
 }
 
-data class UpdateResult(val violations: Map<String, List<String>>, val invalidate: Boolean)
+data class UpdateResult(
+  val violations: Map<String, List<String>>,
+  val invalidate: Boolean,
+)

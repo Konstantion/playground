@@ -7,11 +7,9 @@ data class CreateQuestionRequest(
   val lang: String,
   val body: String,
 ) {
-
-  fun asParams(): QuestionService.CreateQuestionParams {
-    return QuestionService.CreateQuestionParams(
+  fun asParams(): QuestionService.CreateQuestionParams =
+    QuestionService.CreateQuestionParams(
       lang = Lang.fromString(lang),
       body = body,
     )
-  }
 }

@@ -14,6 +14,7 @@ import java.util.UUID
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -23,12 +24,13 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/immutable_test")
 data class ImmutableTestController(
   private val immutableTestService: ImmutableTestService,
-  private val userTestService: UserTestService
+  private val userTestService: UserTestService,
 ) {
-
   @GetMapping
-  fun findAll(@AuthenticationPrincipal userEntity: UserEntity): ResponseEntity<*> {
-    return when (
+  fun findAll(
+    @AuthenticationPrincipal userEntity: UserEntity,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, List<ImmutableTestEntity>> =
         immutableTestService.findAllByCreator(userEntity)
     ) {
@@ -36,33 +38,30 @@ data class ImmutableTestController(
       is Either.Right ->
         ResponseEntity.ok(result.value.map { immutableTest -> immutableTest.asPreviewResponse() })
     }
-  }
 
-  @GetMapping("/id")
+  @GetMapping("/{id}")
   fun findById(
     @AuthenticationPrincipal userEntity: UserEntity,
-    id: UUID,
-  ): ResponseEntity<*> {
-    return when (
+    @PathVariable("id") id: UUID,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, ImmutableTestEntity> =
         immutableTestService.findById(userEntity, id)
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
     }
-  }
 
   @PostMapping
   fun create(
     @AuthenticationPrincipal userEntity: UserEntity,
-    @RequestBody request: CreateImmutableTestRequest
-  ): ResponseEntity<*> {
-    return when (
+    @RequestBody request: CreateImmutableTestRequest,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, ImmutableTestEntity> =
         immutableTestService.createImmutableTest(userEntity, request.asParams())
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
     }
-  }
 }

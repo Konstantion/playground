@@ -30,7 +30,7 @@ data class QuestionServiceImpl(
 
   override fun save(
     user: UserEntity,
-    question: Question<Lang>
+    question: Question<Lang>,
   ): Either<ServiceIssue, QuestionEntity> {
     log.info("Save[userId={}, username={}, question={}]", user.id(), user.username(), question)
 
@@ -40,7 +40,7 @@ data class QuestionServiceImpl(
         "SaveResult[userId={}, username={}, result={}]",
         user.id(),
         user.username(),
-        saveResult
+        saveResult,
       )
       return saveResult
     } else {
@@ -52,7 +52,7 @@ data class QuestionServiceImpl(
     log.info("GetQuestions[userId={}, username={}]", user.id(), user.username())
     return when (user.role()) {
       Role.Admin,
-      Role.Teacher -> questionPort.sqlAction { findAllByCreatorId(user.id()) }
+      Role.Teacher, -> questionPort.sqlAction { findAllByCreatorId(user.id()) }
       Role.Student -> Forbidden.asEither("User is not allowed to get questions.")
     }
   }
@@ -62,7 +62,7 @@ data class QuestionServiceImpl(
     return when (user.role()) {
       Role.Admin -> questionPort.sqlAction { findAll() }
       Role.Student,
-      Role.Teacher -> Forbidden.asEither("User is not allowed to get all questions.")
+      Role.Teacher, -> Forbidden.asEither("User is not allowed to get all questions.")
     }
   }
 
@@ -70,12 +70,15 @@ data class QuestionServiceImpl(
     log.info("GetPublicQuestions[userId={}, username={}]", user.id(), user.username())
     return when (user.role()) {
       Role.Admin,
-      Role.Teacher -> questionPort.sqlAction { findAllByPublic(true) }
+      Role.Teacher, -> questionPort.sqlAction { findAllByPublic(true) }
       Role.Student -> Forbidden.asEither("User is not allowed to get public questions.")
     }
   }
 
-  override fun getQuestion(user: UserEntity, id: UUID): Either<ServiceIssue, QuestionEntity> {
+  override fun getQuestion(
+    user: UserEntity,
+    id: UUID,
+  ): Either<ServiceIssue, QuestionEntity> {
     log.info("GetQuestion[userId={}, username={}, id={}]", user.id(), user.username(), id)
     return when (user.role()) {
       Role.Admin ->
@@ -107,13 +110,13 @@ data class QuestionServiceImpl(
 
   override fun createQuestion(
     user: UserEntity,
-    params: QuestionService.CreateQuestionParams
+    params: QuestionService.CreateQuestionParams,
   ): Either<ServiceIssue, QuestionEntity> {
     log.info(
       "CreateQuestion[userId={}, username={}, params={}]",
       user.id(),
       user.username(),
-      params
+      params,
     )
     return if (user.isAdmin() || user.isTeacher()) {
       val entity: QuestionEntity =
@@ -128,7 +131,7 @@ data class QuestionServiceImpl(
         "CreateQuestionSuccess[userId={}, username={}, result={}]",
         user.id(),
         user.username(),
-        toReturn
+        toReturn,
       )
       Either.right(toReturn)
     } else {
@@ -139,14 +142,14 @@ data class QuestionServiceImpl(
   override fun updateQuestion(
     user: UserEntity,
     id: UUID,
-    params: QuestionService.UpdateQuestionParams
+    params: QuestionService.UpdateQuestionParams,
   ): Either<ServiceIssue, QuestionService.UpdateResult<QuestionEntity>> {
     log.info(
       "UpdateQuestion[userId={}, username={}, id={}, params={}]",
       user.id(),
       user.username(),
       id,
-      params
+      params,
     )
 
     return if (user.isAdmin() || user.isTeacher()) {
@@ -168,7 +171,7 @@ data class QuestionServiceImpl(
             "UpdateQuestion[userId={}, username={}, entity={}]",
             user.id(),
             user.username(),
-            entity
+            entity,
           )
 
           if (!entity.public()) {
@@ -186,7 +189,7 @@ data class QuestionServiceImpl(
               user.id(),
               user.username(),
               saved,
-              updateResult
+              updateResult,
             )
             Either.right(QuestionService.UpdateResult(saved, updateResult.violations))
           }
@@ -197,7 +200,10 @@ data class QuestionServiceImpl(
     }
   }
 
-  override fun deleteQuestion(user: UserEntity, id: UUID): Either<ServiceIssue, QuestionEntity> {
+  override fun deleteQuestion(
+    user: UserEntity,
+    id: UUID,
+  ): Either<ServiceIssue, QuestionEntity> {
     log.info("DeleteQuestion[userId={}, username={}, id={}]", user.id(), user.username(), id)
     return when (user.role()) {
       Role.Admin ->
@@ -237,14 +243,17 @@ data class QuestionServiceImpl(
     }
   }
 
-  override fun validateQuestion(user: UserEntity, id: UUID): Either<ServiceIssue, ValidationId> {
+  override fun validateQuestion(
+    user: UserEntity,
+    id: UUID,
+  ): Either<ServiceIssue, ValidationId> {
     log.info("ValidateQuestion[userId={}, username={}, id={}]", user.id(), user.username(), id)
     return getQuestion(user, id).flatMap(questionValidator::validate).map(::ValidationId)
   }
 
   override fun validationStatus(
     user: UserEntity,
-    id: UUID
+    id: UUID,
   ): Either<ServiceIssue, QuestionService.StatusResponse> {
     log.info("ValidationStatus[userId={}, username={}, id={}]", user.id(), user.username(), id)
     return getQuestion(user, id).map { question -> questionValidator.setOrGetStatus(question) }

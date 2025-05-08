@@ -24,18 +24,18 @@ fun pythonTest() {
     mapOf(
       PlaceholderIdentifier.P_1 to PlaceholderDefinition.Value.of(PlaceholderValue.I32(10)),
       PlaceholderIdentifier.P_2 to PlaceholderDefinition.Value.of(PlaceholderValue.I32(20)),
-      PlaceholderIdentifier.P_3 to PlaceholderDefinition.Value.of(PlaceholderValue.Str("haha"))
+      PlaceholderIdentifier.P_3 to PlaceholderDefinition.Value.of(PlaceholderValue.Str("haha")),
     )
 
   val code =
     Code(
       identifier = null,
       """
-                    c = b * a
-                    a *= 3
-                    result = c - a
-                    return str(result) + w
-                
+            c = b * a
+            a *= 3
+            result = c - a
+            return str(result) + w
+            
             """
         .trimIndent(),
       Lang.Python,
@@ -48,7 +48,7 @@ fun pythonTest() {
         PythonCodeInterpreter.toExecutableCode(
           code,
           placeholders,
-          definitions.mapValues { (_, definition) -> definition.value() }
+          definitions.mapValues { (_, definition) -> definition.value() },
         )
     ) {
       is Either.Left -> throw IllegalArgumentException(result.value.toString())

@@ -11,17 +11,34 @@ import { useNavigate } from 'react-router-dom';
 import { Routes as RRoutes, RTests } from '@/rout/Routes.jsx';
 import Loading from '@/components/Loading.jsx';
 import {
+    Search,
     CalendarDays,
-    CheckSquare,
-    ClipboardList,
     Clock,
     FileWarning,
-    Search,
-    XSquare,
-} from 'lucide-react'; // Changed Icon
+    ClipboardList,
+    Archive,
+    CheckCircle,
+} from 'lucide-react'; // Added Archive, CheckCircle
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+
+const ImmutableTestStatus = {
+    ACTIVE: 'ACTIVE',
+    ARCHIVED: 'ARCHIVED',
+};
+
+const getStatusProps = status => {
+    switch (status) {
+        case ImmutableTestStatus.ACTIVE:
+            return { text: 'Active', icon: CheckCircle, color: 'green', variant: 'secondary' };
+        case ImmutableTestStatus.ARCHIVED:
+            return { text: 'Archived', icon: Archive, color: 'gray', variant: 'outline' };
+        default:
+            return { text: 'Unknown', icon: FileWarning, color: 'yellow', variant: 'outline' };
+    }
+};
 
 export default function TestsPage() {
-    // Renamed component
     const { auth, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -43,10 +60,7 @@ export default function TestsPage() {
                         closeButton: true,
                         duration: 5000,
                     });
-                    if (type === ErrorType.TokenExpired) {
-                        logout();
-                        navigate(RRoutes.Login.path);
-                    }
+                    if (type === ErrorType.TokenExpired) logout();
                 },
                 data => {
                     const testsData = Array.isArray(data) ? data : [];
@@ -54,7 +68,7 @@ export default function TestsPage() {
                         testsData.map(t => ({
                             id: t.id,
                             name: t.name,
-                            active: t.active,
+                            status: t.status, // Use status field
                             createdAt: t.createdAt,
                             expiresAfter: t.expiresAfter,
                         }))
@@ -80,15 +94,14 @@ export default function TestsPage() {
                             <ClipboardList
                                 size={24}
                                 className="mr-3 text-sky-600 dark:text-sky-500"
-                            />{' '}
-                            {/* Changed Icon */}
+                            />
                             <div>
                                 <CardTitle className="text-xl font-semibold text-slate-800 dark:text-slate-100">
-                                    Tests {/* Updated Title */}
+                                    Tests
                                 </CardTitle>
                                 <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
                                     Browse previously generated tests. ({filteredTests.length}{' '}
-                                    found) {/* Updated Desc */}
+                                    found)
                                 </CardDescription>
                             </div>
                         </div>
@@ -106,15 +119,14 @@ export default function TestsPage() {
                         </div>
 
                         {loading ? (
-                            <Loading message="Loading tests..." /> // Updated message
+                            <Loading message="Loading tests..." />
                         ) : filteredTests.length === 0 ? (
                             <div className="text-center py-10 text-slate-500 dark:text-slate-400">
                                 <FileWarning
                                     size={48}
                                     className="mx-auto mb-4 text-slate-400 dark:text-slate-500"
                                 />
-                                <p className="font-semibold text-lg">No Tests Found</p>{' '}
-                                {/* Updated Text */}
+                                <p className="font-semibold text-lg">No Tests Found</p>
                                 <p className="text-sm mt-1">
                                     {search
                                         ? 'Try adjusting your search term.'
@@ -124,61 +136,68 @@ export default function TestsPage() {
                         ) : (
                             <ScrollArea className="h-[calc(100vh-310px)] min-h-[400px] pr-1">
                                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                                    {filteredTests.map(item => (
-                                        <Card
-                                            key={item.id}
-                                            className="cursor-pointer hover:shadow-lg transition-shadow duration-200 dark:bg-slate-850 dark:hover:bg-slate-700/70 border dark:border-slate-700 rounded-lg overflow-hidden flex flex-col"
-                                            onClick={() => navigate(`${RTests}/${item.id}`)} // Use RTests
-                                        >
-                                            <CardHeader className="p-4">
-                                                <CardTitle
-                                                    className="text-md font-semibold text-sky-700 dark:text-sky-500 truncate"
-                                                    title={item.name}
-                                                >
-                                                    {item.name}
-                                                </CardTitle>
-                                                <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
-                                                    ID: {item.id}
-                                                </CardDescription>
-                                            </CardHeader>
-                                            <CardContent className="p-4 pt-0 space-y-2 text-xs flex-grow">
-                                                <div className="flex items-center text-slate-600 dark:text-slate-300">
-                                                    <CalendarDays
-                                                        size={13}
-                                                        className="mr-1.5 text-slate-500 dark:text-slate-400"
-                                                    />
-                                                    Created:{' '}
-                                                    {new Date(item.createdAt).toLocaleDateString()}
-                                                </div>
-                                                <div className="flex items-center text-slate-600 dark:text-slate-300">
-                                                    {item.active ? (
-                                                        <CheckSquare
-                                                            size={13}
-                                                            className="mr-1.5 text-green-500 dark:text-green-400"
-                                                        />
-                                                    ) : (
-                                                        <XSquare
-                                                            size={13}
-                                                            className="mr-1.5 text-red-500 dark:text-red-400"
-                                                        />
-                                                    )}
-                                                    Status: {item.active ? 'Active' : 'Inactive'}
-                                                </div>
-                                                {item.expiresAfter && (
+                                    {filteredTests.map(item => {
+                                        const statusProps = getStatusProps(item.status); // Get status display props
+                                        return (
+                                            <Card
+                                                key={item.id}
+                                                className="cursor-pointer hover:shadow-lg transition-shadow duration-200 dark:bg-slate-850 dark:hover:bg-slate-700/70 border dark:border-slate-700 rounded-lg overflow-hidden flex flex-col"
+                                                onClick={() => navigate(`${RTests}/${item.id}`)}
+                                            >
+                                                <CardHeader className="p-4">
+                                                    <CardTitle
+                                                        className="text-md font-semibold text-sky-700 dark:text-sky-500 truncate"
+                                                        title={item.name}
+                                                    >
+                                                        {item.name}
+                                                    </CardTitle>
+                                                    <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+                                                        ID: {item.id}
+                                                    </CardDescription>
+                                                </CardHeader>
+                                                <CardContent className="p-4 pt-0 space-y-2 text-xs flex-grow">
                                                     <div className="flex items-center text-slate-600 dark:text-slate-300">
-                                                        <Clock
+                                                        <CalendarDays
                                                             size={13}
                                                             className="mr-1.5 text-slate-500 dark:text-slate-400"
                                                         />
-                                                        Expires:{' '}
+                                                        Created:{' '}
                                                         {new Date(
-                                                            item.expiresAfter
-                                                        ).toLocaleString()}
+                                                            item.createdAt
+                                                        ).toLocaleDateString()}
                                                     </div>
-                                                )}
-                                            </CardContent>
-                                        </Card>
-                                    ))}
+                                                    {/* Display Status Badge */}
+                                                    <div className="flex items-center">
+                                                        <Badge
+                                                            variant={statusProps.variant}
+                                                            className={cn(
+                                                                'text-xs py-0.5 px-1.5',
+                                                                `bg-${statusProps.color}-100 text-${statusProps.color}-700 dark:bg-${statusProps.color}-700/30 dark:text-${statusProps.color}-300 border-${statusProps.color}-300 dark:border-${statusProps.color}-700`
+                                                            )}
+                                                        >
+                                                            <statusProps.icon
+                                                                size={12}
+                                                                className="mr-1"
+                                                            />
+                                                            {statusProps.text}
+                                                        </Badge>
+                                                    </div>
+                                                    {item.expiresAfter && (
+                                                        <div className="flex items-center text-slate-600 dark:text-slate-300">
+                                                            <Clock
+                                                                size={13}
+                                                                className="mr-1.5 text-slate-500 dark:text-slate-400"
+                                                            />
+                                                            Expires:{' '}
+                                                            {new Date(
+                                                                item.expiresAfter
+                                                            ).toLocaleString()}
+                                                        </div>
+                                                    )}
+                                                </CardContent>
+                                            </Card>
+                                        );
+                                    })}
                                 </div>
                             </ScrollArea>
                         )}

@@ -10,7 +10,6 @@ import org.springframework.stereotype.Repository
 interface TestModelRepository :
   TestModelPort<TestModelEntity>, JpaRepository<TestModelEntity, UUID> {
   override fun findAllByCreatorId(creatorId: UUID): List<TestModelEntity>
-  override fun save(entry: TestModelEntity): TestModelEntity {
-    return saveAndFlush(entry)
-  }
+
+  override fun save(entry: TestModelEntity): TestModelEntity = saveAndFlush(entry)
 }

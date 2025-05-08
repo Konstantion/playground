@@ -36,24 +36,24 @@ class QuestionExecutorTest {
           Code(
             UUID.randomUUID(),
             """
-              return "hi"
-            """
+                        return "hi"
+                        """
               .trimIndent(),
             Lang.Python,
-            Code.Output.Str::class.java
-          )
+            Code.Output.Str::class.java,
+          ),
         ),
         Question.Variant.Correct(
           UUID.randomUUID(),
           Code(
             UUID.randomUUID(),
             """
-                  return a + c
-            """
+                        return a + c
+                        """
               .trimIndent(),
             Lang.Python,
-            Code.Output.Str::class.java
-          )
+            Code.Output.Str::class.java,
+          ),
         ),
       )
     val incorrect =
@@ -63,13 +63,13 @@ class QuestionExecutorTest {
           Code(
             UUID.randomUUID(),
             """
-              return str(a) 
-            """
+                        return str(a) 
+                        """
               .trimIndent(),
             Lang.Python,
-            Code.Output.Str::class.java
-          )
-        )
+            Code.Output.Str::class.java,
+          ),
+        ),
       )
 
     when (
@@ -105,13 +105,13 @@ class QuestionExecutorTest {
           Code(
             UUID.randomUUID(),
             """
-              return str(a) + 1
-            """
+                        return str(a) + 1
+                        """
               .trimIndent(),
             Lang.Python,
-            Code.Output.Str::class.java
-          )
-        )
+            Code.Output.Str::class.java,
+          ),
+        ),
       )
 
     when (
@@ -135,9 +135,9 @@ class QuestionExecutorTest {
 
   private fun question(
     correct: List<Question.Variant.Correct<Lang.Python>>,
-    incorrect: List<Question.Variant.Incorrect<Lang.Python>>
-  ): Question<Lang.Python> {
-    return Question(
+    incorrect: List<Question.Variant.Incorrect<Lang.Python>>,
+  ): Question<Lang.Python> =
+    Question(
       identifier = UUID.randomUUID(),
       lang = Lang.Python,
       body = "body",
@@ -145,31 +145,28 @@ class QuestionExecutorTest {
       placeholderDefinitions =
         mapOf(
           PlaceholderIdentifier.P_1 to PlaceholderDefinition.Value.of(PlaceholderValue.I32(10)),
-          PlaceholderIdentifier.P_2 to PlaceholderDefinition.I32Range(10, 20)
+          PlaceholderIdentifier.P_2 to PlaceholderDefinition.I32Range(10, 20),
         ),
       callArgs =
         listOf(
           PlaceholderLabel(PlaceholderIdentifier.P_1, "a"),
           PlaceholderLabel(PlaceholderIdentifier.P_1, "b"),
-          PlaceholderLabel(PlaceholderIdentifier.P_2, "c")
+          PlaceholderLabel(PlaceholderIdentifier.P_2, "c"),
         ),
       additionalCheck = null,
       correctVariants = correct,
       incorrectVariants = incorrect,
     )
-  }
 
-  private fun service(): QuestionExecutor<Lang.Python> {
-    return NaiveQuestionExecutor(sandbox(), GroupId(0))
-  }
+  private fun service(): QuestionExecutor<Lang.Python> =
+    NaiveQuestionExecutor(sandbox(), GroupId(0))
 
-  private fun sandbox(): UserBasedSandbox<Lang.Python> {
-    return UserBasedSandbox(
+  private fun sandbox(): UserBasedSandbox<Lang.Python> =
+    UserBasedSandbox(
       LoggerFactory::getLogger,
       Lang.Python,
       "kostia",
       CmdHelper.Python3File,
-      PythonCodeInterpreter
+      PythonCodeInterpreter,
     )
-  }
 }

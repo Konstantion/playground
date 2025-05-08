@@ -21,7 +21,6 @@ dependencyResolutionManagement {
             plugin("kotlin", "org.jetbrains.kotlin.jvm").version("2.0.20-RC")
             plugin("kotlin-serialization", "org.jetbrains.kotlin.plugin.serialization").version("2.0.20-RC")
 
-
             library("docker-java", "com.github.docker-java:docker-java:3.4.0")
             library("slf4j", "org.slf4j:slf4j-api:2.0.7")
 
@@ -34,7 +33,6 @@ dependencyResolutionManagement {
 
                 bundle("kotlinx-serialization", listOf("json", "core", "cbor").map { "kotlinx-serialization-$it" })
             }
-
 
             run {
                 val version = "2.20.0"

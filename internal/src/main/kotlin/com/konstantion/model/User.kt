@@ -18,8 +18,8 @@ interface User {
   fun isStudent() = role() == Role.Student
 
   companion object {
-    fun admin(): User {
-      return object : User {
+    fun admin(): User =
+      object : User {
         override fun id() = UUID.randomUUID()
 
         override fun getUsername() = "username"
@@ -28,6 +28,5 @@ interface User {
 
         override fun role() = Role.Admin
       }
-    }
   }
 }

@@ -14,12 +14,15 @@ data class Question<L>(
   val placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderDefinition<*>>,
   val callArgs: List<PlaceholderLabel>,
   val additionalCheck:
-    Code<L, @Serializable(with = OutputTypeSerializer::class) Code.Output.Bool>? =
+    Code<
+      L,
+      @Serializable(with = OutputTypeSerializer::class)
+      Code.Output.Bool,
+    >? =
     null,
   val correctVariants: List<Variant.Correct<L>>,
   val incorrectVariants: List<Variant.Incorrect<L>>,
 ) where L : Lang {
-
   fun variants(): List<Variant<L>> = incorrectVariants + correctVariants
 
   @Serializable
@@ -32,13 +35,23 @@ data class Question<L>(
     @Serializable
     data class Correct<L>(
       @Serializable(with = UUIDSerializer::class) override val identifier: UUID?,
-      override val code: Code<L, @Serializable(with = OutputTypeSerializer::class) Code.Output.Str>
+      override val code:
+        Code<
+          L,
+          @Serializable(with = OutputTypeSerializer::class)
+          Code.Output.Str,
+        >,
     ) : Variant<L> where L : Lang
 
     @Serializable
     data class Incorrect<L>(
       @Serializable(with = UUIDSerializer::class) override val identifier: UUID?,
-      override val code: Code<L, @Serializable(with = OutputTypeSerializer::class) Code.Output.Str>
+      override val code:
+        Code<
+          L,
+          @Serializable(with = OutputTypeSerializer::class)
+          Code.Output.Str,
+        >,
     ) : Variant<L> where L : Lang
   }
 }

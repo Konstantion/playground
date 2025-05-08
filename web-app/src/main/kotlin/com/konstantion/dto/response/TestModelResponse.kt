@@ -9,7 +9,7 @@ data class TestModelResponse(
   val name: String,
   val questions: List<QuestionResponse>,
   val createdAt: Long,
-  val creatorId: UUID? = null
+  val creatorId: UUID? = null,
 ) {
   companion object {
     fun TestModelEntity.asResponse() =
@@ -18,7 +18,7 @@ data class TestModelResponse(
         name = name(),
         questions = questions.asResponse(),
         createdAt = createdAt().toEpochMilli(),
-        creatorId = creator?.id()
+        creatorId = creator?.id(),
       )
   }
 }

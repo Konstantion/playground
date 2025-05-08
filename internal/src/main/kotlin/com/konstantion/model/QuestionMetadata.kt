@@ -12,4 +12,8 @@ data class QuestionMetadata(
   fun answers(): List<Answer> = correctAnswers + incorrectAnswers
 }
 
-data class Answer(val variantIdentifier: UUID, val text: String, val executorTaskId: TaskId)
+data class Answer(
+  val variantIdentifier: UUID,
+  val text: String,
+  val executorTaskId: TaskId,
+)

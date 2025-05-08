@@ -10,9 +10,11 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/hello")
-class HelloController(private val questionService: QuestionService) {
+class HelloController(
+  private val questionService: QuestionService,
+) {
   @GetMapping
-  fun hello(@AuthenticationPrincipal userEntity: UserEntity): ResponseEntity<String> {
-    return ResponseEntity.ok("hello ${userEntity.username()}!")
-  }
+  fun hello(
+    @AuthenticationPrincipal userEntity: UserEntity,
+  ): ResponseEntity<String> = ResponseEntity.ok("hello ${userEntity.username()}!")
 }

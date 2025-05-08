@@ -13,20 +13,22 @@ object LangSerializer : KSerializer<Lang> {
   override val descriptor: SerialDescriptor =
     PrimitiveSerialDescriptor("Lang", PrimitiveKind.STRING)
 
-  override fun deserialize(decoder: Decoder): Lang {
-    return when (val lang = decoder.decodeString()) {
+  override fun deserialize(decoder: Decoder): Lang =
+    when (val lang = decoder.decodeString()) {
       "javascript" -> Lang.JavaScript
       "python" -> Lang.Python
       else -> throw Unreachable("unhandled lang=$lang")
     }
-  }
 
-  override fun serialize(encoder: Encoder, value: Lang) {
+  override fun serialize(
+    encoder: Encoder,
+    value: Lang,
+  ) {
     encoder.encodeString(
       when (value) {
         Lang.JavaScript -> "javascript"
         Lang.Python -> "python"
-      }
+      },
     )
   }
 }

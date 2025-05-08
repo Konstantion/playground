@@ -21,7 +21,6 @@ configurations.all {
     exclude(group = "org.apache.logging.log4j", module = "log4j-slf4j2-impl")
 }
 
-
 tasks.jar {
     enabled = false
     dependsOn(tasks.bootJar)

@@ -43,11 +43,14 @@ data class VariantService(
     }
   }
 
-  fun create(creator: UserEntity, createParams: CreateParams): Either<ServiceIssue, VariantEntity> {
+  fun create(
+    creator: UserEntity,
+    createParams: CreateParams,
+  ): Either<ServiceIssue, VariantEntity> {
     log.info("Creating variant for user: {} with code: {}", creator, createParams)
     return when (creator.role()) {
       Role.Admin,
-      Role.Teacher -> {
+      Role.Teacher, -> {
         val codeToSave =
           CodeEntity().apply {
             code = createParams.code
@@ -87,11 +90,14 @@ data class VariantService(
     }
   }
 
-  fun update(user: UserEntity, updateParams: UpdateParams): Either<ServiceIssue, VariantEntity> {
+  fun update(
+    user: UserEntity,
+    updateParams: UpdateParams,
+  ): Either<ServiceIssue, VariantEntity> {
     log.info("Updating variant for user: {} with params: {}", user, updateParams)
     return when (user.role()) {
       Role.Admin,
-      Role.Teacher -> {
+      Role.Teacher, -> {
         val variantDb: VariantEntity =
           when (
             val result: Either<ServiceIssue, VariantEntity> =
@@ -148,11 +154,14 @@ data class VariantService(
     }
   }
 
-  fun delete(user: UserEntity, id: UUID): Either<ServiceIssue, VariantEntity> {
+  fun delete(
+    user: UserEntity,
+    id: UUID,
+  ): Either<ServiceIssue, VariantEntity> {
     log.info("Deleting variant for user: {} with ID: {}", user, id)
     return when (user.role()) {
       Role.Admin,
-      Role.Teacher -> {
+      Role.Teacher, -> {
         val variantDb: VariantEntity =
           when (
             val result: Either<ServiceIssue, VariantEntity> =
@@ -172,7 +181,12 @@ data class VariantService(
     }
   }
 
-  data class CreateParams(val code: String)
+  data class CreateParams(
+    val code: String,
+  )
 
-  data class UpdateParams(val id: UUID, val code: String)
+  data class UpdateParams(
+    val id: UUID,
+    val code: String,
+  )
 }

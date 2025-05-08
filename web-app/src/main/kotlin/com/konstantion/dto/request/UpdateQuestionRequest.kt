@@ -21,8 +21,8 @@ data class UpdateQuestionRequest(
   val correctVariant: UUID? = null,
   val incorrectVariant: UUID? = null,
 ) {
-  fun asParams(): UpdateQuestionParams {
-    return UpdateQuestionParams(
+  fun asParams(): UpdateQuestionParams =
+    UpdateQuestionParams(
       action = action,
       body = body,
       formatAndCode = formatAndCodeDto?.asModel(),
@@ -30,7 +30,7 @@ data class UpdateQuestionRequest(
         placeholderDefinition?.mapValues { (_, definition) ->
           Json.decodeFromString(
             PlaceholderDefinition.serializer(PlaceholderValue.serializer()),
-            definition.toString()
+            definition.toString(),
           )
         },
       placeholders = placeholders,
@@ -40,5 +40,4 @@ data class UpdateQuestionRequest(
       correctVariantId = correctVariant,
       incorrectVariantId = incorrectVariant,
     )
-  }
 }

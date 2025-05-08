@@ -11,10 +11,12 @@ interface CodeInterpreter<L> where L : Lang {
   fun <R> toExecutableCode(
     code: Code<L, R>,
     callArgs: List<PlaceholderLabel>,
-    placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderValue>
+    placeholderDefinitions: Map<PlaceholderIdentifier, PlaceholderValue>,
   ): Either<InterpreterIssue, String> where R : Code.Output
 }
 
 sealed interface InterpreterIssue {
-  data class Variables(val description: String) : InterpreterIssue
+  data class Variables(
+    val description: String,
+  ) : InterpreterIssue
 }

@@ -21,7 +21,6 @@ import java.util.UUID
 @Entity
 @Table(name = "variants")
 open class VariantEntity {
-
   @Id @GeneratedValue(strategy = GenerationType.UUID) open var id: UUID? = null
 
   @OneToOne(cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
@@ -36,13 +35,11 @@ open class VariantEntity {
 
   @Column(name = "public", nullable = false) open var public: Boolean = true
 
-  fun <L> toCorrect(lang: L): Question.Variant.Correct<L> where L : Lang {
-    return Question.Variant.Correct(nonNull(id), refine(nonNull(code).toModel(lang)))
-  }
+  fun <L> toCorrect(lang: L): Question.Variant.Correct<L> where L : Lang =
+    Question.Variant.Correct(nonNull(id), refine(nonNull(code).toModel(lang)))
 
-  fun <L> toIncorrect(lang: L): Question.Variant.Incorrect<L> where L : Lang {
-    return Question.Variant.Incorrect(nonNull(id), refine(nonNull(code).toModel(lang)))
-  }
+  fun <L> toIncorrect(lang: L): Question.Variant.Incorrect<L> where L : Lang =
+    Question.Variant.Incorrect(nonNull(id), refine(nonNull(code).toModel(lang)))
 
   fun id(): UUID = nonNull(id)
 
@@ -52,23 +49,19 @@ open class VariantEntity {
 
   fun public() = nonNull(public)
 
-  override fun toString(): String {
-    return "VariantEntity(id=$id, code=$code)"
-  }
+  override fun toString(): String = "VariantEntity(id=$id, code=$code)"
 
   companion object {
-    fun fromCorrect(variant: Question.Variant.Correct<*>): VariantEntity {
-      return VariantEntity().apply {
+    fun fromCorrect(variant: Question.Variant.Correct<*>): VariantEntity =
+      VariantEntity().apply {
         id = id()
         code = CodeEntity.fromModel(variant.code)
       }
-    }
 
-    fun fromIncorrect(variant: Question.Variant.Incorrect<*>): VariantEntity {
-      return VariantEntity().apply {
+    fun fromIncorrect(variant: Question.Variant.Incorrect<*>): VariantEntity =
+      VariantEntity().apply {
         id = id()
         code = CodeEntity.fromModel(variant.code)
       }
-    }
   }
 }

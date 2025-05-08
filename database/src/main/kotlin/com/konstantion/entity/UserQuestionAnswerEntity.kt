@@ -25,11 +25,13 @@ open class UserQuestionAnswerEntity {
   @JoinTable(
     name = "user_question_answer_mapping",
     joinColumns = [JoinColumn(name = "user_question_answer_id")],
-    inverseJoinColumns = [JoinColumn(name = "answer_id", nullable = false)]
+    inverseJoinColumns = [JoinColumn(name = "answer_id", nullable = false)],
   )
   open var answers: MutableList<AnswerEntity> = mutableListOf()
 
   fun id(): UUID = FieldUtils.nonNull(id)
+
   fun question(): QuestionMetadataEntity = FieldUtils.nonNull(question)
+
   fun answers(): List<AnswerEntity> = FieldUtils.nonNull(answers)
 }

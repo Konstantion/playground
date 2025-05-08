@@ -8,7 +8,5 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface VariantRepository : JpaRepository<VariantEntity, UUID>, VariantPort<VariantEntity> {
-  override fun save(entry: VariantEntity): VariantEntity {
-    return saveAndFlush(entry)
-  }
+  override fun save(entry: VariantEntity): VariantEntity = saveAndFlush(entry)
 }

@@ -8,7 +8,7 @@ class ListRawSerializer : JsonSerializer<List<String>>() {
   override fun serialize(
     value: List<String>?,
     gen: JsonGenerator,
-    serializers: SerializerProvider
+    serializers: SerializerProvider,
   ) {
     if (value == null) {
       gen.writeNull()

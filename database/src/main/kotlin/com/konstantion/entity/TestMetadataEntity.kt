@@ -19,18 +19,25 @@ import java.util.UUID
 open class TestMetadataEntity {
   @Id @GeneratedValue(strategy = GenerationType.UUID) open var id: UUID? = null
 
-  @ManyToOne
-  @JoinColumn(name = "test_model_id", nullable = false)
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "immutable_test_id", nullable = false) // Renamed for clarity
   open var immutableTestEntity: ImmutableTestEntity? = null
 
   @Column(name = "name", nullable = false) open var name: String? = null
 
-  @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-  @JoinColumn(name = "test_metadata_id", nullable = false)
+  @OneToMany(
+    mappedBy = "testMetadata",
+    cascade = [CascadeType.ALL],
+    fetch = FetchType.LAZY,
+    orphanRemoval = true,
+  )
   open var questionMetadata: MutableList<QuestionMetadataEntity> = mutableListOf()
 
   fun id(): UUID = FieldUtils.nonNull(id)
+
   fun immutableTestEntity(): ImmutableTestEntity = FieldUtils.nonNull(immutableTestEntity)
+
   fun name(): String = FieldUtils.nonNull(name)
+
   fun questionMetadata(): List<QuestionMetadataEntity> = FieldUtils.nonNull(questionMetadata)
 }

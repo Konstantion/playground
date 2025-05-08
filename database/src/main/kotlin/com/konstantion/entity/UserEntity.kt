@@ -40,8 +40,8 @@ open class UserEntity {
 
   fun isStudent(): Boolean = role() == Role.Student
 
-  fun asUser(): User {
-    return object : User {
+  fun asUser(): User =
+    object : User {
       override fun id(): UUID = nonNull(id)
 
       override fun getUsername(): String = username()
@@ -50,5 +50,4 @@ open class UserEntity {
 
       override fun role(): Role = nonNull(role)
     }
-  }
 }

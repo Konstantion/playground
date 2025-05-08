@@ -17,17 +17,20 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/admin/questions")
-class AdminQuestionController(private val questionService: QuestionService) {
+class AdminQuestionController(
+  private val questionService: QuestionService,
+) {
   private val log: Logger = LoggerFactory.getLogger(AdminQuestionController::class.java)
 
   @GetMapping
-  fun getAllQuestions(@AuthenticationPrincipal userEntity: UserEntity): ResponseEntity<*> {
-    return when (
+  fun getAllQuestions(
+    @AuthenticationPrincipal userEntity: UserEntity,
+  ): ResponseEntity<*> =
+    when (
       val result: Either<ServiceIssue, List<QuestionEntity>> =
         questionService.getAllQuestion(userEntity)
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
     }
-  }
 }

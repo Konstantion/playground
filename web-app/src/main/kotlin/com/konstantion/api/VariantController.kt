@@ -25,11 +25,15 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/variant")
-data class VariantController(private val variantService: VariantService) {
+data class VariantController(
+  private val variantService: VariantService,
+) {
   private val log: Logger = LoggerFactory.getLogger(javaClass)
 
   @GetMapping("/{id}")
-  fun getById(@PathVariable("id") id: UUID): ResponseEntity<*> {
+  fun getById(
+    @PathVariable("id") id: UUID,
+  ): ResponseEntity<*> {
     log.info("Fetching variant with ID: {}", id)
     return when (val result: Either<ServiceIssue, VariantEntity> = variantService.getById(id)) {
       is Either.Left -> result.value.asError()
@@ -40,7 +44,7 @@ data class VariantController(private val variantService: VariantService) {
   @PostMapping
   fun createVariant(
     @AuthenticationPrincipal userEntity: UserEntity,
-    @RequestBody request: CreateVariantRequest
+    @RequestBody request: CreateVariantRequest,
   ): ResponseEntity<*> {
     log.info("Creating variant with request: {}", request)
     return when (
@@ -56,7 +60,7 @@ data class VariantController(private val variantService: VariantService) {
   fun updateVariantById(
     @AuthenticationPrincipal userEntity: UserEntity,
     @PathVariable("id") id: UUID,
-    @RequestBody request: UpdateVariantRequest
+    @RequestBody request: UpdateVariantRequest,
   ): ResponseEntity<*> {
     log.info("Updating variant with ID: {} and request: {}", id, request)
     return when (
@@ -71,7 +75,7 @@ data class VariantController(private val variantService: VariantService) {
   @DeleteMapping("/{id}")
   fun deleteVariantById(
     @AuthenticationPrincipal userEntity: UserEntity,
-    @PathVariable("id") id: UUID
+    @PathVariable("id") id: UUID,
   ): ResponseEntity<*> {
     log.info("Deleting variant with ID: {}", id)
     return when (

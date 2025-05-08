@@ -15,7 +15,7 @@ object ImagePuller {
   ): Either<Throwable, Boolean> =
     try {
       Either.right(
-        pullImageCmd(image.name).start().awaitCompletion(timeout.toMillis(), TimeUnit.MILLISECONDS)
+        pullImageCmd(image.name).start().awaitCompletion(timeout.toMillis(), TimeUnit.MILLISECONDS),
       )
     } catch (error: Throwable) {
       Either.left(error)

@@ -5,7 +5,6 @@ import com.konstantion.service.ServiceIssue
 import org.springframework.http.ResponseEntity
 
 object ControllerUtils {
-  fun ServiceIssue.asError(): ResponseEntity<ErrorResponse> {
-    return ResponseEntity.status(code()).body(ErrorResponse(code(), message()))
-  }
+  fun ServiceIssue.asError(): ResponseEntity<ErrorResponse> =
+    ResponseEntity.status(code()).body(ErrorResponse(code(), message()))
 }

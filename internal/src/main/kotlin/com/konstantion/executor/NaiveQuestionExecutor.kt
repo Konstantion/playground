@@ -24,7 +24,6 @@ class NaiveQuestionExecutor<Id, L>(
   private val executor: ExecutorService =
     Executors.newCachedThreadPool(Thread.ofPlatform().name("naive-question-service", 0).factory()),
 ) : QuestionExecutor<L> where L : Lang, Id : Any {
-
   private val taskIdGen: IdGenerator<TaskId> = IdGenerator.AtomicLong(0).andThen(::TaskId)
 
   override fun submit(question: Question<L>): Task {
@@ -53,7 +52,7 @@ class NaiveQuestionExecutor<Id, L>(
             groupId = id,
             code = variant.code,
             callArgs = question.callArgs,
-            placeholderValues = placeholderValues
+            placeholderValues = placeholderValues,
           )
         }
         .mapValues { (_, task) -> task.id() to task.get() }
@@ -84,8 +83,8 @@ class NaiveQuestionExecutor<Id, L>(
           text = question.body,
           formatAndCode = question.formatAndCode.reformated(placeholderValues),
           correctAnswers = correct,
-          incorrectAnswers = incorrect
-        )
+          incorrectAnswers = incorrect,
+        ),
       )
     }
   }

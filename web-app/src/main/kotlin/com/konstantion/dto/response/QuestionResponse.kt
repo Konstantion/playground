@@ -27,8 +27,8 @@ data class QuestionResponse(
   val createdAt: Long,
 ) {
   companion object {
-    fun QuestionEntity.asResponse(): QuestionResponse {
-      return QuestionResponse(
+    fun QuestionEntity.asResponse(): QuestionResponse =
+      QuestionResponse(
         id = id(),
         lang = lang(),
         body = body(),
@@ -43,10 +43,9 @@ data class QuestionResponse(
         creatorId = creator()?.id(),
         createdAt = createdAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
       )
-    }
 
-    fun List<QuestionEntity>.asResponse(): List<QuestionResponse> {
-      return map { question -> question.asResponse() }
+    fun List<QuestionEntity>.asResponse(): List<QuestionResponse> = map { question ->
+      question.asResponse()
     }
   }
 }

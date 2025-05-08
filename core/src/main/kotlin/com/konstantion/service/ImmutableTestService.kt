@@ -2,6 +2,7 @@ package com.konstantion.service
 
 import com.konstantion.entity.CodeEntity
 import com.konstantion.entity.ImmutableTestEntity
+import com.konstantion.entity.ImmutableTestStatus
 import com.konstantion.entity.QuestionEntity
 import com.konstantion.entity.TestModelEntity
 import com.konstantion.entity.UserEntity
@@ -60,7 +61,10 @@ data class ImmutableTestService(
     }
   }
 
-  fun findById(user: UserEntity, id: UUID): Either<ServiceIssue, ImmutableTestEntity> {
+  fun findById(
+    user: UserEntity,
+    id: UUID,
+  ): Either<ServiceIssue, ImmutableTestEntity> {
     log.info(
       "FindById[userId={}, username={}, id={}]",
       user.id(),
@@ -142,14 +146,14 @@ data class ImmutableTestService(
     val userEntity = userRepository.findById(user.id()).orElseThrow()
     val immutableTest =
       ImmutableTestEntity().apply {
-        name = deepClone.name
-        active = true
-        createdAt = Instant.now()
-        questions = deepClone.questions
-        creator = userEntity
-        expiresAfter = expiresAfterInstant
-        shuffleVariants = shuffleVariantsParam
-        shuffleQuestions = shuffleQuestionsParam
+        this.name = deepClone.name
+        this.status = ImmutableTestStatus.ACTIVE
+        this.createdAt = Instant.now()
+        this.questions = deepClone.questions
+        this.creator = userEntity
+        this.expiresAfter = expiresAfterInstant
+        this.shuffleVariants = shuffleVariantsParam
+        this.shuffleQuestions = shuffleQuestionsParam
       }
 
     val immutableEntity = immutableTestRepository.saveAndFlush(immutableTest)
@@ -161,7 +165,6 @@ data class ImmutableTestService(
       TestModelEntity().apply {
         name = original.name
         createdAt = Instant.now()
-        // Optionally, you might also want to copy the creator if that makes sense.
         creator = original.creator
       }
 

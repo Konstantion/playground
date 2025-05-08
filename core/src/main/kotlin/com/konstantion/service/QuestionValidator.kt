@@ -45,7 +45,10 @@ data class QuestionValidator(
   fun validate(questionEntity: QuestionEntity) =
     lock.withLock { validate(questionEntity.id(), questionEntity.toModel()) }
 
-  private fun validate(id: UUID, question: Question<Lang>): Either<ServiceIssue, TaskId> =
+  private fun validate(
+    id: UUID,
+    question: Question<Lang>,
+  ): Either<ServiceIssue, TaskId> =
     lock.withLock {
       if (question.lang != Lang.Python) {
         return Either.left(UnexpectedAction("Python questions are not supported"))
@@ -57,7 +60,7 @@ data class QuestionValidator(
           return Either.left(UnexpectedAction("Validation is already successful"))
         is StatusResponse.Error ->
           return Either.left(
-            UnexpectedAction("Validation failed: ${status.message}, fix question.")
+            UnexpectedAction("Validation failed: ${status.message}, fix question."),
           )
         StatusResponse.NotRegistered -> {}
       }
@@ -132,8 +135,8 @@ data class QuestionValidator(
                     uniqueIssues +=
                       "Answer with id=${answer.variantIdentifier} is same as " +
                         "correct answers with ids=${
-                                sameCorrect.map(Answer::variantIdentifier).joinToString(", ")
-                              }"
+                                                sameCorrect.map(Answer::variantIdentifier).joinToString(", ")
+                                            }"
                   }
 
                   val sameIncorrect =
@@ -147,8 +150,8 @@ data class QuestionValidator(
                     uniqueIssues +=
                       "Answer with id=${answer.variantIdentifier} is same as " +
                         "incorrect answers with ids=${
-                                sameIncorrect.map(Answer::variantIdentifier).joinToString(", ")
-                              }"
+                                                sameIncorrect.map(Answer::variantIdentifier).joinToString(", ")
+                                            }"
                   }
                 }
               }
@@ -161,13 +164,13 @@ data class QuestionValidator(
                   id,
                   badFactor,
                   badMetadatas.size,
-                  metadatas.size
+                  metadatas.size,
                 )
                 when (status(id)) {
                   is StatusResponse.Submitted ->
                     require(
                       statuses.put(id, StatusResponse.Error(uniqueIssues.joinToString(".\n")))
-                        is StatusResponse.Submitted
+                        is StatusResponse.Submitted,
                     )
                   is StatusResponse.NotRegistered ->
                     log.warn("Question was invalidated, while submitted")
@@ -196,7 +199,7 @@ data class QuestionValidator(
         }
 
       require(
-        statuses.put(id, StatusResponse.Submitted(taskId, task)) is StatusResponse.NotRegistered
+        statuses.put(id, StatusResponse.Submitted(taskId, task)) is StatusResponse.NotRegistered,
       )
 
       return Either.Right(taskId)
@@ -245,9 +248,8 @@ data class QuestionValidator(
       }
     }
 
-  private fun refined(question: Question<Lang>): Question<Lang.Python> {
-    return question as Question<Lang.Python>
-  }
+  private fun refined(question: Question<Lang>): Question<Lang.Python> =
+    question as Question<Lang.Python>
 
   @PreDestroy
   fun close() {

@@ -44,7 +44,7 @@ fun main() {
             override fun onNext(frame: Frame) {
               println(String(frame.payload))
             }
-          }
+          },
         )
         .awaitCompletion()
     } catch (error: Throwable) {

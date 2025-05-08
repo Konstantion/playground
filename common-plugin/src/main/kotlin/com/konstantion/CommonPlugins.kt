@@ -15,31 +15,32 @@ import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 class CommonPlugin : Plugin<Project> {
-    override fun apply(target: Project): Unit = with(target) {
-        common()
-    }
+    override fun apply(target: Project): Unit =
+        with(target) {
+            common()
+        }
 }
 
 class SpringPlugin : Plugin<Project> {
-    override fun apply(target: Project): Unit = with(target) {
-        common()
+    override fun apply(target: Project): Unit =
+        with(target) {
+            common()
 
-        plugins.apply("org.springframework.boot")
-        plugins.apply("io.spring.dependency-management")
-        plugins.apply("org.jetbrains.kotlin.plugin.spring")
+            plugins.apply("org.springframework.boot")
+            plugins.apply("io.spring.dependency-management")
+            plugins.apply("org.jetbrains.kotlin.plugin.spring")
 
-        extensions.getByType(KotlinJvmProjectExtension::class.java).apply {
-            compilerOptions {
-                progressiveMode.set(true)
+            extensions.getByType(KotlinJvmProjectExtension::class.java).apply {
+                compilerOptions {
+                    progressiveMode.set(true)
+                }
+            }
+
+            dependencies.apply {
+                add("implementation", "org.springframework.boot:spring-boot-starter")
+                add("testImplementation", "org.springframework.boot:spring-boot-starter-test")
             }
         }
-
-        dependencies.apply {
-            add("implementation", "org.springframework.boot:spring-boot-starter")
-            add("testImplementation", "org.springframework.boot:spring-boot-starter-test")
-        }
-
-    }
 }
 
 private fun Project.common() {
@@ -52,8 +53,14 @@ private fun Project.common() {
 
     plugins.apply("org.jetbrains.kotlin.jvm")
 
-    tasks.named("compileJava", JavaCompile::class.java).get().options.encoding = "UTF-8"
-    tasks.named("compileTestJava", JavaCompile::class.java).get().options.encoding = "UTF-8"
+    tasks
+        .named("compileJava", JavaCompile::class.java)
+        .get()
+        .options.encoding = "UTF-8"
+    tasks
+        .named("compileTestJava", JavaCompile::class.java)
+        .get()
+        .options.encoding = "UTF-8"
 
     extensions.getByType(JavaPluginExtension::class.java).apply {
         sourceCompatibility = JavaVersion.VERSION_21
@@ -73,7 +80,6 @@ private fun Project.common() {
             ext.lineEndings = LineEnding.PLATFORM_NATIVE
         }
     }
-
 
     group = "com.konstantion"
 

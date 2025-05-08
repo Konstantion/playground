@@ -29,7 +29,6 @@ gradlePlugin {
             implementationClass = "$group.$name"
         }
 
-
         create("SpringPlugin") {
             id = "$group.common.spring"
             implementationClass = "$group.$name"

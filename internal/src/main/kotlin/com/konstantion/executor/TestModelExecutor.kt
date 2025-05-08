@@ -57,11 +57,15 @@ class TestModelExecutor(
     }
   }
 
-  private fun <T> withExecutor(lang: Lang, block: (QuestionExecutor<Lang>) -> T): T where T : Any =
-    block(questionExecutors[lang] ?: error("No executor for language $lang"))
+  private fun <T> withExecutor(
+    lang: Lang,
+    block: (QuestionExecutor<Lang>) -> T,
+  ): T where T : Any = block(questionExecutors[lang] ?: error("No executor for language $lang"))
 
   sealed interface Issue {
-    data class OfQuestion(val issue: List<QuestionExecutor.Issue>) : Issue
+    data class OfQuestion(
+      val issue: List<QuestionExecutor.Issue>,
+    ) : Issue
   }
 
   interface Task {

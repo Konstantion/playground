@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-
 dependencies {
     api(project(":common"))
     implementation(libs.kotlinx.serialization.core)

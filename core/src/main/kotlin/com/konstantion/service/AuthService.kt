@@ -22,7 +22,9 @@ private val SECRET = "mylittlesecretisitlongenough".repeat(10)
 private const val EXPIRATION_TIME = 86400000
 
 @Service
-data class AuthService(private val userRepository: UserRepository) {
+data class AuthService(
+  private val userRepository: UserRepository,
+) {
   private val log: Logger = LoggerFactory.getLogger(javaClass)
 
   fun login(params: LoginParams): Either<ServiceIssue, UserAndToken> {
@@ -49,7 +51,10 @@ data class AuthService(private val userRepository: UserRepository) {
     return Either.right(UserAndToken(user, generateToken(user)))
   }
 
-  fun register(user: User?, params: RegisterParams): Either<ServiceIssue, UserEntity> {
+  fun register(
+    user: User?,
+    params: RegisterParams,
+  ): Either<ServiceIssue, UserEntity> {
     log.info("Register[user={}, params={}]", user, params)
 
     val maybeUser =
@@ -107,28 +112,28 @@ data class AuthService(private val userRepository: UserRepository) {
     return Either.right(userDb)
   }
 
-  private fun isExpired(token: String): Boolean {
-    return try {
+  private fun isExpired(token: String): Boolean =
+    try {
       getClaims(token).expiration.before(Date())
     } catch (expiredException: ExpiredJwtException) {
       true
     }
-  }
 
-  private fun getClaims(token: String): Claims {
-    return Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token).body
-  }
+  private fun getClaims(token: String): Claims =
+    Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token).body
 
-  private fun generateToken(user: UserEntity): String {
-    return Jwts.builder()
+  private fun generateToken(user: UserEntity): String =
+    Jwts.builder()
       .setSubject(user.username)
       .setIssuedAt(Date(System.currentTimeMillis()))
       .setExpiration(Date(System.currentTimeMillis() + EXPIRATION_TIME))
       .signWith(SignatureAlgorithm.HS512, SECRET)
       .compact()
-  }
 
-  data class LoginParams(val username: String, val password: String)
+  data class LoginParams(
+    val username: String,
+    val password: String,
+  )
 
   data class UserAndToken(
     val user: UserEntity,

@@ -10,20 +10,19 @@ import kotlin.concurrent.withLock
 object SqlHelper {
   private val lock: Lock = ReentrantLock()
 
-  fun <P : Port, T : Any> P.sqlAction(action: P.() -> T): Either<ServiceIssue, T> {
-    return lock.withLock {
+  fun <P : Port, T : Any> P.sqlAction(action: P.() -> T): Either<ServiceIssue, T> =
+    lock.withLock {
       try {
         Either.right(action())
       } catch (dbIssue: Exception) {
         Either.left(SqlError(dbIssue.message ?: "Unknown error"))
       }
     }
-  }
 
   fun <P : Port, T : Any> P.sqlOptionalAction(
     action: P.() -> Optional<T>
-  ): Either<ServiceIssue, T> {
-    return lock.withLock {
+  ): Either<ServiceIssue, T> =
+    lock.withLock {
       try {
         val result = action()
         if (result.isPresent) {
@@ -35,5 +34,4 @@ object SqlHelper {
         Either.left(SqlError(dbIssue.message ?: "Unknown error"))
       }
     }
-  }
 }

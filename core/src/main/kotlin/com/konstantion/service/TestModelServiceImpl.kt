@@ -19,15 +19,18 @@ import org.springframework.stereotype.Service
 @Service
 data class TestModelServiceImpl(
   private val testPort: TestModelPort<TestModelEntity>,
-  private val questionPort: QuestionPort<QuestionEntity>
+  private val questionPort: QuestionPort<QuestionEntity>,
 ) : TestModelService {
   private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-  override fun getTestModelById(user: UserEntity, id: UUID): Either<ServiceIssue, TestModelEntity> {
+  override fun getTestModelById(
+    user: UserEntity,
+    id: UUID,
+  ): Either<ServiceIssue, TestModelEntity> {
     log.info("GetTestModelById[userId={}, username={}, id={}]", user.id(), user.username(), id)
     return when (user.role()) {
       Role.Admin,
-      Role.Teacher -> {
+      Role.Teacher, -> {
         testPort
           .sqlAction { findById(id).asMaybe() }
           .flatMap { maybeTest ->
@@ -52,7 +55,7 @@ data class TestModelServiceImpl(
     log.info("GetTestModels[userId={}, username={}]", user.id(), user.username())
     return when (user.role()) {
       Role.Admin,
-      Role.Teacher -> testPort.sqlAction { findAllByCreatorId(user.id()) }
+      Role.Teacher, -> testPort.sqlAction { findAllByCreatorId(user.id()) }
       Role.Student -> Forbidden.asEither("User is not allowed to get test models.")
     }
   }
@@ -62,19 +65,19 @@ data class TestModelServiceImpl(
     return when (user.role()) {
       Role.Admin -> testPort.sqlAction { findAll() }
       Role.Teacher,
-      Role.Student -> Forbidden.asEither("User is not allowed to get test models.")
+      Role.Student, -> Forbidden.asEither("User is not allowed to get test models.")
     }
   }
 
   override fun createTestModel(
     user: UserEntity,
-    params: TestModelService.CreateTestModelParams
+    params: TestModelService.CreateTestModelParams,
   ): Either<ServiceIssue, TestModelEntity> {
     log.info(
       "CreateTestModel[userId={}, username={}, params={}]",
       user.id(),
       user.username(),
-      params
+      params,
     )
     return if (user.isAdmin() || user.isTeacher()) {
       val toSave =
@@ -96,7 +99,7 @@ data class TestModelServiceImpl(
             "CreateTestModel[userId={}, username={}, result={}]",
             user.id(),
             user.username(),
-            result.value
+            result.value,
           )
           result
         }
@@ -109,14 +112,14 @@ data class TestModelServiceImpl(
   override fun updateTestModel(
     user: UserEntity,
     id: UUID,
-    params: TestModelService.UpdateTestModelParams
+    params: TestModelService.UpdateTestModelParams,
   ): Either<ServiceIssue, TestModelService.UpdateResult> {
     log.info(
       "UpdateTestModel[userId={}, username={}, id={}, params={}]",
       user.id(),
       user.username(),
       id,
-      params
+      params,
     )
     return if (user.isAdmin() || user.isTeacher()) {
       testPort
@@ -181,7 +184,7 @@ data class TestModelServiceImpl(
                       "UpdateTestModel[userId={}, username={}, result={}]",
                       user.id(),
                       user.username(),
-                      saveResult.value
+                      saveResult.value,
                     )
                     Either.right(TestModelService.UpdateResult(saveResult.value, violations))
                   }
@@ -198,7 +201,10 @@ data class TestModelServiceImpl(
     }
   }
 
-  override fun deleteTestModel(user: UserEntity, id: UUID): Either<ServiceIssue, TestModelEntity> {
+  override fun deleteTestModel(
+    user: UserEntity,
+    id: UUID,
+  ): Either<ServiceIssue, TestModelEntity> {
     log.info("DeleteTestModel[userId={}, username={}, id={}]", user.id(), user.username(), id)
 
     val maybeTestModel = testPort.sqlAction { findById(id).asMaybe() }
