@@ -1,47 +1,30 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth.jsx';
-import { authenticatedReq } from '@/utils/Requester.js';
-import { Endpoints } from '@/utils/Endpoints.js';
-import { ErrorType } from '@/utils/ErrorType.js';
-import { toast } from 'sonner';
-
-import Header from '@/components/Header.jsx';
+import React, {useCallback, useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {useAuth} from '@/hooks/useAuth.jsx';
+import {authenticatedReq} from '@/utils/Requester.js';
+import {Endpoints} from '@/utils/Endpoints.js';
+import {ErrorType} from '@/utils/ErrorType.js';
 import Loading from '@/components/Loading.jsx';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from '@/components/ui/select';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
+import {Badge} from '@/components/ui/badge';
+import {ScrollArea} from '@/components/ui/scroll-area';
+import {Separator} from '@/components/ui/separator';
+import {Checkbox} from '@/components/ui/checkbox';
+import {Label} from '@/components/ui/label';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import {
+    Activity,
+    AlertTriangle,
     BarChart3,
     BookOpenText,
     CheckCircle2,
     Percent,
     PieChart,
-    AlertTriangle,
-    Code2,
-    Eye,
-    Users,
-    Activity,
     TrendingUp,
-    TrendingDown,
-    Filter,
+    Users,
     XCircle,
-    ListChecks,
-    Clock,
-    HelpCircle,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import {cn} from '@/lib/utils';
 
 const CodeDisplay = ({ formatAndCode, title = 'Code Snippet' }) => {
     if (!formatAndCode || !formatAndCode.code) {
@@ -173,7 +156,7 @@ export default function StatisticsPage() {
                                 ? totalScore / relevantAttempts.length
                                 : null;
 
-                        const mockStats = {
+                        const state = {
                             immutableTestId: data.id,
                             testName: data.name,
                             totalConsideredAttempts: relevantAttempts.length,
@@ -183,7 +166,7 @@ export default function StatisticsPage() {
                                     ut.questionAnswers?.some(qa => qa.questionId === q.id)
                                 ).length;
 
-                                let timesCorrectlyMock = 0;
+                                let timesCorrectly = 0;
                                 let questionScoreSum = 0;
 
                                 relevantAttempts.forEach(ut => {
@@ -192,7 +175,7 @@ export default function StatisticsPage() {
                                     );
                                     if (userAnswerForThisQ) {
                                         const studentSelectedAnswerIds = new Set(
-                                            userAnswerForThisQ.answers.map(a => a.id)
+                                            userAnswerForThisQ.answers.map(a => a.variantId)
                                         );
                                         const correctVariantIds = new Set(
                                             q.correctVariants.map(v => v.id)
@@ -207,13 +190,13 @@ export default function StatisticsPage() {
                                                 correctVariantIds.size;
 
                                         if (isAttemptCorrect) {
-                                            timesCorrectlyMock++;
+                                            timesCorrectly++;
                                             questionScoreSum += 100;
                                         }
                                     }
                                 });
 
-                                const averageScoreForQMock =
+                                const averageScoreForQ =
                                     timesAnswered > 0 ? questionScoreSum / timesAnswered : null;
 
                                 const allVariantOptions = [
@@ -235,7 +218,7 @@ export default function StatisticsPage() {
                                         );
                                         if (
                                             userAnswerForThisQ?.answers.some(
-                                                ans => ans.id === variant.id
+                                                ans => ans.variantId === variant.id
                                             )
                                         ) {
                                             timesSelectedInRelevant++;
@@ -260,13 +243,13 @@ export default function StatisticsPage() {
                                     questionTextSnapshot: q.body,
                                     questionFormatAndCodeSnapshot: q.formatAndCode,
                                     totalTimesAnsweredInConsideredTests: timesAnswered,
-                                    timesAnsweredCorrectly: timesCorrectlyMock,
-                                    averageScoreForQuestion: averageScoreForQMock,
+                                    timesAnsweredCorrectly: timesCorrectly,
+                                    averageScoreForQuestion: averageScoreForQ,
                                     answerOptionStatistics: answerOptionStats,
                                 };
                             }),
                         };
-                        setTestStatistics(mockStats);
+                        setTestStatistics(state);
                     } else {
                         setTestStatistics(data);
                     }
@@ -460,12 +443,6 @@ export default function StatisticsPage() {
                                                 style={{ width: `${percentageSelected}%` }}
                                             ></div>
                                         </div>
-                                        {optStat.answerCode && (
-                                            <CodeDisplay
-                                                formatAndCode={optStat.answerCode}
-                                                title="Original Variant Code"
-                                            />
-                                        )}
                                     </li>
                                 );
                             })}

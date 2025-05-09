@@ -136,7 +136,7 @@ data class ImmutableTestService(
       is Either.Left -> {
         log.error(
           "Failed to save archived immutable tests: {}",
-          saveImmutableTestsResult.value.message()
+          saveImmutableTestsResult.value.message(),
         )
         return Either.left(saveImmutableTestsResult.value)
       }
@@ -312,7 +312,7 @@ data class ImmutableTestService(
       log.info(
         "Archiving test {}: Found {} IN_PROGRESS user tests to cancel.",
         id,
-        userTestsToCancel.size
+        userTestsToCancel.size,
       )
       userTestsToCancel.forEach { userTest ->
         userTest.status = UserTestStatus.CANCELLED
@@ -327,7 +327,7 @@ data class ImmutableTestService(
           log.error(
             "Failed to update user tests status during archive for immutable test {}: {}",
             id,
-            saveUserTestsResult.value
+            saveUserTestsResult.value,
           )
 
           return Either.left(saveUserTestsResult.value)

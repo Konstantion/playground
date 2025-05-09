@@ -10,8 +10,10 @@ import com.konstantion.entity.UserEntity
 import com.konstantion.entity.UserQuestionAnswerEntity
 import com.konstantion.entity.UserTestEntity
 import com.konstantion.entity.UserTestStatus
+import com.konstantion.entity.VariantEntity
 import com.konstantion.executor.TestModelExecutor
 import com.konstantion.model.Answer
+import com.konstantion.model.QuestionMetadata
 import com.konstantion.model.TestModel
 import com.konstantion.model.TestModelMetadata
 import com.konstantion.repository.AnswerRepository
@@ -132,10 +134,15 @@ data class UserTestService(
       }
 
     val idToQuestionEntityMap = immutableTestEntityDb.questions().associateBy { it.id() }
+    val idToVariantEntityMap =
+      immutableTestEntityDb
+        .questions()
+        .flatMap { question -> question.correctVariants + question.incorrectVariants }
+        .associateBy { it.id() }
     val allAnswersToPersist = mutableListOf<AnswerEntity>()
 
     val transientQuestionMetadataList =
-      generatedMetadata.questionMetadatas.map { generatedQuestionMetadata ->
+      generatedMetadata.questionMetadatas.map { generatedQuestionMetadata: QuestionMetadata ->
         val originalQuestionEntity =
           idToQuestionEntityMap[generatedQuestionMetadata.questionIdentifier]
             ?: return Either.left(
@@ -154,11 +161,25 @@ data class UserTestService(
 
         val transientCorrectAnswers =
           currentCorrectAnswersDto.map { answerDto ->
-            toAnswerEntity(answerDto, originalQuestionEntity)
+            val variant =
+              idToVariantEntityMap[answerDto.variantIdentifier]
+                ?: return Either.left(
+                  SqlError(
+                    "Consistency error: Variant ${answerDto.variantIdentifier} not found in ImmutableTest ${immutableTestEntityDb.id()}",
+                  ),
+                )
+            toAnswerEntity(answerDto, originalQuestionEntity, variant)
           }
         val transientIncorrectAnswers =
           currentIncorrectAnswersDto.map { answerDto ->
-            toAnswerEntity(answerDto, originalQuestionEntity)
+            val variant =
+              idToVariantEntityMap[answerDto.variantIdentifier]
+                ?: return Either.left(
+                  SqlError(
+                    "Consistency error: Variant ${answerDto.variantIdentifier} not found in ImmutableTest ${immutableTestEntityDb.id()}",
+                  ),
+                )
+            toAnswerEntity(answerDto, originalQuestionEntity, variant)
           }
 
         allAnswersToPersist.addAll(transientCorrectAnswers)
@@ -576,10 +597,12 @@ data class UserTestService(
   private fun toAnswerEntity(
     from: Answer,
     questionEntity: QuestionEntity,
+    variantEntity: VariantEntity,
   ): AnswerEntity =
     AnswerEntity().apply {
       this.question = questionEntity
       this.answer = from.text
+      this.variant = variantEntity
       this.taskId = from.executorTaskId.value
     }
 

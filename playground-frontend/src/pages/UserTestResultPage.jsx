@@ -57,6 +57,7 @@ const getUserTestStatusProps = status => {
 // --- Component to display individual question results ---
 // Renamed from UserTestResultPage to avoid naming conflict
 function QuestionResultDisplay({ questionMetadata, userAnswerData, isStudent }) {
+    console.log(userAnswerData)
     // Ensure userAnswerData and its answers property are defined before mapping
     const studentAnswerIds = new Set(userAnswerData?.answers?.map(a => a.id) || []);
     const correctMetadataAnswerIds = new Set(
@@ -77,13 +78,19 @@ function QuestionResultDisplay({ questionMetadata, userAnswerData, isStudent }) 
     return (
         <Card className="mb-4 dark:bg-slate-800 border dark:border-slate-700/50">
             <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold dark:text-slate-100">
-                    {questionMetadata?.text || 'Question text missing'}
-                </CardTitle>
-                <CardDescription className="text-xs dark:text-slate-400">
-                    Question ID: {questionMetadata?.questionId || 'N/A'} | Metadata ID:{' '}
-                    {questionMetadata?.id || 'N/A'}
-                </CardDescription>
+                {isStudent ?
+                    <CardTitle className="text-base font-semibold dark:text-slate-100">
+                        { 'Question' }
+                    </CardTitle>
+                : <>
+                    <CardTitle className="text-base font-semibold dark:text-slate-100">
+                        {questionMetadata?.text || 'Question text missing'}
+                    </CardTitle>
+                    <CardDescription className="text-xs dark:text-slate-400">
+                        Question ID: {questionMetadata?.questionId || 'N/A'} | Metadata ID:{' '}
+                        {questionMetadata?.id || 'N/A'}
+                    </CardDescription>
+                </>}
             </CardHeader>
             <CardContent className="text-sm space-y-3">
                 <div>
@@ -210,8 +217,9 @@ export default function UserTestResultPage() {
                     user: data.user || {},
                 };
                 // Pre-process map for easier lookup
+                console.log(details.questionAnswers);
                 details.studentAnswersMap = new Map(
-                    details.questionAnswers.map(qa => [qa.questionId, qa])
+                    details.questionAnswers.map(qa => [qa.questionMetadataId, qa])
                 );
 
                 setUserTest(details);
