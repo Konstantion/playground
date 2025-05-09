@@ -45,8 +45,9 @@ export default function ValidateCard({
             setIsValidating(false); // Ensure validating state is off
             setStatus('Success'); // Set status to Success
         } else if (!isValidating) {
-            // If not validated AND not currently in the process of validating, reset status
-            setStatus(null);
+            if (!status) {
+                setStatus(null);
+            }
         }
         // Only re-run if initialQuestion changes OR isValidating changes (to reset status when validation stops)
     }, [initialQuestion, isValidating]);
@@ -183,6 +184,7 @@ export default function ValidateCard({
     // --- Status Display Logic ---
     const getStatusDisplayProperties = () => {
         // Prioritize showing the "Validated" state if the flag is true
+        console.log(status)
         if (validated) {
             return {
                 icon: <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />,
@@ -193,6 +195,7 @@ export default function ValidateCard({
             };
         }
         // If not validated, check the fetched status
+        console.log("status", status)
         if (status && status.startsWith('Error')) {
             return {
                 icon: <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400" />,

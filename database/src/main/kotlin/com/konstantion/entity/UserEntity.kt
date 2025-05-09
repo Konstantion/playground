@@ -22,6 +22,8 @@ open class UserEntity {
 
   @Column(name = "password", nullable = false) open var password: String? = null
 
+  @Column(name = "email", nullable = true, unique = false) open var email: String? = null
+
   @Column(name = "role") @Enumerated(EnumType.STRING) open var role: Role? = null
 
   @Column(name = "anonymous", nullable = false) open var anonymous: Boolean = false

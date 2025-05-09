@@ -13,6 +13,8 @@ dependencies {
     implementation(libs.swagger.api)
     implementation(libs.kotlin.reflect)
     implementation(libs.jackson.module.kotlin)
+    implementation(libs.flyway.core)
+    implementation(libs.flyway.postgres)
 }
 
 // exclude log4j-to-slf4j and log4j-slf4j2-impl

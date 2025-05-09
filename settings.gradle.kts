@@ -66,6 +66,8 @@ dependencyResolutionManagement {
             library("swagger-common", "org.springdoc:springdoc-openapi-starter-common:2.0.2")
             library("kotlin-reflect", "org.jetbrains.kotlin:kotlin-reflect:2.0.20-RC")
             library("jackson-module-kotlin", "com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2")
+            library("flyway-core", "org.flywaydb:flyway-core:11.8.1")
+            library("flyway-postgres", "org.flywaydb:flyway-database-postgresql:11.8.1")
         }
     }
 }
