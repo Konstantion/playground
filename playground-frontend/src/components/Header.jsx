@@ -1,8 +1,16 @@
-import {useAuth} from '@/hooks/useAuth.jsx';
-import {Button} from '@/components/ui/button.js';
-import {pagesFor} from '@/pages/Pages.js'; // Import TestsPage key
-import {BarChart3, Briefcase, ClipboardList, LayoutDashboard, LogOut, Settings, UserCircle,} from 'lucide-react';
-import {cn} from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth.jsx';
+import { Button } from '@/components/ui/button.js';
+import { pagesFor } from '@/pages/Pages.js'; // Import TestsPage key
+import {
+    BarChart3,
+    Briefcase,
+    ClipboardList,
+    LayoutDashboard,
+    LogOut,
+    Settings,
+    UserCircle,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 // Mapping page keys to icons for the header navigation
 const pageIcons = {

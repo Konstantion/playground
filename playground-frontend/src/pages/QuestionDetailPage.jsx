@@ -1,24 +1,24 @@
-import React, {useEffect, useState} from 'react';
-import {useNavigate, useParams} from 'react-router-dom';
-import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert'; // Import Alert components
-import {Lock} from 'lucide-react'; // Import Lock icon
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'; // Import Alert components
+import { Lock } from 'lucide-react'; // Import Lock icon
 // ... other imports ...
 import Header from '@/components/Header.jsx';
 import Loading from '@/components/Loading.jsx';
 import NotFound from '@/components/NotFound.jsx';
-import {useAuth} from '@/hooks/useAuth.jsx';
-import {authenticatedReq} from '@/utils/Requester.js';
-import {Endpoints} from '@/utils/Endpoints.js';
-import {toast} from 'sonner';
-import {ErrorType} from '@/utils/ErrorType.js';
-import {RHome, Routes} from '@/rout/Routes.jsx';
+import { useAuth } from '@/hooks/useAuth.jsx';
+import { authenticatedReq } from '@/utils/Requester.js';
+import { Endpoints } from '@/utils/Endpoints.js';
+import { toast } from 'sonner';
+import { ErrorType } from '@/utils/ErrorType.js';
+import { RHome, Routes } from '@/rout/Routes.jsx';
 import QuestionPreview from '@/components/QuestionPreview.jsx';
 import PlaceholderConfigurator from '@/components/PlaceholderConfigurator.jsx';
 import CallArgsConfigurator from '@/components/CallArgsConfigurator.jsx';
 import AddVariant from '@/components/AddVariant.jsx';
-import {VariantsCarousel} from '@/components/VariantsCarousel.jsx';
+import { VariantsCarousel } from '@/components/VariantsCarousel.jsx';
 import ValidateCard from '@/components/ValidateCard.jsx';
-import {Card} from '@/components/ui/card.js';
+import { Card } from '@/components/ui/card.js';
 
 const State = Object.freeze({
     Loading: 'Loading',

@@ -1,6 +1,6 @@
 import React from 'react';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {CheckCircle, XCircle} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CheckCircle, XCircle } from 'lucide-react';
 
 export default function VariantsConfigurator({ correct, incorrect }) {
     return (
