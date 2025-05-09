@@ -45,7 +45,7 @@ data class AuthService(
       }
 
     if (user.password != params.password) {
-      return Either.left(UnexpectedAction("Invalid password"))
+      return Either.left(UnexpectedAction("Invalid password or username"))
     }
 
     return Either.right(UserAndToken(user, generateToken(user)))
@@ -78,6 +78,7 @@ data class AuthService(
       UserEntity().apply {
         username = params.username
         password = params.password
+        email = params.email
         role = params.role
         anonymous = false
       }
@@ -143,6 +144,7 @@ data class AuthService(
   data class RegisterParams(
     val username: String,
     val password: String,
+    val email: String,
     val role: Role,
   )
 }

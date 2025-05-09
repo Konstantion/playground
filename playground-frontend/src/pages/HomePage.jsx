@@ -9,7 +9,7 @@ import QuestionsPage from '@/pages/QuestionsPage.jsx';
 import { useNavigate, useParams } from 'react-router-dom';
 import { RHome } from '@/rout/Routes.jsx';
 import NotFound from '@/components/NotFound.jsx';
-import { StatisticsPage } from '@/pages/StatisticsPage.jsx';
+import StatisticsPage from '@/pages/StatisticsPage.jsx';
 import TestModelsPage from '@/pages/TestModelsPage.jsx';
 import TestsPage from '@/pages/TestsPage.jsx';
 import MyTestsPage from '@/pages/MyTestsPage.jsx';

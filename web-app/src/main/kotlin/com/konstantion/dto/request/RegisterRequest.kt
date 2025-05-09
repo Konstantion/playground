@@ -6,8 +6,9 @@ import com.konstantion.service.AuthService.RegisterParams
 data class RegisterRequest(
   val username: String,
   val password: String,
+  val email: String,
   val role: Role,
 ) {
   fun asParams(): RegisterParams =
-    RegisterParams(username = username, password = password, role = role)
+    RegisterParams(username = username, password = password, email = email, role = role)
 }

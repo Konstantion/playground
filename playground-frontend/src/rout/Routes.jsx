@@ -1,20 +1,18 @@
-// playground-frontend/src/rout/Routes.jsx
-
 import LoginPage from '../pages/LoginPage.jsx';
 import HomePage from '../pages/HomePage.jsx';
 import QuestionDetailPage from '@/pages/QuestionDetailPage.jsx';
 import TestModelDetailPage from '@/pages/TestModelDetailPage.jsx';
-import TestsPage from '@/pages/TestsPage.jsx'; // Admin/Teacher list view
-import TestDetailPage from '@/pages/TestDetailPage.jsx'; // Immutable Test detail view
+import TestsPage from '@/pages/TestsPage.jsx';
+import TestDetailPage from '@/pages/TestDetailPage.jsx';
 import TestTakingPage from '@/pages/TestTakingPage.jsx';
-import UserTestResultPage from '@/pages/UserTestResultPage.jsx'; // Import the test taking page component
+import UserTestResultPage from '@/pages/UserTestResultPage.jsx';
 
 export const RHome = '/home';
 export const RQuestions = '/questions';
 export const RTestModels = '/test_models';
-export const RTests = '/tests'; // Base for Admin/Teacher list view of Immutable Tests
+export const RTests = '/tests';
 export const RLogin = '/login';
-export const RTest = '/test'; // Define the base path for taking a test
+export const RTest = '/test';
 export const RUserTestResult = '/user_test_result';
 
 export const Routes = Object.freeze({
@@ -32,7 +30,7 @@ export const Routes = Object.freeze({
     },
     TestsList: {
         path: RTests,
-        element: <TestsPage />, // Rendered within HomePage based on section param
+        element: <TestsPage />,
         public: false,
     },
     TestDetail: {
