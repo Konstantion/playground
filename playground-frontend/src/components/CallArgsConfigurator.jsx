@@ -1,4 +1,3 @@
-// playground-frontend/src/components/CallArgsConfigurator.jsx
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.js';
@@ -24,9 +23,7 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Link2, MinusCircle, PlusCircle, Settings2 } from 'lucide-react';
 
-// Added isEditable prop
 export default function CallArgsConfigurator({ id, question, setQuestion, className, isEditable }) {
-    // ... (existing state and hooks remain the same) ...
     const { auth, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -45,7 +42,7 @@ export default function CallArgsConfigurator({ id, question, setQuestion, classN
             >
                 Argument Name
             </Label>
-            {/* Disable Select if not editable */}
+
             <Select value={callArgName} onValueChange={setCallArgName} disabled={!isEditable}>
                 <SelectTrigger
                     id="call-arg-name"
@@ -72,7 +69,7 @@ export default function CallArgsConfigurator({ id, question, setQuestion, classN
             >
                 Link to Placeholder Identifier
             </Label>
-            {/* Disable Select if not editable or no placeholders */}
+
             <Select
                 value={linkedIdentifier}
                 onValueChange={setLinkedIdentifier}
@@ -107,7 +104,6 @@ export default function CallArgsConfigurator({ id, question, setQuestion, classN
     );
 
     const handleAction = async () => {
-        // ... (action logic remains the same) ...
         setIsLoading(true);
         const body = {
             action: actionStr(action),
@@ -181,7 +177,6 @@ export default function CallArgsConfigurator({ id, question, setQuestion, classN
                 className
             )}
         >
-            {/* ... (CardHeader remains the same) ... */}
             <CardHeader className="pb-3 pt-4 px-4 sm:px-5">
                 <div className="flex items-center">
                     <Settings2 size={20} className="mr-2.5 text-sky-600 dark:text-sky-500" />
@@ -197,7 +192,6 @@ export default function CallArgsConfigurator({ id, question, setQuestion, classN
             </CardHeader>
             <CardContent className="flex-1 flex flex-col p-3 sm:p-4 min-h-0">
                 <Tabs value={action} onValueChange={setAction} className="flex flex-col flex-1">
-                    {/* Disable TabsList if not editable */}
                     <TabsList className="grid w-full grid-cols-2 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg">
                         <TabsTrigger
                             value={Action.ADD}
@@ -215,9 +209,7 @@ export default function CallArgsConfigurator({ id, question, setQuestion, classN
                         </TabsTrigger>
                     </TabsList>
 
-                    {/* Disable content if not editable */}
                     <fieldset disabled={!isEditable} className="flex-1 mt-4 flex flex-col">
-                        {/* Content for ADD Tab */}
                         <TabsContent value={Action.ADD} className="flex-1 mt-0">
                             <div className="space-y-4 p-1">
                                 {selectCallArgName()}
@@ -239,7 +231,6 @@ export default function CallArgsConfigurator({ id, question, setQuestion, classN
                             </div>
                         </TabsContent>
 
-                        {/* Content for REMOVE Tab */}
                         <TabsContent value={Action.REMOVE} className="flex-1 mt-0">
                             <div className="space-y-4 p-1">
                                 {selectCallArgName()}
@@ -252,13 +243,12 @@ export default function CallArgsConfigurator({ id, question, setQuestion, classN
                     </fieldset>
 
                     <div className="mt-auto pt-4">
-                        {/* Disable Button if not editable */}
                         <Button
                             onClick={handleAction}
                             className="w-full bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={
                                 isLoading ||
-                                !isEditable || // Disable if not editable
+                                !isEditable ||
                                 (action === Action.ADD && availablePlaceholders.length === 0)
                             }
                             title={
@@ -267,10 +257,8 @@ export default function CallArgsConfigurator({ id, question, setQuestion, classN
                                     : ''
                             }
                         >
-                            {/* ... (loading indicator logic remains the same) ... */}
                             {isLoading ? (
                                 <div className="flex items-center justify-center">
-                                    {/* SVG spinner */}
                                     <svg
                                         className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                                         xmlns="http://www.w3.org/2000/svg"

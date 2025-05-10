@@ -117,7 +117,7 @@ data class UserTestService(
       TestModel(
         id = immutableTestEntityDb.id(),
         name = immutableTestEntityDb.name(),
-        questions = questionsToProcess.map { it.toModel() }, // Use potentially shuffled list
+        questions = questionsToProcess.map { it.toModel() },
       )
     val generatedMetadata: TestModelMetadata =
       when (
@@ -608,6 +608,6 @@ data class UserTestService(
 
   data class UserAnswerParams(
     val testId: UUID,
-    val answers: Map<UUID, List<UUID>>, // QuestionMetadataID to list of chosen AnswerIDs
+    val answers: Map<UUID, List<UUID>>,
   )
 }

@@ -1,4 +1,3 @@
-// playground-frontend/src/components/QuestionPreview.jsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,7 +13,7 @@ import {
     Trash2,
     XCircle,
 } from 'lucide-react';
-// ... other imports ...
+
 import { Badge } from '@/components/ui/badge';
 import { prettierStr } from '@/entities/Placeholder.js';
 import { Input } from '@/components/ui/input.js';
@@ -42,9 +41,7 @@ import { QuestionsPage } from '@/pages/Pages.js';
 import { between } from '@/utils/Strings.js';
 import { cn } from '@/lib/utils.js';
 
-// Added isEditable prop
 export default function QuestionPreview({ question, className, setQuestion, isEditable }) {
-    // ... (existing state and useEffect hooks remain the same) ...
     const { auth, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -76,7 +73,6 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
     }, []);
 
     const placeholderRegex = useMemo(() => {
-        // ... (regex logic remains the same) ...
         const placeholderKeys = Object.keys(question.placeholderDefinitions);
         if (placeholderKeys.length === 0) return null;
         const keys = placeholderKeys
@@ -86,7 +82,6 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
     }, [question.placeholderDefinitions]);
 
     const doUpdateReq = async (body, successMessage) => {
-        // ... (update logic remains the same) ...
         await authenticatedReq(
             `${Endpoints.Questions.Base}/${question.id}`,
             'PATCH',
@@ -119,7 +114,6 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
     };
 
     const onNameSave = async () => {
-        // ... (validation and update logic remains the same) ...
         if (!between(draftName, 1, 100)) {
             toast.error('Question name must be 1-100 characters.', { closeButton: true });
             return;
@@ -129,7 +123,6 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
     };
 
     const onFormatAndCodeSave = async () => {
-        // ... (validation and update logic remains the same) ...
         if (!between(draftCode, 1, 1000)) {
             toast.error('Code must be 1-1000 characters.', { closeButton: true });
             return;
@@ -146,7 +139,6 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
     };
 
     const onDeleteConfirm = async () => {
-        // ... (delete logic remains the same) ...
         setIsDeleteOpen(false);
         await authenticatedReq(
             `${Endpoints.Questions.Base}/${question.id}`,
@@ -175,14 +167,14 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                     })}
                     <h4 className="font-semibold text-sm uppercase tracking-wider">{title}</h4>
                 </div>
-                {/* Disable edit button if not editable */}
+
                 {onEdit && (
                     <Button
                         variant="ghost"
                         size="icon"
                         className="text-slate-500 hover:text-sky-600 dark:hover:text-sky-500 h-8 w-8 disabled:text-slate-400 disabled:dark:text-slate-600 disabled:hover:bg-transparent disabled:cursor-not-allowed"
                         onClick={onEdit}
-                        disabled={editDisabled || !isEditable} // Disable based on prop
+                        disabled={editDisabled || !isEditable}
                         title={!isEditable ? 'Cannot edit an immutable question' : 'Edit'}
                     >
                         {isEditable ? <Edit size={16} /> : <Lock size={16} />}
@@ -194,7 +186,6 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
     );
 
     const applyPlaceholderHighlighting = (editor, monaco) => {
-        // ... (highlighting logic remains the same) ...
         if (!editor || !monaco || !placeholderRegex) return [];
 
         const model = editor.getModel();
@@ -235,7 +226,7 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                         Question Details{' '}
                         <span className="text-sky-600 dark:text-sky-500">#{question.id}</span>
                     </CardTitle>
-                    {/* Disable delete button if not editable */}
+
                     <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
                         <DialogTrigger asChild>
                             <Button
@@ -254,7 +245,6 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="dark:bg-slate-800">
-                            {/* ... (Delete Dialog content remains the same) ... */}
                             <DialogHeader>
                                 <DialogTitle className="text-red-600 dark:text-red-500">
                                     Confirm Deletion
@@ -281,7 +271,7 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                         </DialogContent>
                     </Dialog>
                 </div>
-                {/* Add Public/Immutable Status Badge */}
+
                 <Badge
                     variant={isEditable ? 'secondary' : 'outline'}
                     className={cn(
@@ -298,10 +288,9 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
             <CardContent className="flex-1 p-0 overflow-hidden min-h-0">
                 <ScrollArea className="h-full max-h-[calc(80vh-120px)] sm:max-h-[calc(100vh-250px)] md:max-h-[600px] lg:max-h-[70vh] xl:max-h-[65vh]">
                     <div className="p-4 sm:p-5 space-y-4">
-                        {/* Name Section */}
                         <Dialog open={isNameOpen} onOpenChange={setIsNameOpen}>
                             <InfoSection
-                                title="Name / Body" // Updated title for clarity
+                                title="Name / Body"
                                 icon={<Info />}
                                 onEdit={() => {
                                     setDraftName(question.body);
@@ -313,9 +302,8 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                                     {question.body}
                                 </p>
                             </InfoSection>
-                            {/* Edit Name Dialog */}
+
                             <DialogContent className="dark:bg-slate-800">
-                                {/* ... (Dialog content remains the same) ... */}
                                 <DialogHeader>
                                     <DialogTitle className="dark:text-slate-100">
                                         Edit Question Name / Body
@@ -347,9 +335,7 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                             </DialogContent>
                         </Dialog>
 
-                        {/* Language Section */}
                         <InfoSection title="Language" icon={<Languages />}>
-                            {/* ... (content remains the same) ... */}
                             <Badge
                                 variant="secondary"
                                 className="text-sm dark:bg-slate-700 dark:text-sky-400"
@@ -358,7 +344,6 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                             </Badge>
                         </InfoSection>
 
-                        {/* Format & Code Section */}
                         <Dialog open={isFCOpen} onOpenChange={setIsFCOpen}>
                             <InfoSection
                                 title="Formatted Code & Language"
@@ -370,7 +355,6 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                                 }}
                                 editDisabled={!isEditable} // Disable edit if not editable
                             >
-                                {/* ... (Display-only Monaco Editor remains the same) ... */}
                                 <div className="h-40 border dark:border-slate-700 rounded-md overflow-hidden relative bg-white dark:bg-slate-900">
                                     <Editor
                                         key={`display-${question.id}-${question.formatAndCode.code}`}
@@ -397,9 +381,8 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                                     />
                                 </div>
                             </InfoSection>
-                            {/* Edit Format & Code Dialog */}
+
                             <DialogContent className="max-w-3xl w-[95vw] sm:w-full dark:bg-slate-800">
-                                {/* ... (Dialog content remains the same) ... */}
                                 <DialogHeader>
                                     <DialogTitle className="dark:text-slate-100">
                                         Edit Format & Code
@@ -479,12 +462,10 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                             </DialogContent>
                         </Dialog>
 
-                        {/* Validation Status Section */}
                         <InfoSection
                             title="Validation Status"
                             icon={question.validated ? <CheckCircle /> : <XCircle />}
                         >
-                            {/* ... (content remains the same) ... */}
                             {question.validated ? (
                                 <span className="inline-flex items-center text-green-600 dark:text-green-400">
                                     <CheckCircle className="w-5 h-5 mr-1.5" /> Validated
@@ -496,9 +477,7 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                             )}
                         </InfoSection>
 
-                        {/* Placeholders Section */}
                         <InfoSection title="Placeholders" icon={<Tag />}>
-                            {/* ... (content remains the same) ... */}
                             {Object.keys(question.placeholderDefinitions).length > 0 ? (
                                 <div className="flex flex-wrap gap-2">
                                     {Object.entries(question.placeholderDefinitions).map(
@@ -523,9 +502,7 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                             )}
                         </InfoSection>
 
-                        {/* Call Arguments Section */}
                         <InfoSection title="Call Arguments" icon={<Tag />}>
-                            {/* ... (content remains the same) ... */}
                             {question.callArgs && Object.keys(question.callArgs).length > 0 ? (
                                 <div className="flex flex-wrap gap-2">
                                     {Object.values(question.callArgs).map(value => (
@@ -551,7 +528,6 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                             )}
                         </InfoSection>
 
-                        {/* Created At Section */}
                         <InfoSection title="Created At" icon={<CalendarDays />}>
                             <p>{new Date(question.createdAt).toLocaleString()}</p>
                         </InfoSection>

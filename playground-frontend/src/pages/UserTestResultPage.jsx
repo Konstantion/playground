@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import Loading from '@/components/Loading.jsx';
 import NotFound from '@/components/NotFound.jsx';
 import Header from '@/components/Header.jsx';
-import { RHome } from '@/rout/Routes.jsx'; // Import necessary routes
+import { RHome } from '@/rout/Routes.jsx';
 import {
     AlertTriangle,
     ArrowLeft,
@@ -26,9 +26,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import { Role } from '@/entities/Role.js'; // For visual separation
+import { Role } from '@/entities/Role.js';
 
-// Re-use or redefine status helpers if not globally available
 const UserTestStatus = {
     NOT_STARTED: 'NOT_STARTED',
     IN_PROGRESS: 'IN_PROGRESS',
@@ -54,43 +53,41 @@ const getUserTestStatusProps = status => {
     }
 };
 
-// --- Component to display individual question results ---
-// Renamed from UserTestResultPage to avoid naming conflict
 function QuestionResultDisplay({ questionMetadata, userAnswerData, isStudent }) {
-    console.log(userAnswerData)
-    // Ensure userAnswerData and its answers property are defined before mapping
+    console.log(userAnswerData);
+
     const studentAnswerIds = new Set(userAnswerData?.answers?.map(a => a.id) || []);
     const correctMetadataAnswerIds = new Set(
         questionMetadata?.correctAnswers?.map(a => a.id) || []
     );
 
-    // Determine if the student's answer for this question is correct
     const isCorrect =
         studentAnswerIds.size === correctMetadataAnswerIds.size &&
         [...studentAnswerIds].every(id => correctMetadataAnswerIds.has(id));
 
-    // Combine all possible answers (correct and incorrect) from the metadata for display
     const allPossibleAnswers = [
         ...(questionMetadata?.correctAnswers || []),
         ...(questionMetadata?.incorrectAnswers || []),
-    ].sort((a, b) => (a.id || '').localeCompare(b.id || '')); // Sort consistently for display, handle potential null IDs
+    ].sort((a, b) => (a.id || '').localeCompare(b.id || ''));
 
     return (
         <Card className="mb-4 dark:bg-slate-800 border dark:border-slate-700/50">
             <CardHeader className="pb-2">
-                {isStudent ?
+                {isStudent ? (
                     <CardTitle className="text-base font-semibold dark:text-slate-100">
-                        { 'Question' }
+                        {'Question'}
                     </CardTitle>
-                : <>
-                    <CardTitle className="text-base font-semibold dark:text-slate-100">
-                        {questionMetadata?.text || 'Question text missing'}
-                    </CardTitle>
-                    <CardDescription className="text-xs dark:text-slate-400">
-                        Question ID: {questionMetadata?.questionId || 'N/A'} | Metadata ID:{' '}
-                        {questionMetadata?.id || 'N/A'}
-                    </CardDescription>
-                </>}
+                ) : (
+                    <>
+                        <CardTitle className="text-base font-semibold dark:text-slate-100">
+                            {questionMetadata?.text || 'Question text missing'}
+                        </CardTitle>
+                        <CardDescription className="text-xs dark:text-slate-400">
+                            Question ID: {questionMetadata?.questionId || 'N/A'} | Metadata ID:{' '}
+                            {questionMetadata?.id || 'N/A'}
+                        </CardDescription>
+                    </>
+                )}
             </CardHeader>
             <CardContent className="text-sm space-y-3">
                 <div>
@@ -105,14 +102,14 @@ function QuestionResultDisplay({ questionMetadata, userAnswerData, isStudent }) 
                                     className={cn(
                                         'flex items-center',
                                         isStudentSelection ? 'font-bold' : '',
-                                        // Highlight correct answers green, incorrect selections red
+
                                         isCorrectAnswer && !isStudent
                                             ? 'text-green-700 dark:text-green-400'
                                             : 'text-slate-700 dark:text-slate-300',
                                         isStudentSelection &&
                                             !isCorrectAnswer &&
                                             !isStudent &&
-                                            'text-red-700 dark:text-red-400' // Style incorrect selections red
+                                            'text-red-700 dark:text-red-400'
                                     )}
                                 >
                                     {
@@ -174,16 +171,14 @@ function QuestionResultDisplay({ questionMetadata, userAnswerData, isStudent }) 
         </Card>
     );
 }
-// --- END: QuestionResultDisplay Component ---
 
-// --- Main Page Component ---
 export default function UserTestResultPage() {
-    const { userTestId } = useParams(); // Get userTestId from route params
+    const { userTestId } = useParams();
     const navigate = useNavigate();
     const { auth, logout } = useAuth();
 
     const [userTest, setUserTest] = useState(null);
-    const [pageStatus, setPageStatus] = useState('loading'); // 'loading', 'loaded', 'notfound', 'error'
+    const [pageStatus, setPageStatus] = useState('loading');
 
     const fetchUserTest = useCallback(async () => {
         if (!userTestId || !auth.accessToken) {
@@ -193,7 +188,7 @@ export default function UserTestResultPage() {
         }
         setPageStatus('loading');
         await authenticatedReq(
-            `${Endpoints.UserTest.Base}/${userTestId}`, // Use the GET endpoint for specific user test
+            `${Endpoints.UserTest.Base}/${userTestId}`,
             'GET',
             null,
             auth.accessToken,
@@ -216,7 +211,7 @@ export default function UserTestResultPage() {
                         : [],
                     user: data.user || {},
                 };
-                // Pre-process map for easier lookup
+
                 console.log(details.questionAnswers);
                 details.studentAnswersMap = new Map(
                     details.questionAnswers.map(qa => [qa.questionMetadataId, qa])
@@ -233,7 +228,6 @@ export default function UserTestResultPage() {
         fetchUserTest();
     }, [fetchUserTest]);
 
-    // --- Render states ---
     if (pageStatus === 'loading') {
         return (
             <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col">
@@ -267,7 +261,6 @@ export default function UserTestResultPage() {
                     </p>
                     <Button onClick={() => navigate(-1)} variant="outline" className="mt-4">
                         {' '}
-                        {/* Go back */}
                         <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
                     </Button>
                 </div>
@@ -276,14 +269,13 @@ export default function UserTestResultPage() {
     }
 
     const statusProps = getUserTestStatusProps(userTest.status);
-    const immutableTestId = userTest.testId; // Get the parent immutable test ID
+    const immutableTestId = userTest.testId;
 
     return (
         <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col selection:bg-sky-500 selection:text-white">
             <Header page={null} setPage={p => navigate(`${RHome}/${p}`)} />
 
             <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-5xl mx-auto w-full">
-                {/* Back Button to the Immutable Test Detail Page */}
                 <Button
                     onClick={() => navigate(-1)}
                     variant="outline"
@@ -293,7 +285,6 @@ export default function UserTestResultPage() {
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
 
-                {/* Summary Card */}
                 <Card className="mb-6 shadow-lg rounded-xl dark:bg-slate-800 border dark:border-slate-700/50">
                     <CardHeader className="pb-4">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -368,17 +359,15 @@ export default function UserTestResultPage() {
                     </CardContent>
                 </Card>
 
-                {/* Questions Breakdown */}
                 <h2 className="text-xl font-semibold mb-4 dark:text-slate-200">
                     Question Breakdown
                 </h2>
                 {userTest.testMetadata?.questionMetadata?.length > 0 ? (
                     userTest.testMetadata.questionMetadata.map(qMeta => (
-                        // *** CORRECTED: Use QuestionResultDisplay here ***
                         <QuestionResultDisplay
-                            key={qMeta.id || qMeta.questionId} // Use unique key
+                            key={qMeta.id || qMeta.questionId}
                             questionMetadata={qMeta}
-                            userAnswerData={userTest.studentAnswersMap.get(qMeta.id)} // Use questionId for lookup if map uses it
+                            userAnswerData={userTest.studentAnswersMap.get(qMeta.id)}
                             isStudent={auth.user.role === Role.Student}
                         />
                     ))

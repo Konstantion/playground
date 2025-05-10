@@ -1,6 +1,6 @@
 import { useAuth } from '@/hooks/useAuth.jsx';
 import { Button } from '@/components/ui/button.js';
-import { pagesFor } from '@/pages/Pages.js'; // Import TestsPage key
+import { pagesFor } from '@/pages/Pages.js';
 import {
     BarChart3,
     Briefcase,
@@ -12,17 +12,15 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Mapping page keys to icons for the header navigation
 const pageIcons = {
-    TestsPage: <ClipboardList size={16} />, // Use TestsPage key
+    TestsPage: <ClipboardList size={16} />,
     TestModels: <Briefcase size={16} />,
     Questions: <LayoutDashboard size={16} />,
     Statistics: <BarChart3 size={16} />,
-    // Add more mappings as needed
 };
 
 const Header = ({ page, setPage }) => {
-    const { logout, auth } = useAuth(); // Authentication context
+    const { logout, auth } = useAuth();
 
     const accessiblePages = pagesFor(auth.user.role);
 

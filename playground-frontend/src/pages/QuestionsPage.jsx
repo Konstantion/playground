@@ -27,7 +27,7 @@ import {
     PlusCircle,
     Search,
     XCircle,
-} from 'lucide-react'; // Added icons
+} from 'lucide-react';
 import { authenticatedReq } from '@/utils/Requester.js';
 import { Endpoints } from '@/utils/Endpoints.js';
 import { useAuth } from '@/hooks/useAuth.jsx';
@@ -39,20 +39,17 @@ import Loading from '@/components/Loading.jsx';
 import { between, blank } from '@/utils/Strings.js';
 import { Badge } from '@/components/ui/badge';
 
-// Page for displaying and creating Questions
 const QuestionsPage = () => {
-    const { auth, logout } = useAuth(); // Authentication context
-    const navigate = useNavigate(); // Navigation hook
+    const { auth, logout } = useAuth();
+    const navigate = useNavigate();
 
-    // State for new question form, list of questions, search, and loading
     const [questionName, setQuestionName] = useState('');
-    const [questionLang, setQuestionLang] = useState(Object.values(Lang)[0] || ''); // Default to first language or empty
+    const [questionLang, setQuestionLang] = useState(Object.values(Lang)[0] || '');
     const [search, setSearch] = useState('');
-    const [dataItems, setDataItems] = useState([]); // Stores converted question data for display
+    const [dataItems, setDataItems] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isCreating, setIsCreating] = useState(false); // Loading state for creation
+    const [isCreating, setIsCreating] = useState(false);
 
-    // Fetch existing questions when the component mounts
     useEffect(() => {
         const fetchQuestions = async () => {
             setLoading(true);
@@ -62,7 +59,6 @@ const QuestionsPage = () => {
                 null,
                 auth.accessToken,
                 (type, message) => {
-                    // Error callback
                     setLoading(false);
                     toast.error(message || 'Failed to load questions.', {
                         closeButton: true,
@@ -74,8 +70,6 @@ const QuestionsPage = () => {
                     }
                 },
                 questions => {
-                    // Success callback
-                    // Ensure questions is an array before mapping
                     const questionsData = Array.isArray(questions) ? questions : [];
                     const converted = questionsData.map(convert);
                     setDataItems(converted);
@@ -85,13 +79,10 @@ const QuestionsPage = () => {
         };
 
         fetchQuestions();
-    }, [auth.accessToken, logout, navigate]); // Dependencies
+    }, [auth.accessToken, logout, navigate]);
 
-    // Handler for creating a new question
     const handleCreateQuestion = async () => {
-        // Validate inputs
         if (!between(questionName.trim(), 1, 100)) {
-            // Increased max length for name
             toast.error('Question name must be 1-100 characters.', {
                 closeButton: true,
                 duration: 3000,
@@ -107,12 +98,11 @@ const QuestionsPage = () => {
 
         setIsCreating(true);
         await authenticatedReq(
-            Endpoints.Questions.Base, // Endpoint for creating a question
+            Endpoints.Questions.Base,
             'POST',
-            { body: questionName.trim(), lang: questionLang }, // Request body
+            { body: questionName.trim(), lang: questionLang },
             auth.accessToken,
             (type, message) => {
-                // Error callback
                 toast.error(message || 'Failed to create question.', {
                     closeButton: true,
                     duration: 5000,
@@ -124,19 +114,17 @@ const QuestionsPage = () => {
                 setIsCreating(false);
             },
             question => {
-                // Success callback
                 toast.success(`Question "${question.body}" created successfully!`, {
                     duration: 3000,
                 });
-                setQuestionName(''); // Clear input field
-                // setQuestionLang(Object.values(Lang)[0] || ''); // Reset language if needed
-                setDataItems(prev => [...prev, convert(question)]); // Add new question to the list
+                setQuestionName('');
+
+                setDataItems(prev => [...prev, convert(question)]);
                 setIsCreating(false);
             }
         );
     };
 
-    // Helper function to convert raw question data to the format needed for display
     const convert = question => ({
         id: question.id,
         name: question.body,

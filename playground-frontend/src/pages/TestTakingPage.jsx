@@ -5,7 +5,7 @@ import { authenticatedReq } from '@/utils/Requester';
 import { Endpoints } from '@/utils/Endpoints';
 import { ErrorType } from '@/utils/ErrorType';
 import { toast } from 'sonner';
-import { RHome } from '@/rout/Routes'; // Import RHome
+import { RHome } from '@/rout/Routes';
 import Loading from '@/components/Loading';
 import NotFound from '@/components/NotFound';
 import { Button } from '@/components/ui/button';
@@ -34,7 +34,6 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-// Define Status constants matching backend enum
 const UserTestStatus = {
     NOT_STARTED: 'NOT_STARTED',
     IN_PROGRESS: 'IN_PROGRESS',
@@ -69,29 +68,25 @@ export default function TestTakingPage() {
     const [timeLeft, setTimeLeft] = useState(null);
     const timerIntervalRef = useRef(null);
 
-    // NEW: Callback for the top-left button
     const handleTopLeftButtonClick = useCallback(() => {
         navigate(`${RHome}/Tests`);
-    }, [navigate, RHome, userTestId]); // Add dependencies used within the callback
+    }, [navigate, RHome, userTestId]);
 
-    // Submission handler (memoized)
     const handleSubmit = useCallback(
         async (isAutoSubmit = false) => {
-            // Prevent double submission or submitting if not in progress
             if (
                 status !== 'loaded' ||
                 !testData ||
                 testData.status !== UserTestStatus.IN_PROGRESS
             ) {
                 if (!isAutoSubmit) {
-                    // Don't show toast for auto-submit if already completed/error
                     toast.warning('Cannot submit test at this time.', { duration: 3000 });
                 }
                 return;
             }
 
-            setStatus('submitting'); // Set submitting state
-            if (timerIntervalRef.current) clearInterval(timerIntervalRef.current); // Stop timer
+            setStatus('submitting');
+            if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
 
             await authenticatedReq(
                 `${Endpoints.UserTest.Base}/submit`,
@@ -102,13 +97,12 @@ export default function TestTakingPage() {
                 },
                 auth.accessToken,
                 (type, msg) => {
-                    setStatus('loaded'); // Revert status to allow retry? Or set to 'error'? Let's allow retry.
+                    setStatus('loaded');
                     toast.error(`Submission failed: ${msg || 'Unknown error'}`, {
                         duration: 5000,
                         closeButton: true,
                     });
                     if (type === ErrorType.TokenExpired) logout();
-                    // Consider restarting timer if appropriate and time hasn't run out
                 },
                 completedTestData => {
                     setStatus('completed');
@@ -121,15 +115,14 @@ export default function TestTakingPage() {
             );
         },
         [userTestId, userAnswers, auth.accessToken, logout, status, testData]
-    ); // Include status and testData
+    );
 
-    // Timer logic (memoized)
     const startTimer = useCallback(
         (startTimeMillis, endTimeMillis) => {
             if (!endTimeMillis || !startTimeMillis) return;
 
             const now = Date.now();
-            // Calculate remaining time based on absolute end time and current time
+
             const initialTimeLeft = Math.max(0, Math.floor((endTimeMillis - now) / 1000));
             setTimeLeft(initialTimeLeft);
 
@@ -142,7 +135,7 @@ export default function TestTakingPage() {
                         toast.error("Time's up! Submitting your answers automatically.", {
                             duration: 5000,
                         });
-                        handleSubmit(true); // Auto-submit
+                        handleSubmit(true);
                         return 0;
                     }
                     return prevTime - 1;
@@ -150,17 +143,16 @@ export default function TestTakingPage() {
             }, 1000);
         },
         [handleSubmit]
-    ); // Depend only on handleSubmit
+    );
 
-    // Fetch Test Data Effect
     useEffect(() => {
         if (!userTestId) {
             setStatus('error');
             toast.error('Invalid Test Attempt ID.');
-            navigate(`${RHome}/Tests`); // Redirect if ID is missing
+            navigate(`${RHome}/Tests`);
             return;
         }
-        let isMounted = true; // Flag to prevent state updates on unmounted component
+        let isMounted = true;
 
         const fetchTestData = async () => {
             setStatus('loading');
@@ -170,7 +162,7 @@ export default function TestTakingPage() {
                 null,
                 auth.accessToken,
                 (type, msg) => {
-                    if (!isMounted) return; // Don't update state if unmounted
+                    if (!isMounted) return;
                     setStatus('error');
                     toast.error(`Failed to load test: ${msg || 'Unknown error'}`, {
                         duration: 4000,
@@ -178,9 +170,8 @@ export default function TestTakingPage() {
                     if (type === ErrorType.TokenExpired) logout();
                 },
                 data => {
-                    if (!isMounted) return; // Don't update state if unmounted
+                    if (!isMounted) return;
 
-                    // Validate fetched data status
                     if (data.status !== UserTestStatus.IN_PROGRESS) {
                         setStatus('error');
                         const message =
@@ -188,21 +179,19 @@ export default function TestTakingPage() {
                                 ? "Test not started. Please start it from 'My Tests'."
                                 : `Cannot take test. Status: ${data.status}`;
                         toast.error(message, { duration: 5000 });
-                        navigate(`${RHome}/Tests`); // Redirect back to list
+                        navigate(`${RHome}/Tests`);
                         return;
                     }
 
                     setTestData(data);
                     setStatus('loaded');
-                    setUserAnswers({}); // Reset answers when loading a test
+                    setUserAnswers({});
                     setCurrentQuestionIndex(0);
 
-                    // Start timer only if expiresAfter is present (absolute timestamp)
-                    // And startedAt is also present (should be if IN_PROGRESS)
                     if (data.startedAt && data.immutableTest?.expiresAfter) {
                         startTimer(data.startedAt, data.immutableTest.expiresAfter);
                     } else {
-                        setTimeLeft(null); // No time limit
+                        setTimeLeft(null);
                     }
                 }
             );
@@ -210,28 +199,24 @@ export default function TestTakingPage() {
 
         fetchTestData();
 
-        // Cleanup function
         return () => {
-            isMounted = false; // Set flag when component unmounts
+            isMounted = false;
             if (timerIntervalRef.current) {
-                clearInterval(timerIntervalRef.current); // Clear timer on unmount
+                clearInterval(timerIntervalRef.current);
             }
         };
-        // **CRITICAL FIX**: Removed startTimer from dependencies
-    }, [userTestId, auth.accessToken, logout, navigate]); // Only depend on things that trigger a refetch
+    }, [userTestId, auth.accessToken, logout, navigate]);
 
-    // Cleanup timer specifically when component unmounts (redundant but safe)
     useEffect(() => {
         return () => {
             if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
         };
     }, []);
 
-    // --- Answer Handling ---
     const handleAnswerChange = (questionMetadataId, answerId, isChecked) => {
         const currentQuestionMeta =
             testData?.testMetadata?.questionMetadata?.[currentQuestionIndex];
-        if (!currentQuestionMeta) return; // Should not happen if loaded
+        if (!currentQuestionMeta) return;
 
         const questionType = getQuestionType(currentQuestionMeta);
 
@@ -242,7 +227,6 @@ export default function TestTakingPage() {
             if (questionType === QuestionType.SINGLE_CHOICE) {
                 newAnswers = [answerId];
             } else {
-                // MULTIPLE_CHOICE
                 if (isChecked) {
                     newAnswers = [...new Set([...currentAnswers, answerId])];
                 } else {
@@ -257,7 +241,6 @@ export default function TestTakingPage() {
         });
     };
 
-    // --- Navigation ---
     const goToNext = () => {
         if (currentQuestionIndex < (testData?.testMetadata?.questionMetadata?.length || 0) - 1) {
             setCurrentQuestionIndex(prev => prev + 1);
@@ -270,11 +253,9 @@ export default function TestTakingPage() {
         }
     };
 
-    // --- Rendering Logic ---
     if (status === 'loading') return <Loading message="Loading test..." />;
     if (status === 'error' || !testData) return <NotFound message="Could not load the test." />;
 
-    // --- Completed View ---
     if (status === 'completed') {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100 dark:bg-slate-900 p-6">
@@ -297,9 +278,8 @@ export default function TestTakingPage() {
         );
     }
 
-    // --- Test Taking View ---
     const currentQuestionMeta = testData.testMetadata?.questionMetadata?.[currentQuestionIndex];
-    // Add extra safety check
+
     if (!currentQuestionMeta) {
         console.error(
             'Error: Could not find current question metadata at index',
@@ -310,7 +290,7 @@ export default function TestTakingPage() {
     }
 
     const questionType = getQuestionType(currentQuestionMeta);
-    // Ensure answers are arrays before spreading
+
     const correctAnswers = Array.isArray(currentQuestionMeta.correctAnswers)
         ? currentQuestionMeta.correctAnswers
         : [];
@@ -318,14 +298,13 @@ export default function TestTakingPage() {
         ? currentQuestionMeta.incorrectAnswers
         : [];
     const allAnswers = [...correctAnswers, ...incorrectAnswers];
-    // TODO: Shuffle 'allAnswers' if testData.immutableTest.shuffleVariants is true
 
     const selectedAnswersSet = new Set(userAnswers[currentQuestionMeta.id] || []);
     const progressValue =
         ((currentQuestionIndex + 1) / (testData.testMetadata?.questionMetadata?.length || 1)) * 100;
 
     const formatTime = seconds => {
-        if (seconds === null || seconds < 0) return '--:--'; // Handle null or negative
+        if (seconds === null || seconds < 0) return '--:--';
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
@@ -337,10 +316,10 @@ export default function TestTakingPage() {
                 <div className="flex justify-between items-center max-w-5xl mx-auto">
                     <div className="flex items-center space-x-2 sm:space-x-3">
                         <Button
-                            variant="outline" // Or "ghost" for a less prominent look
-                            size="icon" // Makes it a small square button, good for an icon
+                            variant="outline"
+                            size="icon"
                             onClick={handleTopLeftButtonClick}
-                            aria-label="Back to tests" // For accessibility
+                            aria-label="Back to tests"
                             className="dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
                         >
                             <ChevronLeft className="h-5 w-5" />
@@ -370,10 +349,9 @@ export default function TestTakingPage() {
                             {testData.testMetadata?.questionMetadata?.length || 0}
                         </CardDescription>
                         <CardTitle className="text-lg font-medium text-slate-900 dark:text-slate-50 leading-relaxed">
-                            {/* Use dangerouslySetInnerHTML ONLY if question text is guaranteed to be safe HTML, otherwise render as text */}
                             {currentQuestionMeta.text}
                         </CardTitle>
-                        {/* Display Formatted Code if available */}
+
                         {currentQuestionMeta.formatAndCode?.code && (
                             <div className="mt-3 p-3 bg-slate-100 dark:bg-slate-700/50 rounded text-sm border dark:border-slate-600">
                                 <pre className="whitespace-pre-wrap font-mono text-slate-700 dark:text-slate-300">
@@ -383,7 +361,6 @@ export default function TestTakingPage() {
                         )}
                     </CardHeader>
                     <CardContent>
-                        {/* Answer Options */}
                         {questionType === QuestionType.SINGLE_CHOICE ? (
                             <RadioGroup
                                 value={selectedAnswersSet.values().next().value || ''}
@@ -411,7 +388,6 @@ export default function TestTakingPage() {
                                 ))}
                             </RadioGroup>
                         ) : (
-                            // MULTIPLE_CHOICE
                             <div className="space-y-3">
                                 {allAnswers.map(answer => (
                                     <div
@@ -460,7 +436,6 @@ export default function TestTakingPage() {
                                 Next <ChevronRight className="ml-1 h-4 w-4" />
                             </Button>
                         ) : (
-                            // Use AlertDialog for final submission confirmation
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button
@@ -487,7 +462,7 @@ export default function TestTakingPage() {
                                             Cancel
                                         </AlertDialogCancel>
                                         <AlertDialogAction
-                                            onClick={() => handleSubmit(false)} // Pass false for manual submit
+                                            onClick={() => handleSubmit(false)}
                                             className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white"
                                         >
                                             Confirm Submit

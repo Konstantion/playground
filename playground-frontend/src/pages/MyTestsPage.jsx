@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'; // Added useMemo
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth.jsx';
 import { ErrorType } from '@/utils/ErrorType.js';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { RTest, RUserTestResult } from '@/rout/Routes.jsx'; // Added RHome
+import { RTest, RUserTestResult } from '@/rout/Routes.jsx';
 import Loading from '@/components/Loading.jsx';
 import {
     AlertCircle,
@@ -64,7 +64,6 @@ const getStatusProps = status => {
     }
 };
 
-// --- Filter Options ---
 const statusFilterOptions = [
     { value: 'ALL', label: 'All Tests' },
     { value: UserTestStatus.NOT_STARTED, label: 'Ready to Start' },
@@ -73,23 +72,20 @@ const statusFilterOptions = [
     { value: UserTestStatus.EXPIRED, label: 'Expired' },
     { value: UserTestStatus.CANCELLED, label: 'Cancelled' },
 ];
-// --- End Filter Options ---
 
 export default function MyTestsPage() {
     const { auth, logout } = useAuth();
     const navigate = useNavigate();
 
-    const [allUserTests, setAllUserTests] = useState([]); // Renamed from userTests for clarity
+    const [allUserTests, setAllUserTests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
     const [addTestId, setAddTestId] = useState('');
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [startingTestId, setStartingTestId] = useState(null);
 
-    // --- State for search and filter ---
     const [searchQuery, setSearchQuery] = useState('');
     const [activeStatusFilter, setActiveStatusFilter] = useState('ALL');
-    // --- End State for search and filter ---
 
     const fetchMyTests = useCallback(async () => {
         setLoading(true);
@@ -109,7 +105,6 @@ export default function MyTestsPage() {
             data => {
                 const testsData = Array.isArray(data) ? data : [];
                 setAllUserTests(
-                    // Changed to setAllUserTests
                     testsData.map(t => ({
                         id: t.id,
                         immutableTestId: t.testId,
@@ -127,7 +122,6 @@ export default function MyTestsPage() {
         fetchMyTests();
     }, [fetchMyTests]);
 
-    // --- Filtered Tests Logic ---
     const filteredUserTests = useMemo(() => {
         return allUserTests.filter(test => {
             const matchesSearch = test.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -136,7 +130,6 @@ export default function MyTestsPage() {
             return matchesSearch && matchesStatus;
         });
     }, [allUserTests, searchQuery, activeStatusFilter]);
-    // --- End Filtered Tests Logic ---
 
     const handleAddTest = async () => {
         const trimmedId = addTestId.trim();
@@ -176,7 +169,7 @@ export default function MyTestsPage() {
                     status: createdUserTest.status,
                     score: createdUserTest.score,
                 };
-                setAllUserTests(prev => [...prev, newTestEntry]); // Add to allUserTests
+                setAllUserTests(prev => [...prev, newTestEntry]);
                 toast.success(`Test "${newTestEntry.name}" added successfully!`, {
                     duration: 3000,
                 });
@@ -204,26 +197,22 @@ export default function MyTestsPage() {
                     setStartingTestId(null);
                 },
                 updatedTestData => {
-                    setAllUserTests(
-                        (
-                            prev // Update allUserTests
-                        ) =>
-                            prev.map(t =>
-                                t.id === userTestId ? { ...t, status: updatedTestData.status } : t
-                            )
+                    setAllUserTests(prev =>
+                        prev.map(t =>
+                            t.id === userTestId ? { ...t, status: updatedTestData.status } : t
+                        )
                     );
                     toast.success(
                         `Starting test "${updatedTestData.testMetadata?.name || userTestId}"...`,
                         { duration: 1500 }
                     );
                     navigate(`${RTest}/${userTestId}`);
-                    // No need to setStartingTestId(null) here as navigation occurs
                 }
             );
         } else if (currentStatus === UserTestStatus.IN_PROGRESS) {
             toast.info(`Resuming test...`, { duration: 1500 });
             navigate(`${RTest}/${userTestId}`);
-            setStartingTestId(null); // Reset after navigation attempt
+            setStartingTestId(null);
         } else {
             toast.warning(`Cannot start or continue test with status: ${currentStatus}`, {
                 duration: 3000,
@@ -311,7 +300,6 @@ export default function MyTestsPage() {
                     </div>
                 </CardHeader>
                 <CardContent className="p-4 md:p-6">
-                    {/* --- START: Search and Filter UI --- */}
                     <div className="mb-6 space-y-4">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 dark:text-slate-500" />
@@ -348,11 +336,10 @@ export default function MyTestsPage() {
                             ))}
                         </div>
                     </div>
-                    {/* --- END: Search and Filter UI --- */}
 
                     {loading ? (
                         <Loading message="Loading your tests..." />
-                    ) : filteredUserTests.length === 0 ? ( // Use filteredUserTests
+                    ) : filteredUserTests.length === 0 ? (
                         <div className="text-center py-16 text-slate-500 dark:text-slate-400">
                             <FileWarning
                                 size={48}
@@ -368,10 +355,8 @@ export default function MyTestsPage() {
                     ) : (
                         <ScrollArea className="h-[calc(100vh-360px)] min-h-[300px]">
                             {' '}
-                            {/* Adjusted height */}
                             <ul className="divide-y dark:divide-slate-700/50">
                                 {filteredUserTests.map(test => {
-                                    // Use filteredUserTests
                                     const statusProps = getStatusProps(test.status);
                                     const isLoadingStart = startingTestId === test.id;
                                     const canStartOrContinue =

@@ -1,5 +1,3 @@
-// playground-frontend/src/components/ValidateCard.jsx
-
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.js';
@@ -31,35 +29,30 @@ export default function ValidateCard({
     const [validated, setValidated] = useState(question.validated);
     const intervalRef = useRef(null);
 
-    // Effect to sync with parent question state and reset validation status if needed
     useEffect(() => {
         setQuestion(initialQuestion);
         const isNowValidated = initialQuestion.validated;
         setValidated(isNowValidated);
 
         if (isNowValidated) {
-            // If the question is now marked as validated (from parent or fetch)
             if (intervalRef.current) {
-                clearInterval(intervalRef.current); // Stop polling if validated
+                clearInterval(intervalRef.current);
             }
-            setIsValidating(false); // Ensure validating state is off
-            setStatus('Success'); // Set status to Success
+            setIsValidating(false);
+            setStatus('Success');
         } else if (!isValidating) {
             if (!status) {
                 setStatus(null);
             }
         }
-        // Only re-run if initialQuestion changes OR isValidating changes (to reset status when validation stops)
     }, [initialQuestion, isValidating]);
 
-    // Function to fetch the current validation status from the backend
     const fetchStatus = useCallback(
         async (silent = false) => {
-            // 'silent' flag prevents toasts on background polls
             if (!question || !question.id) {
                 if (!silent)
                     toast.error('Question ID is missing. Cannot fetch status.', { duration: 3000 });
-                setIsValidating(false); // Stop validation process if ID is missing
+                setIsValidating(false);
                 if (intervalRef.current) clearInterval(intervalRef.current);
                 return;
             }
@@ -70,7 +63,6 @@ export default function ValidateCard({
                 null,
                 auth.accessToken,
                 (type, message) => {
-                    // Error fetching status
                     if (!silent)
                         toast.error(
                             `Status fetch error: ${message || 'Unknown error'} (Type: ${type})`,
@@ -80,7 +72,7 @@ export default function ValidateCard({
                         logout();
                         if (navigate) navigate(RRoutes.Login.path);
                     }
-                    // Stop polling on error, update status only if it wasn't already an error
+
                     clearInterval(intervalRef.current);
                     setIsValidating(false);
                     if (!status || !status.startsWith('Error:')) {
@@ -88,23 +80,20 @@ export default function ValidateCard({
                     }
                 },
                 response => {
-                    // Success fetching status
-                    setStatus(response.status); // Update status display
+                    setStatus(response.status);
                     if (response.status === 'Success') {
-                        // Validation Succeeded!
-                        clearInterval(intervalRef.current); // Stop polling
-                        setValidated(true); // Mark as validated locally
-                        setIsValidating(false); // Turn off validating state
-                        // Update parent component state
+                        clearInterval(intervalRef.current);
+                        setValidated(true);
+                        setIsValidating(false);
+
                         const updatedQuestion = { ...question, validated: true };
                         setQuestion(updatedQuestion);
                         if (setParentQuestion) setParentQuestion(updatedQuestion);
                         if (!silent)
                             toast.success('Question validation succeeded!', { duration: 3000 });
                     } else if (response.status && response.status.startsWith('Error')) {
-                        // Validation process reported an error
-                        clearInterval(intervalRef.current); // Stop polling
-                        setIsValidating(false); // Turn off validating state
+                        clearInterval(intervalRef.current);
+                        setIsValidating(false);
                         if (!silent) {
                             toast.error(`Validation process error: ${response.status}`, {
                                 duration: 5000,
@@ -112,14 +101,12 @@ export default function ValidateCard({
                             });
                         }
                     }
-                    // If status is 'Submitted' or 'NotRegistered', polling continues via setInterval
                 }
             );
         },
-        [question, auth.accessToken, logout, navigate, setParentQuestion, status] // Added status dependency
+        [question, auth.accessToken, logout, navigate, setParentQuestion, status]
     );
 
-    // Handler to initiate the validation process
     const handleValidate = async () => {
         if (!question || !question.id) {
             toast.error('Question ID is missing. Cannot start validation.', { duration: 3000 });
@@ -130,25 +117,22 @@ export default function ValidateCard({
             return;
         }
 
-        setIsValidating(true); // Set validating state
-        setValidated(false); // Reset validated state
-        setStatus('Initiating validation...'); // Initial status message
-        if (intervalRef.current) clearInterval(intervalRef.current); // Clear any previous interval
+        setIsValidating(true);
+        setValidated(false);
+        setStatus('Initiating validation...');
+        if (intervalRef.current) clearInterval(intervalRef.current);
 
-        // Show the "initiated" toast *once* when validation starts
         toast.info('Validation process initiated. Polling for status...', {
-            id: 'validation-initiated', // Use ID to allow potential dismissal later if needed
+            id: 'validation-initiated',
             duration: 2500,
         });
 
-        // Make the API call to start validation
         await authenticatedReq(
             `${Endpoints.Questions.Base}/${question.id}/validate`,
             'PUT',
             null,
             auth.accessToken,
             (type, message) => {
-                // Error starting validation
                 toast.error(
                     `Validation start error: ${message || 'Unknown error'} (Type: ${type})`,
                     { duration: 5000, closeButton: true }
@@ -157,33 +141,28 @@ export default function ValidateCard({
                     logout();
                     if (navigate) navigate(RRoutes.Login.path);
                 }
-                // Reset state if starting failed
+
                 clearInterval(intervalRef.current);
                 setIsValidating(false);
                 setStatus(`Error: ${message || 'Failed to start validation'}`);
             },
             _taskId => {
-                // Successfully started validation
-                // Fetch status immediately after starting
-                fetchStatus(false); // Fetch status and show potential errors immediately
-                // Start polling at intervals
-                intervalRef.current = setInterval(() => fetchStatus(true), intervalMs); // Poll silently
+                fetchStatus(false);
+
+                intervalRef.current = setInterval(() => fetchStatus(true), intervalMs);
             }
         );
     };
 
-    // Cleanup interval on component unmount
     useEffect(() => {
         return () => {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
             }
         };
-    }, []); // Empty dependency array ensures this runs only on unmount
+    }, []);
 
-    // --- Status Display Logic ---
     const getStatusDisplayProperties = () => {
-        // Prioritize showing the "Validated" state if the flag is true
         if (validated) {
             return {
                 icon: <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />,
@@ -193,25 +172,24 @@ export default function ValidateCard({
                 textClass: 'text-green-700 dark:text-green-300',
             };
         }
-        // If not validated, check the fetched status
+
         if (status && status.startsWith('Error')) {
             return {
                 icon: <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400" />,
-                text: status, // Display the specific error message from backend
+                text: status,
                 bgClass: 'bg-red-50 dark:bg-red-900/20 border-red-500/30 dark:border-red-600/40',
                 textClass: 'text-red-700 dark:text-red-300',
             };
         }
         if (isValidating || (status && status !== 'NotRegistered' && status !== null)) {
-            // Show loading/processing if isValidating is true OR status is something other than NotRegistered/null/Error
             return {
                 icon: <Loader2 className="w-5 h-5 text-sky-500 dark:text-sky-400 animate-spin" />,
-                text: status || 'Processing validation...', // Show current status message
+                text: status || 'Processing validation...',
                 bgClass: 'bg-sky-50 dark:bg-sky-900/20 border-sky-500/30 dark:border-sky-600/40',
                 textClass: 'text-sky-700 dark:text-sky-300',
             };
         }
-        // Default state: Not validated, not currently validating
+
         return {
             icon: <Info className="w-5 h-5 text-slate-500 dark:text-slate-400" />,
             text: 'This question has not been validated yet. Click the button below to start.',
@@ -244,7 +222,6 @@ export default function ValidateCard({
                 </div>
             </CardHeader>
             <CardContent className="p-3 sm:p-4 space-y-4">
-                {/* Status Display Area */}
                 <div className="space-y-1.5">
                     <Label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
                         Current Status:
@@ -263,13 +240,11 @@ export default function ValidateCard({
                     </div>
                 </div>
 
-                {/* Validate Button */}
-                {/* Only show button if not already successfully validated */}
                 {!validated && (
                     <>
                         <Button
                             onClick={handleValidate}
-                            disabled={isValidating || !isEditable} // Disable if validating or question not editable
+                            disabled={isValidating || !isEditable}
                             className="w-full py-2.5 text-sm font-medium flex items-center justify-center space-x-2 rounded-lg
                                        bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white
                                        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 dark:focus:ring-offset-slate-800
@@ -285,7 +260,7 @@ export default function ValidateCard({
                                 <span>Start Validation</span>
                             )}
                         </Button>
-                        {/* Add message if disabled due to immutability */}
+
                         {!isEditable && (
                             <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-2">
                                 Validation is disabled for immutable questions.
@@ -293,7 +268,7 @@ export default function ValidateCard({
                         )}
                     </>
                 )}
-                {/* Show a message or different button if already validated */}
+
                 {validated && (
                     <div className="text-center text-sm text-green-700 dark:text-green-300 font-medium pt-2">
                         Question is validated.

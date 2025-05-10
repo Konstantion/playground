@@ -1,4 +1,3 @@
-// playground-frontend/src/components/PlaceholderConfigurator.jsx
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.js';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.js';
@@ -28,7 +27,6 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { MinusCircle, PlusCircle, SlidersHorizontal } from 'lucide-react';
 
-// Added isEditable prop
 export default function PlaceholderConfigurator({
     id,
     question,
@@ -36,7 +34,6 @@ export default function PlaceholderConfigurator({
     className,
     isEditable,
 }) {
-    // ... (existing state and hooks remain the same) ...
     const { auth, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -56,7 +53,7 @@ export default function PlaceholderConfigurator({
             >
                 Placeholder Identifier
             </Label>
-            {/* Disable Select if not editable */}
+
             <Select value={identifier} onValueChange={setIdentifier} disabled={!isEditable}>
                 <SelectTrigger
                     id="placeholder-identifier"
@@ -83,7 +80,7 @@ export default function PlaceholderConfigurator({
             >
                 Definition Type
             </Label>
-            {/* Disable Select if not editable */}
+
             <Select
                 value={placeholderDefinitionType}
                 onValueChange={value => {
@@ -110,13 +107,12 @@ export default function PlaceholderConfigurator({
     );
 
     const definitionConfigurator = () => {
-        // ... (logic to select component remains the same) ...
         let component;
-        // Pass isEditable down to specific configurators
+
         const commonProps = {
             key: placeholderDefinitionType,
             onChange: setDefinition,
-            isEditable: isEditable, // Pass down
+            isEditable: isEditable,
         };
 
         switch (placeholderDefinitionType) {
@@ -153,14 +149,12 @@ export default function PlaceholderConfigurator({
 
         return (
             <div className="mt-4 p-4 border border-slate-200 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-800/30">
-                {/* Disable the fieldset containing the configurator */}
                 <fieldset disabled={!isEditable}>{component}</fieldset>
             </div>
         );
     };
 
     const handleActionClick = async () => {
-        // ... (action logic remains the same) ...
         setIsLoading(true);
         const body = { action: actionStr(action) };
 
@@ -234,7 +228,6 @@ export default function PlaceholderConfigurator({
                 className
             )}
         >
-            {/* ... (CardHeader remains the same) ... */}
             <CardHeader className="pb-3 pt-4 px-4 sm:px-5">
                 <div className="flex items-center">
                     <SlidersHorizontal
@@ -260,7 +253,6 @@ export default function PlaceholderConfigurator({
                     }}
                     className="flex flex-col flex-1"
                 >
-                    {/* Disable TabsList if not editable */}
                     <TabsList className="grid w-full grid-cols-2 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg">
                         <TabsTrigger
                             value={Action.ADD}
@@ -278,9 +270,7 @@ export default function PlaceholderConfigurator({
                         </TabsTrigger>
                     </TabsList>
 
-                    {/* Content for ADD Tab */}
                     <TabsContent value={Action.ADD} className="flex-1 mt-4 overflow-hidden">
-                        {/* Disable content if not editable */}
                         <ScrollArea
                             className="h-full pr-2"
                             style={{
@@ -296,9 +286,7 @@ export default function PlaceholderConfigurator({
                         </ScrollArea>
                     </TabsContent>
 
-                    {/* Content for REMOVE Tab */}
                     <TabsContent value={Action.REMOVE} className="flex-1 mt-4 overflow-hidden">
-                        {/* Disable content if not editable */}
                         <ScrollArea
                             className="h-full pr-2"
                             style={{
@@ -317,7 +305,6 @@ export default function PlaceholderConfigurator({
                     </TabsContent>
 
                     <div className="mt-auto pt-4">
-                        {/* Disable Button if not editable */}
                         <Button
                             onClick={handleActionClick}
                             className="w-full bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
@@ -328,10 +315,8 @@ export default function PlaceholderConfigurator({
                                     : ''
                             }
                         >
-                            {/* ... (loading indicator logic remains the same) ... */}
                             {isLoading ? (
                                 <div className="flex items-center justify-center">
-                                    {/* SVG spinner */}
                                     <svg
                                         className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                                         xmlns="http://www.w3.org/2000/svg"

@@ -182,7 +182,6 @@ export default function AddVariant({ question, setQuestion, className }) {
             </CardHeader>
 
             <CardContent className="flex-1 flex flex-col gap-3 sm:gap-4 p-3 sm:p-4 min-h-0">
-                {/* Function Signature Display */}
                 <div className="bg-slate-100 dark:bg-slate-700/50 p-2.5 sm:p-3 rounded-md text-xs sm:text-sm">
                     <div className="flex items-center text-slate-600 dark:text-slate-300 mb-4">
                         <TerminalSquare size={16} className="mr-2 text-sky-500" />
@@ -191,7 +190,6 @@ export default function AddVariant({ question, setQuestion, className }) {
                     <InlineCode code={signature} language={question.lang.toLowerCase()} />
                 </div>
 
-                {/* Code Editor */}
                 <div className="flex-1 border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden min-h-[200px] sm:min-h-[250px]">
                     <EEditor
                         language={question.lang.toLowerCase()}
@@ -202,7 +200,6 @@ export default function AddVariant({ question, setQuestion, className }) {
                     />
                 </div>
 
-                {/* Correctness Checkbox */}
                 <div className="flex items-center space-x-2.5 pt-1">
                     <Checkbox
                         id={`isCorrect-${question.id}`}
@@ -225,7 +222,6 @@ export default function AddVariant({ question, setQuestion, className }) {
                     )}
                 </div>
 
-                {/* Add Variant Button */}
                 <div className="mt-auto">
                     <Button
                         onClick={createVariant}

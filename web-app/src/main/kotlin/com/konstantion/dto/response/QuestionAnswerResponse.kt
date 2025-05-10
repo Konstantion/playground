@@ -34,7 +34,7 @@ data class AnswerResponse(
         id = id(),
         questionId = question().id(),
         answer = answer(),
-        variantId = variant().id()
+        variantId = variant().id(),
       )
   }
 }

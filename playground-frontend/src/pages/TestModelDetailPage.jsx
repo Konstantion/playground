@@ -53,7 +53,7 @@ import Loading from '@/components/Loading.jsx';
 import NotFound from '@/components/NotFound.jsx';
 import Header from '@/components/Header.jsx';
 import { RHome, RLogin, RQuestions } from '@/rout/Routes.jsx';
-import { between, blank } from '@/utils/Strings.js'; // Import blank
+import { between, blank } from '@/utils/Strings.js';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -75,7 +75,7 @@ export default function TestModelDetailPage() {
     const [isEditNameDialogOpen, setIsEditNameDialogOpen] = useState(false);
     const [draftModelName, setDraftModelName] = useState('');
 
-    const [immutableTestName, setImmutableTestName] = useState(''); // State for the new test name
+    const [immutableTestName, setImmutableTestName] = useState('');
     const [expiresAfter, setExpiresAfter] = useState('');
     const [shuffleQuestions, setShuffleQuestions] = useState(false);
     const [shuffleVariants, setShuffleVariants] = useState(false);
@@ -112,8 +112,8 @@ export default function TestModelDetailPage() {
                 data => {
                     setModel(data);
                     setDraftModelName(data.name || '');
-                    setImmutableTestName(data.name ? `${data.name} - Instance` : ''); // Default immutable name based on model name
-                    // Initialize other states if needed
+                    setImmutableTestName(data.name ? `${data.name} - Instance` : '');
+
                     setStatus('loaded');
                     document.title = `${data.name || 'Test Model'} - Playground`;
                 }
@@ -122,15 +122,12 @@ export default function TestModelDetailPage() {
         fetchModelData();
     }, [id, auth.accessToken, logout, navigate]);
 
-    // --- Create Immutable Test Handler ---
     const handleCreateImmutableTest = async () => {
-        // Validate the new name
         if (blank(immutableTestName)) {
             toast.error('Please provide a name for the generated test.', { duration: 3000 });
             return;
         }
         if (!between(immutableTestName.trim(), 1, 100)) {
-            // Use between for length check
             toast.error('Generated test name must be 1-100 characters.', { duration: 3000 });
             return;
         }
@@ -138,12 +135,12 @@ export default function TestModelDetailPage() {
         setIsSavingConfiguration(true);
         const expiresValueMs =
             expiresAfter && parseInt(expiresAfter, 10) > 0
-                ? parseInt(expiresAfter, 10) * 60000 + Date.now() // Convert minutes to milliseconds
+                ? parseInt(expiresAfter, 10) * 60000 + Date.now()
                 : null;
 
         const body = {
             testId: id,
-            name: immutableTestName.trim(), // Include the name
+            name: immutableTestName.trim(),
             expiresAfter: expiresValueMs,
             shuffleQuestions: shuffleQuestions,
             shuffleVariants: shuffleVariants,
@@ -188,7 +185,7 @@ export default function TestModelDetailPage() {
     }, [availableQuestions, model, searchAvailable]);
 
     const updateModelDetails = async (patchBody, successMessage, failureMessage) => {
-        setIsSavingConfiguration(true); // Use a general saving state or specific ones if needed
+        setIsSavingConfiguration(true);
         let success = false;
         await authenticatedReq(
             `${Endpoints.TestModel.Base}/${id}`,
@@ -265,7 +262,7 @@ export default function TestModelDetailPage() {
             return;
         }
         await authenticatedReq(
-            Endpoints.Questions.Base, // Use base endpoint to get user's questions
+            Endpoints.Questions.Base,
             'GET',
             null,
             auth.accessToken,
@@ -336,7 +333,6 @@ export default function TestModelDetailPage() {
         );
     };
 
-    // --- Loading / Not Found States ---
     if (status === 'loading')
         return (
             <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col">
@@ -351,7 +347,6 @@ export default function TestModelDetailPage() {
                 <NotFound message="Test model not found." />
             </div>
         );
-    // --- End Loading / Not Found States ---
 
     return (
         <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col selection:bg-sky-500 selection:text-white">
@@ -359,11 +354,8 @@ export default function TestModelDetailPage() {
 
             <main className="flex-1 p-4 md:p-6 lg:p-8">
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8 items-start">
-                    {/* Left Column: Model Details & Test Configuration */}
                     <div className="xl:col-span-4 flex flex-col gap-6 xl:gap-8">
-                        {/* Model Details Card */}
                         <Card className="shadow-xl rounded-xl dark:bg-slate-800 border dark:border-slate-700/50">
-                            {/* ... (Model Details Card content remains the same, including Edit/Delete buttons) ... */}
                             <CardHeader className="pb-4">
                                 <div className="flex justify-between items-start">
                                     <div className="flex items-center">
@@ -380,7 +372,7 @@ export default function TestModelDetailPage() {
                                             </CardDescription>
                                         </div>
                                     </div>
-                                    {/* Edit and Delete Buttons */}
+
                                     <div className="flex items-center space-x-1">
                                         <Dialog
                                             open={isEditNameDialogOpen}
@@ -396,7 +388,7 @@ export default function TestModelDetailPage() {
                                                     <Edit size={16} />
                                                 </Button>
                                             </DialogTrigger>
-                                            {/* Edit Name Dialog Content */}
+
                                             <DialogContent className="dark:bg-slate-800">
                                                 <DialogHeader>
                                                     <DialogTitle className="dark:text-slate-100">
@@ -424,7 +416,7 @@ export default function TestModelDetailPage() {
                                                     <Button
                                                         onClick={handleSaveModelName}
                                                         className="bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white"
-                                                        disabled={isSavingConfiguration} // Disable while saving
+                                                        disabled={isSavingConfiguration}
                                                     >
                                                         {isSavingConfiguration
                                                             ? 'Saving...'
@@ -433,7 +425,7 @@ export default function TestModelDetailPage() {
                                                 </DialogFooter>
                                             </DialogContent>
                                         </Dialog>
-                                        {/* Delete Button Trigger */}
+
                                         <Dialog
                                             open={isDeleteDialogOpen}
                                             onOpenChange={setIsDeleteDialogOpen}
@@ -448,7 +440,7 @@ export default function TestModelDetailPage() {
                                                     <Trash2 size={16} />
                                                 </Button>
                                             </DialogTrigger>
-                                            {/* Delete Confirmation Dialog Content */}
+
                                             <DialogContent className="dark:bg-slate-800">
                                                 <DialogHeader>
                                                     <DialogTitle className="flex items-center text-red-600 dark:text-red-500">
@@ -509,7 +501,6 @@ export default function TestModelDetailPage() {
                             </CardContent>
                         </Card>
 
-                        {/* Test Configuration Card */}
                         <Card className="shadow-xl rounded-xl dark:bg-slate-800 border dark:border-slate-700/50">
                             <CardHeader className="pb-4">
                                 <div className="flex items-center">
@@ -528,7 +519,6 @@ export default function TestModelDetailPage() {
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-4 text-sm">
-                                {/* --- New Input for Immutable Test Name --- */}
                                 <div>
                                     <Label
                                         htmlFor="immutableTestName"
@@ -550,7 +540,6 @@ export default function TestModelDetailPage() {
                                         maxLength={100}
                                     />
                                 </div>
-                                {/* --- End New Input --- */}
 
                                 <div>
                                     <Label
@@ -631,10 +620,8 @@ export default function TestModelDetailPage() {
                         </Card>
                     </div>
 
-                    {/* Right Column: Questions in Model */}
                     <div className="xl:col-span-8">
                         <Card className="shadow-xl rounded-xl dark:bg-slate-800 border dark:border-slate-700/50 flex flex-col min-h-[calc(100vh-180px)] md:min-h-0">
-                            {/* ... (Questions in Model Card content remains the same) ... */}
                             <CardHeader className="pb-4 border-b dark:border-slate-700/50">
                                 <div className="flex justify-between items-center">
                                     <div className="flex items-center">
@@ -770,9 +757,7 @@ export default function TestModelDetailPage() {
                 </div>
             </main>
 
-            {/* Dialog for Adding Questions to Model */}
             <Dialog open={isAddQuestionDialogOpen} onOpenChange={setIsAddQuestionDialogOpen}>
-                {/* ... (Add Question Dialog content remains the same) ... */}
                 <DialogContent className="max-w-2xl w-[95vw] sm:w-full dark:bg-slate-800 rounded-lg">
                     <DialogHeader className="pb-3">
                         <DialogTitle className="text-lg font-medium text-slate-900 dark:text-slate-50">
@@ -886,12 +871,10 @@ export default function TestModelDetailPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Dialog for Immutable Test Created Confirmation */}
             <Dialog
                 open={isImmutableTestCreatedDialogOpen}
                 onOpenChange={setIsImmutableTestCreatedDialogOpen}
             >
-                {/* ... (Immutable Test Created Dialog content remains the same) ... */}
                 <DialogContent className="dark:bg-slate-800">
                     <DialogHeader>
                         <DialogTitle className="flex items-center text-green-600 dark:text-green-400">

@@ -119,7 +119,6 @@ export default function TestModelsPage() {
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 items-start">
-            {/* Section for creating a new Test Model */}
             <Card className="lg:col-span-1 shadow-lg rounded-xl dark:bg-slate-800 border dark:border-slate-700/50">
                 <CardHeader className="pb-4">
                     <div className="flex items-center">
@@ -191,7 +190,6 @@ export default function TestModelsPage() {
                 </CardFooter>
             </Card>
 
-            {/* Section for displaying existing Test Models */}
             <div className="lg:col-span-2 space-y-5">
                 <Card className="shadow-lg rounded-xl dark:bg-slate-800 border dark:border-slate-700/50">
                     <CardHeader className="pb-4">
@@ -238,7 +236,6 @@ export default function TestModelsPage() {
                         ) : (
                             <ScrollArea className="h-[calc(100vh-380px)] min-h-[300px] pr-1">
                                 {' '}
-                                {/* Adjusted height */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {filteredModels.map(item => (
                                         <Card

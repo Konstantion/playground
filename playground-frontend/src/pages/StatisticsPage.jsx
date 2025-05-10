@@ -1,17 +1,23 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
-import {useAuth} from '@/hooks/useAuth.jsx';
-import {authenticatedReq} from '@/utils/Requester.js';
-import {Endpoints} from '@/utils/Endpoints.js';
-import {ErrorType} from '@/utils/ErrorType.js';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth.jsx';
+import { authenticatedReq } from '@/utils/Requester.js';
+import { Endpoints } from '@/utils/Endpoints.js';
+import { ErrorType } from '@/utils/ErrorType.js';
 import Loading from '@/components/Loading.jsx';
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from '@/components/ui/select';
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
-import {Badge} from '@/components/ui/badge';
-import {ScrollArea} from '@/components/ui/scroll-area';
-import {Separator} from '@/components/ui/separator';
-import {Checkbox} from '@/components/ui/checkbox';
-import {Label} from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import {
     Activity,
     AlertTriangle,
@@ -24,7 +30,7 @@ import {
     Users,
     XCircle,
 } from 'lucide-react';
-import {cn} from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 const CodeDisplay = ({ formatAndCode, title = 'Code Snippet' }) => {
     if (!formatAndCode || !formatAndCode.code) {
@@ -513,7 +519,7 @@ export default function StatisticsPage() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        {/* --- START: Attempt Status Filter UI --- */}
+
                         <div>
                             <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">
                                 Filter Attempt Statuses:
@@ -539,7 +545,6 @@ export default function StatisticsPage() {
                                 ))}
                             </div>
                         </div>
-                        {/* --- END: Attempt Status Filter UI --- */}
                     </div>
 
                     {error && (

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'; // Import Alert components
-import { Lock } from 'lucide-react'; // Import Lock icon
-// ... other imports ...
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Lock } from 'lucide-react';
+
 import Header from '@/components/Header.jsx';
 import Loading from '@/components/Loading.jsx';
 import NotFound from '@/components/NotFound.jsx';
@@ -35,7 +35,6 @@ export default function QuestionDetailPage() {
     const [question, setQuestion] = useState(null);
 
     useEffect(() => {
-        // ... (fetchQuestion logic remains the same) ...
         if (!id) {
             setStatus(State.NotFound);
             return;
@@ -70,7 +69,6 @@ export default function QuestionDetailPage() {
         fetchQuestion();
     }, [id, auth.accessToken, logout, navigate]);
 
-    // ... (loading and not found states remain the same) ...
     if (status === State.Loading) {
         return (
             <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col">
@@ -89,16 +87,13 @@ export default function QuestionDetailPage() {
         );
     }
 
-    // Determine if the question is editable based on the 'public' flag
     const isEditable = question.public;
 
     return (
         <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col selection:bg-sky-500 selection:text-white">
             <Header page={null} setPage={page => navigate(`${RHome}/${page}`)} />
 
-            {/* Main content grid */}
             <main className="flex-1 p-4 md:p-6 lg:p-8">
-                {/* Add Immutable Indicator Banner */}
                 {!isEditable && (
                     <Alert className="mb-6 border-amber-500/50 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">
                         <Lock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
@@ -111,22 +106,20 @@ export default function QuestionDetailPage() {
                 )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8">
-                    {/* Column 1: Question Preview & Placeholder Configurator */}
                     <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-6 xl:gap-8">
                         <QuestionPreview
                             question={question}
                             setQuestion={setQuestion}
-                            isEditable={isEditable} // Pass down editable status
+                            isEditable={isEditable}
                         />
                         <PlaceholderConfigurator
                             id={id}
                             question={question}
                             setQuestion={setQuestion}
-                            isEditable={isEditable} // Pass down editable status
+                            isEditable={isEditable}
                         />
                     </div>
 
-                    {/* Column 2: Variants Carousels & Call Args */}
                     <div className="lg:col-span-7 xl:col-span-5 flex flex-col gap-6 xl:gap-8">
                         <VariantsCarousel
                             language={question.lang}
@@ -136,7 +129,7 @@ export default function QuestionDetailPage() {
                             setQuestion={setQuestion}
                             correct={true}
                             className="min-h-[300px] md:min-h-[350px]"
-                            isEditable={isEditable} // Pass down editable status
+                            isEditable={isEditable}
                         />
                         <VariantsCarousel
                             language={question.lang}
@@ -146,19 +139,17 @@ export default function QuestionDetailPage() {
                             setQuestion={setQuestion}
                             correct={false}
                             className="min-h-[300px] md:min-h-[350px]"
-                            isEditable={isEditable} // Pass down editable status
+                            isEditable={isEditable}
                         />
                         <CallArgsConfigurator
                             id={id}
                             question={question}
                             setQuestion={setQuestion}
-                            isEditable={isEditable} // Pass down editable status
+                            isEditable={isEditable}
                         />
                     </div>
 
-                    {/* Column 3: Add Variant & Validate Card */}
                     <div className="lg:col-span-12 xl:col-span-3 flex flex-col gap-6 xl:gap-8">
-                        {/* Conditionally render AddVariant */}
                         {isEditable ? (
                             <AddVariant question={question} setQuestion={setQuestion} />
                         ) : (
@@ -172,7 +163,7 @@ export default function QuestionDetailPage() {
                         <ValidateCard
                             question={question}
                             setQuestion={setQuestion}
-                            isEditable={isEditable} // Pass down editable status
+                            isEditable={isEditable}
                         />
                     </div>
                 </div>

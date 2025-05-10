@@ -8,7 +8,7 @@ import { Endpoints } from '@/utils/Endpoints.js';
 import { useAuth } from '@/hooks/useAuth.jsx';
 import { ErrorType } from '@/utils/ErrorType.js';
 import { toast } from 'sonner';
-import { RHome, RQuestions, RTests, RUserTestResult } from '@/rout/Routes.jsx'; // Added RUserTests (assuming it exists)
+import { RHome, RQuestions, RTests, RUserTestResult } from '@/rout/Routes.jsx';
 import Loading from '@/components/Loading.jsx';
 import NotFound from '@/components/NotFound.jsx';
 import Header from '@/components/Header.jsx';
@@ -49,13 +49,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label.js';
 import { Role } from '@/entities/Role.js';
 
-// Define ImmutableTestStatus constants
 const ImmutableTestStatus = {
     ACTIVE: 'ACTIVE',
     ARCHIVED: 'ARCHIVED',
 };
 
-// Define UserTestStatus constants (ensure these match backend exactly)
 const UserTestStatus = {
     NOT_STARTED: 'NOT_STARTED',
     IN_PROGRESS: 'IN_PROGRESS',
@@ -64,7 +62,6 @@ const UserTestStatus = {
     CANCELLED: 'CANCELLED',
 };
 
-// Helper to get display properties for ImmutableTest status
 const getImmutableStatusProps = status => {
     switch (status) {
         case ImmutableTestStatus.ACTIVE:
@@ -76,7 +73,6 @@ const getImmutableStatusProps = status => {
     }
 };
 
-// Helper to get display properties for UserTest status
 const getUserTestStatusProps = status => {
     switch (status) {
         case UserTestStatus.NOT_STARTED:
@@ -94,12 +90,9 @@ const getUserTestStatusProps = status => {
     }
 };
 
-// --- START: New UserAttemptsList Component ---
 function UserAttemptsList({ userTests = [], navigate }) {
     const handleViewAttempt = userTestId => {
         if (navigate && RUserTestResult && userTestId) {
-            // Check if navigate, route, and ID exist
-            // Use the imported route constant RUserTests
             navigate(`${RUserTestResult}/${userTestId}`);
         } else if (!navigate) {
             toast.error('Navigation function is not available.');
@@ -194,8 +187,6 @@ function UserAttemptsList({ userTests = [], navigate }) {
     );
 }
 
-// --- END: New UserAttemptsList Component ---
-
 export default function TestDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -206,7 +197,6 @@ export default function TestDetailPage() {
     const [isArchiving, setIsArchiving] = useState(false);
 
     const fetchTestData = useCallback(async () => {
-        // ... (fetch logic remains the same, ensuring userTests is included and defaulted to [])
         if (!id) {
             setStatus('notfound');
             return;
@@ -225,11 +215,10 @@ export default function TestDetailPage() {
                 if (type === ErrorType.TokenExpired) logout();
             },
             data => {
-                // Ensure nested arrays exist even if empty
                 const details = {
                     ...data,
                     questions: Array.isArray(data.questions) ? data.questions : [],
-                    userTests: Array.isArray(data.userTests) ? data.userTests : [], // Ensure userTests is an array
+                    userTests: Array.isArray(data.userTests) ? data.userTests : [],
                 };
                 setTest(details);
                 setStatus('loaded');
@@ -243,7 +232,6 @@ export default function TestDetailPage() {
     }, [fetchTestData]);
 
     const handleArchive = useCallback(async () => {
-        // ... (archive logic remains the same)
         if (!test || isArchiving || test.status !== ImmutableTestStatus.ACTIVE) {
             return;
         }
@@ -263,7 +251,7 @@ export default function TestDetailPage() {
                     'Test archived successfully. Active student attempts have been cancelled.',
                     { closeButton: true }
                 );
-                // Ensure nested arrays exist in updated data
+
                 const updatedDetails = {
                     ...updatedTestData,
                     questions: Array.isArray(updatedTestData.questions)
@@ -273,14 +261,13 @@ export default function TestDetailPage() {
                         ? updatedTestData.userTests
                         : [],
                 };
-                setTest(updatedDetails); // Update local state
+                setTest(updatedDetails);
                 setIsArchiving(false);
             }
         );
     }, [test, isArchiving, id, auth.accessToken, logout]);
 
     const canArchive = useMemo(() => {
-        // ... (permission logic remains the same)
         if (!auth.user || !test || test.status !== ImmutableTestStatus.ACTIVE) {
             return false;
         }
@@ -318,7 +305,6 @@ export default function TestDetailPage() {
     const statusProps = getImmutableStatusProps(test.status);
 
     const archiveButtonAndDialog = (
-        // ... (archive button JSX remains the same)
         <AlertDialog>
             <AlertDialogTrigger asChild>
                 <Button
@@ -382,8 +368,6 @@ export default function TestDetailPage() {
 
             <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
                 {' '}
-                {/* Increased max-w */}
-                {/* Back Button */}
                 <Button
                     onClick={() => navigate(`${RHome}/${RTests}`)}
                     variant="outline"
@@ -394,13 +378,9 @@ export default function TestDetailPage() {
                 </Button>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8">
                     {' '}
-                    {/* Changed grid layout */}
-                    {/* Column 1: Test Details, Config, Actions */}
                     <div className="lg:col-span-1 flex flex-col gap-6 xl:gap-8">
-                        {/* Test Details Card */}
                         <Card className="shadow-lg rounded-xl dark:bg-slate-800 border dark:border-slate-700/50">
                             <CardHeader className="pb-4">
-                                {/* ... (Card Header content remains the same) ... */}
                                 <div className="flex items-center">
                                     <ClipboardList
                                         size={22}
@@ -420,7 +400,6 @@ export default function TestDetailPage() {
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-3 text-sm">
-                                {/* ... (Card Content with details remains the same) ... */}
                                 <div className="flex items-center text-slate-700 dark:text-slate-300">
                                     <CalendarDays
                                         size={14}
@@ -475,7 +454,7 @@ export default function TestDetailPage() {
                                         label="Shuffle Variants"
                                     />
                                 </div>
-                                {/* Archive Button Section */}
+
                                 <div className="pt-4 border-t dark:border-slate-700/50">
                                     <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
                                         Actions
@@ -497,12 +476,9 @@ export default function TestDetailPage() {
                             </CardContent>
                         </Card>
                     </div>
-                    {/* Column 2: Questions & User Attempts */}
                     <div className="lg:col-span-2 flex flex-col gap-6 xl:gap-8">
-                        {/* Included Questions Card */}
                         <Card className="shadow-lg rounded-xl dark:bg-slate-800 border dark:border-slate-700/50 flex flex-col">
                             <CardHeader className="pb-4 border-b dark:border-slate-700/50">
-                                {/* ... (Questions Card Header remains the same) ... */}
                                 <div className="flex items-center">
                                     <ListChecks
                                         size={20}
@@ -519,7 +495,6 @@ export default function TestDetailPage() {
                                 </div>
                             </CardHeader>
                             <CardContent className="flex-1 p-0 overflow-hidden">
-                                {/* ... (Questions List rendering remains the same) ... */}
                                 {test.questions?.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 dark:text-slate-400 p-10">
                                         <FileWarning
@@ -536,7 +511,6 @@ export default function TestDetailPage() {
                                 ) : (
                                     <ScrollArea className="h-[250px]">
                                         {' '}
-                                        {/* Fixed height for scroll */}
                                         <ul className="divide-y dark:divide-slate-700/50">
                                             {test.questions.map(q => (
                                                 <li
@@ -575,7 +549,6 @@ export default function TestDetailPage() {
                             </CardContent>
                         </Card>
 
-                        {/* === START: User Attempts Integration === */}
                         <Card className="shadow-lg rounded-xl dark:bg-slate-800 border dark:border-slate-700/50 flex flex-col">
                             <CardHeader className="pb-4 border-b dark:border-slate-700/50">
                                 <div className="flex items-center">
@@ -594,11 +567,9 @@ export default function TestDetailPage() {
                                 </div>
                             </CardHeader>
                             <CardContent className="flex-1 p-0 overflow-hidden">
-                                {/* Pass the userTests array and navigate function */}
                                 <UserAttemptsList userTests={test.userTests} navigate={navigate} />
                             </CardContent>
                         </Card>
-                        {/* === END: User Attempts Integration === */}
                     </div>
                 </div>
             </main>
