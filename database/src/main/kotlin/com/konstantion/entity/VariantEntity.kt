@@ -36,10 +36,16 @@ open class VariantEntity {
   @Column(name = "public", nullable = false) open var public: Boolean = true
 
   fun <L> toCorrect(lang: L): Question.Variant.Correct<L> where L : Lang =
-    Question.Variant.Correct(nonNull(id), refine(nonNull(code).toModel(lang)))
+    Question.Variant.Correct(id, refine(nonNull(code).toModel(lang)))
 
   fun <L> toIncorrect(lang: L): Question.Variant.Incorrect<L> where L : Lang =
-    Question.Variant.Incorrect(nonNull(id), refine(nonNull(code).toModel(lang)))
+    Question.Variant.Incorrect(id, refine(nonNull(code).toModel(lang)))
+
+  fun <L> toCorrectWithoutId(lang: L): Question.Variant.Correct<L> where L : Lang =
+    Question.Variant.Correct(null, refine(nonNull(code).toModelWithoutId(lang)))
+
+  fun <L> toIncorrectWithoutId(lang: L): Question.Variant.Incorrect<L> where L : Lang =
+    Question.Variant.Incorrect(null, refine(nonNull(code).toModelWithoutId(lang)))
 
   fun id(): UUID = nonNull(id)
 
@@ -54,13 +60,13 @@ open class VariantEntity {
   companion object {
     fun fromCorrect(variant: Question.Variant.Correct<*>): VariantEntity =
       VariantEntity().apply {
-        id = id()
+        id = variant.identifier
         code = CodeEntity.fromModel(variant.code)
       }
 
     fun fromIncorrect(variant: Question.Variant.Incorrect<*>): VariantEntity =
       VariantEntity().apply {
-        id = id()
+        id = variant.identifier
         code = CodeEntity.fromModel(variant.code)
       }
   }

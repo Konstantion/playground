@@ -1,5 +1,6 @@
 package com.konstantion.api
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.konstantion.api.ControllerUtils.asError
 import com.konstantion.dto.request.CreateQuestionRequest
 import com.konstantion.dto.request.UpdateQuestionRequest
@@ -8,13 +9,20 @@ import com.konstantion.dto.response.QuestionStatusResponse.Companion.asResponse
 import com.konstantion.dto.response.UpdateQuestionResponse
 import com.konstantion.entity.QuestionEntity
 import com.konstantion.entity.UserEntity
+import com.konstantion.model.Lang
+import com.konstantion.model.Question
 import com.konstantion.service.QuestionService
 import com.konstantion.service.QuestionService.StatusResponse
 import com.konstantion.service.QuestionService.UpdateResult
 import com.konstantion.service.ServiceIssue
 import com.konstantion.utils.Either
 import com.konstantion.utils.TransactionsHelper
+import java.time.Instant
 import java.util.UUID
+import kotlinx.serialization.json.Json
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -55,6 +63,47 @@ data class QuestionController(
     ) {
       is Either.Left -> result.value.asError()
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
+    }
+
+  @PostMapping("/import")
+  fun importQuestion(
+    @AuthenticationPrincipal userEntity: UserEntity,
+    @RequestBody questionJson: JsonNode,
+  ): ResponseEntity<*> =
+    when (
+      val result: Either<ServiceIssue, QuestionEntity> =
+        transactionsHelper.tx { questionService.importQuestion(userEntity, questionJson) }
+    ) {
+      is Either.Left -> result.value.asError()
+      is Either.Right -> ResponseEntity.ok(result.value.asResponse())
+    }
+
+  @GetMapping("/{id}/export")
+  fun exportQuestion(
+    @AuthenticationPrincipal userEntity: UserEntity,
+    @PathVariable("id") id: UUID,
+  ): ResponseEntity<*> =
+    when (
+      val result: Either<ServiceIssue, QuestionEntity> =
+        transactionsHelper.tx { questionService.getQuestion(userEntity, id) }
+    ) {
+      is Either.Left -> result.value.asError()
+      is Either.Right -> {
+        val entity = result.value
+        val json =
+          Json.encodeToString(
+            Question.serializer(Lang.serializer()),
+            result.value.toModelWithoutId(),
+          )
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setContentDispositionFormData(
+          "attachment",
+          "question_${entity.id()}_${Instant.now().toEpochMilli()}.json",
+        )
+
+        ResponseEntity(json, headers, HttpStatus.OK)
+      }
     }
 
   @GetMapping("/{id}")

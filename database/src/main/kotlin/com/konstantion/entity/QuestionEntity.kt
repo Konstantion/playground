@@ -126,6 +126,33 @@ open class QuestionEntity {
   override fun toString(): String =
     "QuestionEntity(id=$id, lang=$lang, body=$body, formatAndCode=$formatAndCode, placeholderDefinitions=$placeholderDefinitions, callArgs=$callArgs, additionalCheck=$additionalCheck, correctVariants=$correctVariants, incorrectVariants=$incorrectVariants)"
 
+  fun toModelWithoutId(): Question<Lang> {
+    val lang: Lang = Json.decodeFromString(nonNull(this.lang))
+    val placeholderDefinition: Map<PlaceholderIdentifier, PlaceholderDefinition<PlaceholderValue>> =
+      this.placeholderDefinitions
+        .mapKeys { (identifier, _) -> PlaceholderIdentifier.valueOf(identifier) }
+        .mapValues { (_, definition) -> Json.decodeFromString(definition) }
+    val additionalCheck: Code<Lang, Code.Output.Bool>? =
+      this.additionalCheck?.let { check -> refine(check.toModel(lang)) }
+    val callArgs: List<PlaceholderLabel> =
+      this.callArgs.map { label -> Json.decodeFromString(label) }
+    val correctVariants: List<Question.Variant.Correct<Lang>> =
+      this.correctVariants.map { variant -> variant.toCorrectWithoutId(lang) }
+    val incorrectVariants: List<Question.Variant.Incorrect<Lang>> =
+      this.incorrectVariants.map { variant -> variant.toIncorrectWithoutId(lang) }
+    return Question(
+      identifier = null,
+      lang = lang,
+      body = nonNull(body),
+      formatAndCode = Json.decodeFromString(nonNull(formatAndCode)),
+      placeholderDefinitions = placeholderDefinition,
+      callArgs = callArgs,
+      additionalCheck = additionalCheck,
+      correctVariants = correctVariants,
+      incorrectVariants = incorrectVariants,
+    )
+  }
+
   fun toModel(): Question<Lang> {
     val lang: Lang = Json.decodeFromString(nonNull(this.lang))
     val placeholderDefinition: Map<PlaceholderIdentifier, PlaceholderDefinition<PlaceholderValue>> =

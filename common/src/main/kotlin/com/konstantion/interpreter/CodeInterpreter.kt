@@ -19,4 +19,9 @@ sealed interface InterpreterIssue {
   data class Variables(
     val description: String,
   ) : InterpreterIssue
+
+  data class ForbiddenImports(
+    val description: String,
+    val detectedImports: List<String>,
+  ) : InterpreterIssue
 }

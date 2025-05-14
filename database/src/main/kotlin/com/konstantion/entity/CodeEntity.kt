@@ -30,6 +30,11 @@ open class CodeEntity {
       Json.decodeFromString(OutputTypeSerializer, nonNull(outputType)),
     )
 
+  fun <L> toModelWithoutId(lang: L): Code<L, *> where L : Lang {
+    val code = toModel(lang)
+    return code.copy(identifier = null)
+  }
+
   fun id(): UUID = nonNull(id)
 
   fun code(): String = nonNull(code)

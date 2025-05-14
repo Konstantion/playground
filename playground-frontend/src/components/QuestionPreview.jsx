@@ -9,6 +9,7 @@ import {
     Info,
     Languages,
     Lock,
+    Share2,
     Tag,
     Trash2,
     XCircle,
@@ -41,7 +42,13 @@ import { QuestionsPage } from '@/pages/Pages.js';
 import { between } from '@/utils/Strings.js';
 import { cn } from '@/lib/utils.js';
 
-export default function QuestionPreview({ question, className, setQuestion, isEditable }) {
+export default function QuestionPreview({
+    question,
+    className,
+    setQuestion,
+    isEditable,
+    handleExport,
+}) {
     const { auth, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -226,6 +233,17 @@ export default function QuestionPreview({ question, className, setQuestion, isEd
                         Question Details{' '}
                         <span className="text-sky-600 dark:text-sky-500">#{question.id}</span>
                     </CardTitle>
+
+                    <Button
+                        onClick={handleExport}
+                        variant="ghost"
+                        size="icon"
+                        disabled={!isEditable}
+                        title="Export Question"
+                        className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-sky-500"
+                    >
+                        <Share2 className="h-5 w-5" />
+                    </Button>
 
                     <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
                         <DialogTrigger asChild>

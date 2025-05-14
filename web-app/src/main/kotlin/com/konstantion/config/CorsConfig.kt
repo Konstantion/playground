@@ -18,6 +18,7 @@ class CorsConfig {
     corsConfig.allowedHeaders =
       listOf(
         "Origin",
+        "Content_Disposition",
         "Access-Control-Allow-Origin",
         "Content-Type",
         "Accept",
@@ -30,6 +31,7 @@ class CorsConfig {
       )
     corsConfig.exposedHeaders =
       listOf(
+        "Content-Disposition",
         "Origin",
         "Content-Type",
         "Accept",

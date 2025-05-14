@@ -1,5 +1,6 @@
 package com.konstantion.service
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.konstantion.entity.QuestionEntity
 import com.konstantion.entity.UserEntity
 import com.konstantion.executor.QuestionExecutor
@@ -13,7 +14,9 @@ import com.konstantion.service.SqlHelper.sqlAction
 import com.konstantion.utils.Either
 import com.konstantion.utils.Maybe
 import com.konstantion.utils.Maybe.Companion.asMaybe
+import java.time.Instant
 import java.util.UUID
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.Json.Default.encodeToString
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -35,7 +38,12 @@ data class QuestionServiceImpl(
     log.info("Save[userId={}, username={}, question={}]", user.id(), user.username(), question)
 
     return if (user.isAdmin() || user.isTeacher()) {
-      val saveResult = questionPort.sqlAction { save(QuestionEntity.fromModel(question)) }
+      val toSave = QuestionEntity.fromModel(question)
+
+      toSave.creator = user
+      toSave.createdAt = Instant.now()
+
+      val saveResult = questionPort.sqlAction { save(toSave) }
       log.info(
         "SaveResult[userId={}, username={}, result={}]",
         user.id(),
@@ -105,6 +113,26 @@ data class QuestionServiceImpl(
           }
       }
       Role.Student -> Forbidden.asEither("User is not allowed to get questions.")
+    }
+  }
+
+  override fun importQuestion(
+    user: UserEntity,
+    questionJson: JsonNode,
+  ): Either<ServiceIssue, QuestionEntity> {
+    log.info(
+      "ImportQuestion[userId={}, username={}, questionJson={}]",
+      user.id(),
+      user.username(),
+      questionJson,
+    )
+
+    try {
+      val question: Question<Lang> = Json.decodeFromString(questionJson.toString())
+      return save(user, question)
+    } catch (parseError: Exception) {
+      log.error("Error parsing question JSON", parseError)
+      return Either.left(UnexpectedAction("Invalid question JSON format."))
     }
   }
 

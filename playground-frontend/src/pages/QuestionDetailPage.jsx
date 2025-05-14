@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Lock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+// Import Share2, remove Download if no longer used elsewhere, keep Lock
+import { Lock, Share2 } from 'lucide-react';
 
 import Header from '@/components/Header.jsx';
 import Loading from '@/components/Loading.jsx';
@@ -39,7 +41,6 @@ export default function QuestionDetailPage() {
             setStatus(State.NotFound);
             return;
         }
-
         const fetchQuestion = async () => {
             setStatus(State.Loading);
             await authenticatedReq(
@@ -65,9 +66,84 @@ export default function QuestionDetailPage() {
                 }
             );
         };
-
         fetchQuestion();
     }, [id, auth.accessToken, logout, navigate]);
+
+    const handleExportQuestion = useCallback(async () => {
+        if (!question || !id) {
+            toast.error('Question data is not available for export.');
+            return;
+        }
+
+        const exportUrl = `${Endpoints.Questions.Base}/${id}/export`;
+        const toastId = toast.loading('Exporting question...'); // Initial loading toast
+
+        try {
+            const response = await fetch(exportUrl, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${auth.accessToken}`,
+                },
+            });
+
+            if (!response.ok) {
+                let errorMsg = `Failed to export question. Status: ${response.status}`;
+                let shouldLogout = false;
+                try {
+                    const errorData = await response.json();
+                    errorMsg = errorData.message || errorData.error || errorMsg;
+                    if (errorData.type === ErrorType.TokenExpired || response.status === 401) {
+                        shouldLogout = true;
+                        errorMsg = 'Session expired. Please login again.';
+                    }
+                } catch (e) {
+                    errorMsg = response.statusText || errorMsg;
+                    if (response.status === 401) {
+                        shouldLogout = true;
+                        errorMsg = 'Session expired. Please login again.';
+                    }
+                }
+
+                if (shouldLogout) {
+                    logout();
+                    navigate(Routes.Login.path);
+                }
+                toast.error(errorMsg, { id: toastId, duration: 5000, closeButton: true }); // Update toast on error
+                return;
+            }
+
+            const disposition = response.headers.get('Content-Disposition');
+            let filename = `question_${id}.json`;
+            if (disposition && disposition.includes('attachment')) {
+                const filenameMatch = disposition.match(/filename="?([^"]+)"?/i);
+                if (filenameMatch && filenameMatch[1]) {
+                    filename = filenameMatch[1];
+                }
+            }
+
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(downloadUrl);
+
+            toast.success(`Question "${filename}" exported successfully!`, {
+                id: toastId,
+                duration: 3000,
+            }); // Update toast on success
+        } catch (error) {
+            console.error('Export failed:', error);
+            toast.error(error.message || 'An unknown error occurred during export.', {
+                id: toastId, // Ensure toastId is used if error happens before response.ok check
+                duration: 5000,
+                closeButton: true,
+            });
+        }
+    }, [id, question, auth.accessToken, logout, navigate]);
 
     if (status === State.Loading) {
         return (
@@ -111,6 +187,7 @@ export default function QuestionDetailPage() {
                             question={question}
                             setQuestion={setQuestion}
                             isEditable={isEditable}
+                            handleExport={handleExportQuestion}
                         />
                         <PlaceholderConfigurator
                             id={id}
@@ -156,7 +233,7 @@ export default function QuestionDetailPage() {
                             <Card className="shadow-xl rounded-xl dark:bg-slate-800 border dark:border-slate-700/50 flex flex-col items-center justify-center p-6 min-h-[200px]">
                                 <Lock className="h-8 w-8 text-slate-400 dark:text-slate-500 mb-3" />
                                 <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
-                                    Cannot add variants to an immutable question.
+                                    Cannot add variants in read-only mode.
                                 </p>
                             </Card>
                         )}

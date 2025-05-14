@@ -1,5 +1,6 @@
 package com.konstantion.service
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.konstantion.entity.QuestionEntity
 import com.konstantion.entity.UserEntity
 import com.konstantion.model.FormatAndCode
@@ -28,6 +29,11 @@ interface QuestionService {
   fun getQuestion(
     user: UserEntity,
     id: UUID,
+  ): Either<ServiceIssue, QuestionEntity>
+
+  fun importQuestion(
+    user: UserEntity,
+    questionJson: JsonNode,
   ): Either<ServiceIssue, QuestionEntity>
 
   fun createQuestion(
