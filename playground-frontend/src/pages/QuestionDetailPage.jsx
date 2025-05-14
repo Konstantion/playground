@@ -1,9 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-// Import Share2, remove Download if no longer used elsewhere, keep Lock
-import { Lock, Share2 } from 'lucide-react';
+import { Lock } from 'lucide-react';
 
 import Header from '@/components/Header.jsx';
 import Loading from '@/components/Loading.jsx';
