@@ -17,7 +17,7 @@ data class UserTestResponse(
   val startedAt: Long?,
   val completedAt: Long?,
   val score: Double?,
-  val shuffleVariants: Boolean
+  val shuffleVariants: Boolean,
 ) {
   companion object {
     fun UserTestEntity.asResponse(): UserTestResponse =
@@ -31,7 +31,7 @@ data class UserTestResponse(
         startedAt = startedAt()?.toEpochMilli(),
         completedAt = completedAt()?.toEpochMilli(),
         score = score(),
-        shuffleVariants = immutableTest().shuffleVariants()
+        shuffleVariants = immutableTest().shuffleVariants(),
       )
   }
 }

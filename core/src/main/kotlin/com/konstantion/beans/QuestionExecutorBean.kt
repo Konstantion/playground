@@ -22,7 +22,7 @@ class QuestionExecutorBean {
       LoggerFactory::getLogger,
       Lang.Python,
       "kostia",
-      CmdHelper.Python3File,
+      CmdHelper.PythonFile,
       PythonCodeInterpreter,
     )
 }

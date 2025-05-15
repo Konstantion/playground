@@ -165,7 +165,7 @@ class QuestionExecutorTest {
       LoggerFactory::getLogger,
       Lang.Python,
       "kostia",
-      CmdHelper.Python3File,
+      CmdHelper.PythonFile,
       PythonCodeInterpreter,
     )
 }
