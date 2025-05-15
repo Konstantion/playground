@@ -27,12 +27,12 @@ export const fetchJwt = async (username, password, onUserAndToken, onError) => {
     }
 };
 
-export const register = async (username, password, role, onRegistered, onError) => {
+export const register = async (username, password, email, role, onRegistered, onError) => {
     try {
         const response = await fetch(Endpoints.Auth.Register, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, role }),
+            body: JSON.stringify({ username, password, role, email }),
         });
 
         const data = await response.json().catch(() => ({}));

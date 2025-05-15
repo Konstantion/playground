@@ -156,6 +156,7 @@ export default function LoginPage() {
             await register(
                 input.username,
                 input.password,
+                input.email,
                 input.role,
                 () => {
                     toast.success('Registration successful! Please log in.', {
