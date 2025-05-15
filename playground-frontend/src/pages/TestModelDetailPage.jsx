@@ -78,7 +78,7 @@ export default function TestModelDetailPage() {
     const [immutableTestName, setImmutableTestName] = useState('');
     const [expiresAfter, setExpiresAfter] = useState('');
     const [shuffleQuestions, setShuffleQuestions] = useState(false);
-    const [shuffleVariants, setShuffleVariants] = useState(false);
+    const [shuffleVariants, setShuffleVariants] = useState(true);
     const [isSavingConfiguration, setIsSavingConfiguration] = useState(false);
 
     const [isImmutableTestCreatedDialogOpen, setIsImmutableTestCreatedDialogOpen] = useState(false);

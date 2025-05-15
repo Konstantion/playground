@@ -14,12 +14,14 @@ data class TestMetadataResponse(
   val testId: UUID,
   val name: String,
   val questionMetadata: List<QuestionMetadataResponse>,
+  val shuffle: Boolean,
 ) {
   companion object {
     fun TestMetadataEntity.asResponse() =
       TestMetadataResponse(
         id = id(),
         testId = immutableTestEntity().id(),
+        shuffle = immutableTestEntity().shuffleVariants(),
         name = name(),
         questionMetadata = questionMetadata.map { metadata -> metadata.asResponse() },
       )

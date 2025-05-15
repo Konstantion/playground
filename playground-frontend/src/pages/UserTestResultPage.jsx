@@ -54,8 +54,6 @@ const getUserTestStatusProps = status => {
 };
 
 function QuestionResultDisplay({ questionMetadata, userAnswerData, isStudent }) {
-    console.log(userAnswerData);
-
     const studentAnswerIds = new Set(userAnswerData?.answers?.map(a => a.id) || []);
     const correctMetadataAnswerIds = new Set(
         questionMetadata?.correctAnswers?.map(a => a.id) || []
@@ -149,24 +147,26 @@ function QuestionResultDisplay({ questionMetadata, userAnswerData, isStudent }) 
                         </p>
                     )}
                 </div>
-                <div className="flex items-center pt-2">
-                    <span className="font-semibold mr-2 dark:text-slate-300">Result:</span>
-                    {isCorrect ? (
-                        <Badge
-                            variant="secondary"
-                            className="bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300"
-                        >
-                            <Check className="mr-1 h-3 w-3" /> Correct
-                        </Badge>
-                    ) : (
-                        <Badge
-                            variant="destructive"
-                            className="bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-300"
-                        >
-                            <X className="mr-1 h-3 w-3" /> Incorrect
-                        </Badge>
-                    )}
-                </div>
+                {!isStudent ?? (
+                    <div className="flex items-center pt-2">
+                        <span className="font-semibold mr-2 dark:text-slate-300">Result:</span>
+                        {isCorrect ? (
+                            <Badge
+                                variant="secondary"
+                                className="bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300"
+                            >
+                                <Check className="mr-1 h-3 w-3" /> Correct
+                            </Badge>
+                        ) : (
+                            <Badge
+                                variant="destructive"
+                                className="bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-300"
+                            >
+                                <X className="mr-1 h-3 w-3" /> Incorrect
+                            </Badge>
+                        )}
+                    </div>
+                )}
             </CardContent>
         </Card>
     );
@@ -212,7 +212,6 @@ export default function UserTestResultPage() {
                     user: data.user || {},
                 };
 
-                console.log(details.questionAnswers);
                 details.studentAnswersMap = new Map(
                     details.questionAnswers.map(qa => [qa.questionMetadataId, qa])
                 );

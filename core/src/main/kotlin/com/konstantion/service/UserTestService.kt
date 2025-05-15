@@ -40,6 +40,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
+const val MAX_ATTEMPT = 5
+
 @Service
 data class UserTestService(
   private val immutableTestRepository: ImmutableTestRepository,
@@ -119,7 +121,9 @@ data class UserTestService(
         name = immutableTestEntityDb.name(),
         questions = questionsToProcess.map { it.toModel() },
       )
-    val generatedMetadata: TestModelMetadata =
+
+    var attempt = 0
+    var generatedMetadata: TestModelMetadata =
       when (
         val executorResult: Either<TestModelExecutor.Issue, TestModelMetadata> =
           testModelExecutor.run(testModel)
@@ -132,6 +136,36 @@ data class UserTestService(
           )
         is Either.Right -> executorResult.value
       }
+
+    while (!generatedMetadata.unique()) {
+      log.warn(
+        "Test model ${testModel.id} uniqueness check failed, retrying... Attempt: $attempt",
+      )
+
+      attempt++
+
+      if (attempt >= MAX_ATTEMPT) {
+        return Either.left(
+          UnexpectedAction(
+            "Uniqueness check for test ${testModel.id} failed, please notify teacher and try again.",
+          ),
+        )
+      }
+
+      generatedMetadata =
+        when (
+          val executorResult: Either<TestModelExecutor.Issue, TestModelMetadata> =
+            testModelExecutor.run(testModel)
+        ) {
+          is Either.Left ->
+            return Either.left(
+              UnexpectedAction(
+                "Test model execution failed: ${testModel.id}, Issue: ${executorResult.value}",
+              ),
+            )
+          is Either.Right -> executorResult.value
+        }
+    }
 
     val idToQuestionEntityMap = immutableTestEntityDb.questions().associateBy { it.id() }
     val idToVariantEntityMap =
