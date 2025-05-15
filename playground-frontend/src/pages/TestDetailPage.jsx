@@ -31,6 +31,7 @@ import {
     CheckCircle,
     CheckSquare,
     ClipboardList,
+    ClipboardCopy, // Added for copy functionality
     Clock,
     Eye,
     FileWarning,
@@ -97,9 +98,10 @@ function UserAttemptsList({ userTests = [], navigate }) {
         } else if (!navigate) {
             toast.error('Navigation function is not available.');
             console.error('Navigation function (navigate prop) is missing in UserAttemptsList.');
-        } else if (!RUserTests) {
-            toast.error('User Test Result route (RUserTests) is not defined.');
-            console.error('RUserTests route constant is not defined or imported correctly.');
+        } else if (!RUserTestResult) {
+            // Corrected RUserTests to RUserTestResult
+            toast.error('User Test Result route (RUserTestResult) is not defined.');
+            console.error('RUserTestResult route constant is not defined or imported correctly.');
         } else if (!userTestId) {
             toast.error('Cannot navigate without a User Test ID.');
             console.error('handleViewAttempt called without a valid userTestId.');
@@ -276,6 +278,17 @@ export default function TestDetailPage() {
         return isCreator || isAdmin;
     }, [auth.user, test]);
 
+    const handleCopyTestId = useCallback(async () => {
+        if (!test?.id) return;
+        try {
+            await navigator.clipboard.writeText(test.id);
+            toast.success('Test ID copied to clipboard!');
+        } catch (err) {
+            console.error('Failed to copy Test ID: ', err);
+            toast.error('Failed to copy Test ID.');
+        }
+    }, [test]);
+
     if (status === 'loading')
         return (
             <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col">
@@ -384,18 +397,29 @@ export default function TestDetailPage() {
                                 <div className="flex items-center">
                                     <ClipboardList
                                         size={22}
-                                        className="mr-3 text-sky-600 dark:text-sky-500"
+                                        className="mr-3 text-sky-600 dark:text-sky-500 flex-shrink-0" // Added flex-shrink-0
                                     />
-                                    <div>
+                                    <div className="min-w-0 flex-1">
+                                        {' '}
+                                        {/* Added min-w-0 and flex-1 for proper wrapping */}
                                         <CardTitle
-                                            className="text-xl font-semibold text-slate-800 dark:text-slate-100 truncate"
-                                            title={test.name}
+                                            className="text-xl font-semibold text-slate-800 dark:text-slate-100 break-words" // Removed truncate, added break-words
+                                            title={test.name} // Keep title attribute for full name on hover
                                         >
                                             {test.name}
                                         </CardTitle>
-                                        <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
-                                            ID: {test.id}
-                                        </CardDescription>
+                                        <div className="flex items-center text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                            <span>ID: {test.id}</span>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="ml-1.5 h-5 w-5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                                                onClick={handleCopyTestId}
+                                                aria-label="Copy Test ID"
+                                            >
+                                                <ClipboardCopy className="h-3 w-3" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </CardHeader>
