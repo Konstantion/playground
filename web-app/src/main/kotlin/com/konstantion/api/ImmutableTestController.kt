@@ -2,11 +2,14 @@ package com.konstantion.api
 
 import com.konstantion.api.ControllerUtils.asError
 import com.konstantion.dto.request.CreateImmutableTestRequest
+import com.konstantion.dto.request.CreateOneTimeTokenRequest
 import com.konstantion.dto.response.ImmutableTestPreviewResponse.Companion.asPreviewResponse
 import com.konstantion.dto.response.ImmutableTestResponse.Companion.asResponse
+import com.konstantion.dto.response.OneTimeTokenResponse
 import com.konstantion.entity.ImmutableTestEntity
 import com.konstantion.entity.UserEntity
 import com.konstantion.service.ImmutableTestService
+import com.konstantion.service.OneTimeTokenService
 import com.konstantion.service.ServiceIssue
 import com.konstantion.service.UserTestService
 import com.konstantion.utils.Either
@@ -28,6 +31,7 @@ data class ImmutableTestController(
   private val immutableTestService: ImmutableTestService,
   private val userTestService: UserTestService,
   private val transactionsHelper: TransactionsHelper,
+  private val oneTimeTokenService: OneTimeTokenService,
 ) {
   @GetMapping
   fun findAll(
@@ -82,5 +86,19 @@ data class ImmutableTestController(
       is Either.Left -> result.value.asError()
       // Return the updated test (now archived)
       is Either.Right -> ResponseEntity.ok(result.value.asResponse())
+    }
+
+  @PostMapping("/{id}/one-time-token")
+  fun generateOneTimeToken(
+    @AuthenticationPrincipal userEntity: UserEntity,
+    @RequestBody request: CreateOneTimeTokenRequest,
+    @PathVariable("id") id: UUID,
+  ): ResponseEntity<*> =
+    when (
+      val result: Either<ServiceIssue, String> =
+        transactionsHelper.tx { oneTimeTokenService.generate(userEntity, request.username, id) }
+    ) {
+      is Either.Left -> result.value.asError()
+      is Either.Right -> ResponseEntity.ok(OneTimeTokenResponse(result.value))
     }
 }

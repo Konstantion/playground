@@ -1,13 +1,13 @@
 package com.konstantion.dto.request
 
-import com.konstantion.service.AuthService
+import com.konstantion.service.LoginParams
 
 data class LoginRequest(
   val username: String,
   val password: String,
 ) {
-  fun asParams(): AuthService.LoginParams =
-    AuthService.LoginParams(
+  fun asParams(): LoginParams =
+    LoginParams(
       username = username,
       password = password,
     )

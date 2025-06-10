@@ -1,8 +1,8 @@
 package com.konstantion.service
 
 import com.konstantion.entity.UserEntity
+import com.konstantion.entity.UserTestEntity
 import com.konstantion.model.Role
-import com.konstantion.model.User
 import com.konstantion.repository.UserRepository
 import com.konstantion.service.SqlHelper.sqlAction
 import com.konstantion.service.SqlHelper.sqlOptionalAction
@@ -14,6 +14,7 @@ import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import java.util.Date
+import java.util.UUID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -21,13 +22,29 @@ import org.springframework.stereotype.Service
 private val SECRET = "mylittlesecretisitlongenough".repeat(10)
 private const val EXPIRATION_TIME = 86400000
 
+interface AuthService {
+  fun register(
+    user: UserEntity?,
+    params: RegisterParams,
+  ): Either<ServiceIssue, UserEntity>
+
+  fun login(params: LoginParams): Either<ServiceIssue, UserAndToken>
+
+  fun loginWithOneTimeToken(token: String): Either<ServiceIssue, UserAndToken>
+
+  fun extractUser(token: String): Either<ServiceIssue, UserEntity>
+}
+
 @Service
-data class AuthService(
+data class AuthServiceImpl(
   private val userRepository: UserRepository,
-) {
+  private val oneTimeTokenService: OneTimeTokenService,
+  private val userTestService: UserTestService,
+  private val immutableTestService: ImmutableTestService,
+) : AuthService {
   private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-  fun login(params: LoginParams): Either<ServiceIssue, UserAndToken> {
+  override fun login(params: LoginParams): Either<ServiceIssue, UserAndToken> {
     log.info("Login[params={}]", params)
 
     val user: UserEntity =
@@ -44,6 +61,10 @@ data class AuthService(
           }
       }
 
+    if (user.anonymous) {
+      return Either.left(UnexpectedAction("Anonymous user cannot login"))
+    }
+
     if (user.password != params.password) {
       return Either.left(UnexpectedAction("Invalid password or username"))
     }
@@ -51,8 +72,64 @@ data class AuthService(
     return Either.right(UserAndToken(user, generateToken(user)))
   }
 
-  fun register(
-    user: User?,
+  override fun loginWithOneTimeToken(token: String): Either<ServiceIssue, UserAndToken> {
+    val tokenData: OneTimeTokenData =
+      when (val result = oneTimeTokenService.activate(token)) {
+        is Maybe.Just -> result.value
+        Maybe.None -> return Either.left(UnexpectedAction("Invalid or expired one-time token"))
+      }
+
+    when (
+      val ignored: Either<ServiceIssue, UserEntity> =
+        userRepository.sqlOptionalAction { findByUsername(tokenData.username) }
+    ) {
+      is Either.Left -> {}
+      is Either.Right ->
+        return Either.left(UnexpectedAction("User already exists, username=${tokenData.username}"))
+    }
+
+    val immutableTest =
+      when (val result = immutableTestService.findByIdNotArchived(tokenData.testId)) {
+        is Either.Left -> return Either.left(result.value)
+        is Either.Right ->
+          when (val maybeImmutableTest = result.value) {
+            is Maybe.Just -> maybeImmutableTest.value
+            Maybe.None ->
+              return Either.left(UnexpectedAction("Test not found, id=${tokenData.testId}"))
+          }
+      }
+
+    val password = UUID.randomUUID().toString()
+    val user =
+      UserEntity().apply {
+        this.username = tokenData.username
+        this.password = password
+        this.role = Role.Student
+        this.anonymous = true
+        this.email = ""
+      }
+
+    val userDb: UserEntity =
+      when (
+        val result: Either<ServiceIssue, UserEntity> = userRepository.sqlAction { save(user) }
+      ) {
+        is Either.Left -> return Either.left(result.value)
+        is Either.Right -> result.value
+      }
+
+    when (
+      val result: Either<ServiceIssue, UserTestEntity> =
+        userTestService.createTestForUser(userDb, immutableTest.id(), true)
+    ) {
+      is Either.Left -> return Either.left(result.value)
+      is Either.Right -> {}
+    }
+
+    return Either.right(UserAndToken(user, generateToken(user)))
+  }
+
+  override fun register(
+    user: UserEntity?,
     params: RegisterParams,
   ): Either<ServiceIssue, UserEntity> {
     log.info("Register[user={}, params={}]", user, params)
@@ -94,7 +171,7 @@ data class AuthService(
     return Either.right(userDb)
   }
 
-  fun extractUser(token: String): Either<ServiceIssue, UserEntity> {
+  override fun extractUser(token: String): Either<ServiceIssue, UserEntity> {
     log.info("ExtractUser[token={}]", token)
     if (isExpired(token)) {
       return Either.left(TokenExpired("Token is expired"))
@@ -130,21 +207,21 @@ data class AuthService(
       .setExpiration(Date(System.currentTimeMillis() + EXPIRATION_TIME))
       .signWith(SignatureAlgorithm.HS512, SECRET)
       .compact()
-
-  data class LoginParams(
-    val username: String,
-    val password: String,
-  )
-
-  data class UserAndToken(
-    val user: UserEntity,
-    val token: String,
-  )
-
-  data class RegisterParams(
-    val username: String,
-    val password: String,
-    val email: String,
-    val role: Role,
-  )
 }
+
+data class LoginParams(
+  val username: String,
+  val password: String,
+)
+
+data class UserAndToken(
+  val user: UserEntity,
+  val token: String,
+)
+
+data class RegisterParams(
+  val username: String,
+  val password: String,
+  val email: String,
+  val role: Role,
+)

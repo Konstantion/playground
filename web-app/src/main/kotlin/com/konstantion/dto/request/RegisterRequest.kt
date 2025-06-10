@@ -1,7 +1,7 @@
 package com.konstantion.dto.request
 
 import com.konstantion.model.Role
-import com.konstantion.service.AuthService.RegisterParams
+import com.konstantion.service.RegisterParams
 
 data class RegisterRequest(
   val username: String,

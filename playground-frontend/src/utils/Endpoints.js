@@ -7,6 +7,7 @@ export const Endpoints = deepFreeze({
     Auth: {
         Login: `${BACKEND_API_URL}/auth/login`,
         Register: `${BACKEND_API_URL}/auth/register`,
+        Base: `${BACKEND_API_URL}/auth`,
     },
     Hello: `${BACKEND_API_URL}/hello`,
     Questions: {

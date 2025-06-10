@@ -351,6 +351,21 @@ data class ImmutableTestService(
       .ifRight { log.info("Successfully archived ImmutableTest: {}", it.id()) }
   }
 
+  fun findByIdNotArchived(id: UUID): Either<ServiceIssue, Maybe<ImmutableTestEntity>> {
+    log.info("FindByIdNotArchived[id={}]", id)
+
+    return immutableTestRepository
+      .sqlOptionalAction { findById(id) }
+      .flatMap { immutableTest ->
+        if (immutableTest.status == ImmutableTestStatus.ARCHIVED) {
+          log.warn("Immutable test {} is archived, cannot be found.", id)
+          Either.right(Maybe.none())
+        } else {
+          Either.right(Maybe.just(immutableTest))
+        }
+      }
+  }
+
   private fun deepCloneTestModel(original: TestModelEntity): TestModelEntity {
     val clone =
       TestModelEntity().apply {

@@ -1,7 +1,6 @@
 package com.konstantion.entity
 
 import com.konstantion.model.Role
-import com.konstantion.model.User
 import com.konstantion.utils.FieldUtils.nonNull
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -41,15 +40,4 @@ open class UserEntity {
   fun isTeacher(): Boolean = role() == Role.Teacher
 
   fun isStudent(): Boolean = role() == Role.Student
-
-  fun asUser(): User =
-    object : User {
-      override fun id(): UUID = nonNull(id)
-
-      override fun getUsername(): String = username()
-
-      override fun getPassword(): String = password()
-
-      override fun role(): Role = nonNull(role)
-    }
 }

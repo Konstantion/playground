@@ -69,6 +69,7 @@ data class UserTestService(
   fun createTestForUser(
     targetUser: UserEntity,
     immutableTestId: UUID,
+    internal: Boolean = false,
   ): Either<ServiceIssue, UserTestEntity> {
     log.info(
       "CreateUserTest[userId={}, username={}, immutableTestModelId={}]",
@@ -76,6 +77,10 @@ data class UserTestService(
       targetUser.username(),
       immutableTestId,
     )
+
+    if (targetUser.anonymous && !internal) {
+      return Either.left(Forbidden("Anonymous users cannot create tests."))
+    }
 
     val immutableTestEntityDb =
       when (

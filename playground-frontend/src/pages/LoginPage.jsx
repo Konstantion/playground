@@ -14,13 +14,24 @@ import {
 } from '@/components/ui/select.js';
 import { preventAndAsync } from '@/utils/Misc.js';
 import { sCp, sEq } from '@/utils/ObjectUtils.js';
-import { between, contains, substrs } from '@/utils/Strings.js';
+import { between, blank, contains, substrs } from '@/utils/Strings.js';
 import { fetchJwt, register } from '@/utils/AuthUtils.js';
 import { RHome } from '@/rout/Routes.jsx';
 import { toast } from 'sonner';
 import { ErrorType } from '@/utils/ErrorType.js';
 import { TestsPage } from '@/pages/Pages.js';
-import { LockKeyhole, UserPlus } from 'lucide-react';
+import { KeyRound, LockKeyhole, UserPlus } from 'lucide-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog.js';
+import { Label } from '@/components/ui/label.js';
+import { Endpoints } from '@/utils/Endpoints.js';
 
 const Mode = Object.freeze({
     Login: 'login',
@@ -91,6 +102,9 @@ export default function LoginPage() {
     const [input, setInput] = useState(sCp(IInput));
     const [error, setError] = useState(sCp(Errors));
     const [isLoading, setIsLoading] = useState(false);
+    const [isTokenDialogOpen, setIsTokenDialogOpen] = useState(false);
+    const [oneTimeToken, setOneTimeToken] = useState('');
+    const [isTokenLoggingIn, setIsTokenLoggingIn] = useState(false);
 
     const { login, logout } = useAuth();
     const navigate = useNavigate();
@@ -110,6 +124,48 @@ export default function LoginPage() {
         setInput(prev => ({ ...prev, role: value }));
         if (error.role) {
             setError(prev => ({ ...prev, role: '' }));
+        }
+    };
+
+    const handleTokenLogin = async () => {
+        const trimmedToken = oneTimeToken.trim();
+        if (blank(trimmedToken)) {
+            toast.error('Token cannot be empty.');
+            return;
+        }
+
+        setIsTokenLoggingIn(true);
+
+        try {
+            const response = await fetch(`${Endpoints.Auth.Base}/activate-token/${trimmedToken}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                const message = data.message || response.statusText;
+                toast.error(message || 'Invalid or expired token.', {
+                    closeButton: true,
+                    duration: 4000,
+                });
+                return;
+            }
+
+            if (data?.accessToken && data?.user) {
+                login(data);
+                toast.success(`Welcome, ${data.user.username}! Your test is ready.`);
+                navigate(`${RHome}/${TestsPage}`);
+            } else {
+                toast.error('Login failed: Invalid response from server.');
+            }
+        } catch (error) {
+            toast.error(error.message || 'A network error occurred.');
+        } finally {
+            setIsTokenLoggingIn(false);
+            setIsTokenDialogOpen(false);
+            setOneTimeToken('');
         }
     };
 
@@ -217,7 +273,6 @@ export default function LoginPage() {
 
                     <CardContent className="space-y-6">
                         <form className="space-y-4" onSubmit={handleSubmit}>
-                            {/* Email input for registration */}
                             {mode === Mode.Register && (
                                 <div className="space-y-1.5">
                                     <label
@@ -248,7 +303,6 @@ export default function LoginPage() {
                                 </div>
                             )}
 
-                            {/* Role selection for registration */}
                             {mode === Mode.Register && (
                                 <div className="space-y-1.5">
                                     <label
@@ -286,7 +340,6 @@ export default function LoginPage() {
                                 </div>
                             )}
 
-                            {/* Username input */}
                             <div className="space-y-1.5">
                                 <label
                                     htmlFor="username"
@@ -314,7 +367,6 @@ export default function LoginPage() {
                                 )}
                             </div>
 
-                            {/* Password input */}
                             <div className="space-y-1.5">
                                 <label
                                     htmlFor="password"
@@ -344,7 +396,6 @@ export default function LoginPage() {
                                 )}
                             </div>
 
-                            {/* Confirm password input for registration */}
                             {mode === Mode.Register && (
                                 <div className="space-y-1.5">
                                     <label
@@ -376,7 +427,6 @@ export default function LoginPage() {
                                 </div>
                             )}
 
-                            {/* Submit button */}
                             <Button
                                 type="submit"
                                 className="w-full mt-6 py-3 text-base bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 ease-in-out disabled:opacity-70"
@@ -413,6 +463,80 @@ export default function LoginPage() {
                                 )}
                             </Button>
                         </form>
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t dark:border-slate-600" />
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-white dark:bg-slate-800 px-2 text-slate-500 dark:text-slate-400">
+                                    Or
+                                </span>
+                            </div>
+                        </div>
+
+                        <Dialog open={isTokenDialogOpen} onOpenChange={setIsTokenDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className="w-full dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700"
+                                >
+                                    <KeyRound className="mr-2 h-4 w-4" />
+                                    Login with a one-time token
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="dark:bg-slate-800">
+                                <DialogHeader>
+                                    <DialogTitle>Login with One-Time Token</DialogTitle>
+                                    <DialogDescription>
+                                        Please enter the token provided by your teacher.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="my-4">
+                                    <Label htmlFor="one-time-token">Token</Label>
+                                    <Input
+                                        id="one-time-token"
+                                        placeholder="Paste your token here"
+                                        value={oneTimeToken}
+                                        onChange={e => setOneTimeToken(e.target.value)}
+                                        className="mt-1 dark:bg-slate-700"
+                                    />
+                                </div>
+                                <DialogFooter>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setIsTokenDialogOpen(false)}
+                                        className="dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button onClick={handleTokenLogin} disabled={isTokenLoggingIn}>
+                                        {isTokenLoggingIn && (
+                                            <svg
+                                                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <circle
+                                                    className="opacity-25"
+                                                    cx="12"
+                                                    cy="12"
+                                                    r="10"
+                                                    stroke="currentColor"
+                                                    strokeWidth="4"
+                                                ></circle>
+                                                <path
+                                                    className="opacity-75"
+                                                    fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                ></path>
+                                            </svg>
+                                        )}
+                                        {isTokenLoggingIn ? 'Verifying...' : 'Login with Token'}
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                     </CardContent>
                 </Tabs>
             </Card>

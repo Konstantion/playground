@@ -31,11 +31,13 @@ import {
     CheckCircle,
     CheckSquare,
     ClipboardList,
-    ClipboardCopy, // Added for copy functionality
+    ClipboardCopy,
     Clock,
+    Copy,
     Eye,
     FileWarning,
     HelpCircle,
+    KeyRound,
     Link as LinkIcon,
     ListChecks,
     Loader2,
@@ -49,6 +51,18 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label.js';
 import { Role } from '@/entities/Role.js';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog.js';
+import { Input } from '@/components/ui/input.js';
+import { between } from '@/utils/Strings.js';
+import { DialogDescription } from '@radix-ui/react-dialog';
 
 const ImmutableTestStatus = {
     ACTIVE: 'ACTIVE',
@@ -99,7 +113,6 @@ function UserAttemptsList({ userTests = [], navigate }) {
             toast.error('Navigation function is not available.');
             console.error('Navigation function (navigate prop) is missing in UserAttemptsList.');
         } else if (!RUserTestResult) {
-            // Corrected RUserTests to RUserTestResult
             toast.error('User Test Result route (RUserTestResult) is not defined.');
             console.error('RUserTestResult route constant is not defined or imported correctly.');
         } else if (!userTestId) {
@@ -197,6 +210,10 @@ export default function TestDetailPage() {
     const [test, setTest] = useState(null);
     const [status, setStatus] = useState('loading');
     const [isArchiving, setIsArchiving] = useState(false);
+    const [isTokenGenDialogOpen, setIsTokenGenDialogOpen] = useState(false);
+    const [tokenUsername, setTokenUsername] = useState('');
+    const [isGeneratingToken, setIsGeneratingToken] = useState(false);
+    const [generatedToken, setGeneratedToken] = useState(null);
 
     const fetchTestData = useCallback(async () => {
         if (!id) {
@@ -268,6 +285,46 @@ export default function TestDetailPage() {
             }
         );
     }, [test, isArchiving, id, auth.accessToken, logout]);
+
+    const handleGenerateToken = async () => {
+        const trimmedUsername = tokenUsername.trim();
+        if (!between(trimmedUsername, 3, 50)) {
+            toast.error('Username must be between 3 and 50 characters.');
+            return;
+        }
+
+        setIsGeneratingToken(true);
+        await authenticatedReq(
+            `${Endpoints.ImmutableTest.Base}/${id}/one-time-token`,
+            'POST',
+            { username: trimmedUsername },
+            auth.accessToken,
+            (type, message) => {
+                toast.error(`Failed to generate token: ${message || 'Unknown error'}`);
+                if (type === ErrorType.TokenExpired) logout();
+                setIsGeneratingToken(false);
+            },
+            tokenResponse => {
+                toast.success('One-time token generated successfully!');
+                setGeneratedToken(tokenResponse.token);
+                setIsTokenGenDialogOpen(false); // Close generation dialog
+                setTokenUsername(''); // Reset username field
+            }
+        );
+        setIsGeneratingToken(false);
+    };
+
+    const handleCopyToken = () => {
+        if (!generatedToken) return;
+        navigator.clipboard
+            .writeText(generatedToken)
+            .then(() => {
+                toast.success('Token copied to clipboard!');
+            })
+            .catch(err => {
+                toast.error('Failed to copy token.');
+            });
+    };
 
     const canArchive = useMemo(() => {
         if (!auth.user || !test || test.status !== ImmutableTestStatus.ACTIVE) {
@@ -375,12 +432,101 @@ export default function TestDetailPage() {
         </AlertDialog>
     );
 
+    const generateTokenDialog = (
+        <Dialog open={isTokenGenDialogOpen} onOpenChange={setIsTokenGenDialogOpen}>
+            <DialogTrigger asChild>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={
+                        test.status !== ImmutableTestStatus.ACTIVE ||
+                        auth.user.role === Role.Student
+                    }
+                >
+                    <KeyRound className="mr-2 h-4 w-4" /> Generate Token
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="dark:bg-slate-800">
+                <DialogHeader>
+                    <DialogTitle>Generate One-Time Token</DialogTitle>
+                    <DialogDescription>
+                        Enter a username for the student who will use this token to register and
+                        take the test.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="my-4 space-y-1.5">
+                    <Label htmlFor="token-username">Student Username</Label>
+                    <Input
+                        id="token-username"
+                        value={tokenUsername}
+                        onChange={e => setTokenUsername(e.target.value)}
+                        placeholder="e.g., john.doe"
+                        className="dark:bg-slate-700 dark:text-slate-200"
+                    />
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button
+                            variant="outline"
+                            className="dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
+                            disabled={isGeneratingToken}
+                        >
+                            Cancel
+                        </Button>
+                    </DialogClose>
+                    <Button onClick={handleGenerateToken} disabled={isGeneratingToken}>
+                        {isGeneratingToken && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Generate Token
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+
+    const tokenResultDialog = (
+        <Dialog open={!!generatedToken} onOpenChange={open => !open && setGeneratedToken(null)}>
+            <DialogContent className="dark:bg-slate-800">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center text-green-600 dark:text-green-400">
+                        <CheckCircle className="mr-2" /> Token Generated Successfully
+                    </DialogTitle>
+                    <DialogDescription className="pt-2">
+                        Share this token with the student. It is valid for 24 hours and can only be
+                        used once.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="my-4 p-3 bg-slate-100 dark:bg-slate-700/50 rounded-md">
+                    <Label className="text-xs text-slate-600 dark:text-slate-400">
+                        One-Time Token:
+                    </Label>
+                    <div className="flex items-center justify-between mt-1">
+                        <p className="text-sm font-mono text-sky-700 dark:text-sky-400 break-all">
+                            {generatedToken}
+                        </p>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleCopyToken}
+                            className="h-7 w-7 text-slate-500 hover:text-sky-600"
+                        >
+                            <Copy size={14} />
+                        </Button>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button className="w-full">Close</Button>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+
     return (
         <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col selection:bg-sky-500 selection:text-white">
             <Header page={null} setPage={p => navigate(`${RHome}/${p}`)} />
 
             <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
-                {' '}
                 <Button
                     onClick={() => navigate(`${RHome}/${RTests}`)}
                     variant="outline"
@@ -390,21 +536,18 @@ export default function TestDetailPage() {
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tests List
                 </Button>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8">
-                    {' '}
                     <div className="lg:col-span-1 flex flex-col gap-6 xl:gap-8">
                         <Card className="shadow-lg rounded-xl dark:bg-slate-800 border dark:border-slate-700/50">
                             <CardHeader className="pb-4">
                                 <div className="flex items-center">
                                     <ClipboardList
                                         size={22}
-                                        className="mr-3 text-sky-600 dark:text-sky-500 flex-shrink-0" // Added flex-shrink-0
+                                        className="mr-3 text-sky-600 dark:text-sky-500 flex-shrink-0"
                                     />
                                     <div className="min-w-0 flex-1">
-                                        {' '}
-                                        {/* Added min-w-0 and flex-1 for proper wrapping */}
                                         <CardTitle
-                                            className="text-xl font-semibold text-slate-800 dark:text-slate-100 break-words" // Removed truncate, added break-words
-                                            title={test.name} // Keep title attribute for full name on hover
+                                            className="text-xl font-semibold text-slate-800 dark:text-slate-100 break-words"
+                                            title={test.name}
                                         >
                                             {test.name}
                                         </CardTitle>
@@ -479,23 +622,22 @@ export default function TestDetailPage() {
                                     />
                                 </div>
 
-                                <div className="pt-4 border-t dark:border-slate-700/50">
+                                <div className="pt-4 border-t dark:border-slate-700/50 space-y-2">
                                     <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
                                         Actions
                                     </Label>
-                                    {canArchive && test.status === ImmutableTestStatus.ACTIVE ? (
-                                        archiveButtonAndDialog
-                                    ) : test.status === ImmutableTestStatus.ARCHIVED ? (
+                                    <div className="flex flex-wrap gap-2">
+                                        {canArchive && test.status === ImmutableTestStatus.ACTIVE
+                                            ? archiveButtonAndDialog
+                                            : null}
+                                        {auth.user.role !== Role.Student && generateTokenDialog}
+                                    </div>
+                                    {test.status === ImmutableTestStatus.ARCHIVED && (
                                         <p className="text-xs text-gray-500 dark:text-slate-400 italic flex items-center">
-                                            <Archive className="mr-1.5 h-3 w-3" /> This test is
-                                            archived.
+                                            <Archive className="mr-1.5 h-3 w-3" /> Actions are
+                                            disabled for archived tests.
                                         </p>
-                                    ) : !canArchive &&
-                                      test.status === ImmutableTestStatus.ACTIVE ? (
-                                        <p className="text-xs text-gray-500 dark:text-slate-400 italic">
-                                            You do not have permission to archive this test.
-                                        </p>
-                                    ) : null}
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
@@ -534,7 +676,6 @@ export default function TestDetailPage() {
                                     </div>
                                 ) : (
                                     <ScrollArea className="h-[250px]">
-                                        {' '}
                                         <ul className="divide-y dark:divide-slate-700/50">
                                             {test.questions.map(q => (
                                                 <li
@@ -597,6 +738,7 @@ export default function TestDetailPage() {
                     </div>
                 </div>
             </main>
+            {tokenResultDialog}
         </div>
     );
 }
