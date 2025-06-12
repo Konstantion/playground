@@ -78,7 +78,13 @@ data class QuestionServiceImpl(
     log.info("GetPublicQuestions[userId={}, username={}]", user.id(), user.username())
     return when (user.role()) {
       Role.Admin,
-      Role.Teacher, -> questionPort.sqlAction { findAllByPublic(true) }
+      Role.Teacher, -> {
+        questionPort
+          .sqlAction { findAllByPublic(true) }
+          .map { questions ->
+            questions.filter { question -> question.creator()?.id() == user.id() }
+          }
+      }
       Role.Student -> Forbidden.asEither("User is not allowed to get public questions.")
     }
   }
