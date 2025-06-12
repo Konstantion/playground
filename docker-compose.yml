@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: backend_app
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "${BACKEND_PORT_HOST}:${BACKEND_PORT_CONTAINER}"
+    environment:
+      - SERVER_PORT=${BACKEND_PORT_CONTAINER}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+
+  frontend:
+    build:
+      context: playground-frontend
+      dockerfile: Dockerfile.frontend
+    container_name: frontend_app
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT_HOST}:${FRONTEND_PORT_CONTAINER}"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
