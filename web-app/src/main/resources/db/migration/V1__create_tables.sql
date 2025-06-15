@@ -10,7 +10,7 @@ CREATE TABLE public.answer
 CREATE TABLE public.codes
 (
     id          uuid                 NOT NULL,
-    code        character varying(255) NOT NULL,
+    code        character varying(5000) NOT NULL,
     output_type character varying(255) NOT NULL
 );
 
@@ -100,7 +100,7 @@ CREATE TABLE public.questions
     creator_id      uuid,
     id              uuid                        NOT NULL,
     body            character varying(255)      NOT NULL,
-    format_and_code character varying(255)      NOT NULL,
+    format_and_code character varying(5000)      NOT NULL,
     lang            character varying(255)      NOT NULL
 );
 

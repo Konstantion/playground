@@ -30,7 +30,6 @@ data class TransactionsHelper(
       txManager.commit(status)
       result
     } catch (unexpected: Throwable) {
-      txManager.rollback(status)
       Either.left(
         UnexpectedAction(
           action = unexpected.message ?: "Unexpected error",

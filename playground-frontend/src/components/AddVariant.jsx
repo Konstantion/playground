@@ -160,6 +160,9 @@ export default function AddVariant({ question, setQuestion, className }) {
         }
     };
 
+    const variantCount =
+        (question.correctVariants?.length || 0) + (question.incorrectVariants?.length || 0);
+
     return (
         <Card
             className={cn(
@@ -196,7 +199,7 @@ export default function AddVariant({ question, setQuestion, className }) {
                         initialCode={code}
                         onChange={setCode}
                         editable={true}
-                        key={question.id + question.lang}
+                        key={`${question.id}-${question.lang}-${variantCount}`}
                     />
                 </div>
 

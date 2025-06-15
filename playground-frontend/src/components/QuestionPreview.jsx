@@ -308,7 +308,7 @@ export default function QuestionPreview({
                     <div className="p-4 sm:p-5 space-y-4">
                         <Dialog open={isNameOpen} onOpenChange={setIsNameOpen}>
                             <InfoSection
-                                title="Name / Body"
+                                title="Name"
                                 icon={<Info />}
                                 onEdit={() => {
                                     setDraftName(question.body);
@@ -324,13 +324,13 @@ export default function QuestionPreview({
                             <DialogContent className="dark:bg-slate-800">
                                 <DialogHeader>
                                     <DialogTitle className="dark:text-slate-100">
-                                        Edit Question Name / Body
+                                        Edit Question Name
                                     </DialogTitle>
                                 </DialogHeader>
                                 <Input
                                     value={draftName}
                                     onChange={e => setDraftName(e.target.value)}
-                                    placeholder="Enter question name / body"
+                                    placeholder="Enter question name"
                                     className="my-4 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600"
                                     maxLength={100}
                                 />

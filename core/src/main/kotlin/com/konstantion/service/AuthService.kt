@@ -22,6 +22,24 @@ import org.springframework.stereotype.Service
 private val SECRET = "mylittlesecretisitlongenough".repeat(10)
 private const val EXPIRATION_TIME = 86400000
 
+interface PasswordEncoder {
+  fun encode(password: String): String
+
+  fun matches(
+    rawPassword: String,
+    encodedPassword: String,
+  ): Boolean
+
+  data object NoOp : PasswordEncoder {
+    override fun encode(password: String): String = password
+
+    override fun matches(
+      rawPassword: String,
+      encodedPassword: String,
+    ): Boolean = rawPassword == encodedPassword
+  }
+}
+
 interface AuthService {
   fun register(
     user: UserEntity?,
@@ -43,6 +61,7 @@ data class AuthServiceImpl(
   private val immutableTestService: ImmutableTestService,
 ) : AuthService {
   private val log: Logger = LoggerFactory.getLogger(javaClass)
+  private val passwordEncoder: PasswordEncoder = PasswordEncoder.NoOp
 
   override fun login(params: LoginParams): Either<ServiceIssue, UserAndToken> {
     log.info("Login[params={}]", params)
@@ -65,7 +84,7 @@ data class AuthServiceImpl(
       return Either.left(UnexpectedAction("Anonymous user cannot login"))
     }
 
-    if (user.password != params.password) {
+    if (!passwordEncoder.matches(user.password(), params.password)) {
       return Either.left(UnexpectedAction("Invalid password or username"))
     }
 
@@ -154,7 +173,7 @@ data class AuthServiceImpl(
     val toSave =
       UserEntity().apply {
         username = params.username
-        password = params.password
+        password = passwordEncoder.encode(params.password)
         email = params.email
         role = params.role
         anonymous = false
