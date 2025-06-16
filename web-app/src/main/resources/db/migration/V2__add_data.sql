@@ -41,22 +41,22 @@ return res
 ', '"Str"');
 INSERT INTO public.codes VALUES ('d4b8f269-96a8-4ee4-b28d-f4950d89987c', 'import math
 if c == "square":
-    return str(b * b) if a == "area" else str(4 * b)
+    return b * b if a == "area" else 4 * b
 else: # circle
-    return str(math.pi * b**2) if a == "area" else str(2 * math.pi * b)', '"Str"');
+    return math.pi * b**2 if a == "area" else 2 * math.pi * b', '"Str"');
 INSERT INTO public.codes VALUES ('44ca72a7-c875-4c61-819d-14828d3feb9d', 'import math
 if c == "circle":
-    return str(b * b) if a == "area" else str(4 * b)
+    return b * b if a == "area" else 4 * b
 else:
-    return str(math.pi * b**2) if a == "area" else str(2 * math.pi * b)', '"Str"');
+    return math.pi * b**2 if a == "area" else 2 * math.pi * b', '"Str"');
 INSERT INTO public.codes VALUES ('4da910a0-4bbe-4bf7-8efa-973a2d800212', 'return b * 2 + b ** 2', '"Str"');
 INSERT INTO public.codes VALUES ('122a889b-1924-43f7-8439-36d065db406b', 'import math
 return math.pi * b', '"Str"');
 INSERT INTO public.codes VALUES ('01cb7422-6ff9-4d3c-a774-14f41a901ce8', '# V=IR, P=V*I=V^2/R
 if c == "current in Amps":
-    return str(a / b)
+    return a / b
 else: # power in Watts
-    return str((a ** 2) / b)
+    return (a ** 2) / b
 ', '"Str"');
 INSERT INTO public.codes VALUES ('43a4f153-1164-45d9-b8e3-7a2e05721c00', 'return a * b', '"Str"');
 INSERT INTO public.codes VALUES ('e67e1ae3-2dea-4d7a-9fe1-a8274345fb70', 'return b - 2 * a', '"Str"');
