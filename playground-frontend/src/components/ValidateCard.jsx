@@ -165,7 +165,6 @@ export default function ValidateCard({
     }, []);
 
     const getStatusDisplayProperties = () => {
-        console.log(status)
         if (validated) {
             return {
                 icon: <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />,

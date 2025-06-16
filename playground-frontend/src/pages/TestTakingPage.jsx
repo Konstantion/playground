@@ -443,7 +443,10 @@ export default function TestTakingPage() {
                         </CardTitle>
 
                         {currentQuestionMeta.formatAndCode?.code && (
-                            <div className="mt-4 p-3 bg-slate-100 dark:bg-slate-700/50 rounded-md text-sm border dark:border-slate-600">
+                            <div
+                                className="mt-4 p-3 bg-slate-100 dark:bg-slate-700/50 rounded-md text-sm border dark:border-slate-600"
+                                style={{ userSelect: 'none' }}
+                            >
                                 <pre className="whitespace-pre-wrap font-mono text-slate-700 dark:text-slate-300 text-xs sm:text-sm">
                                     <code>{currentQuestionMeta.formatAndCode.code}</code>
                                 </pre>

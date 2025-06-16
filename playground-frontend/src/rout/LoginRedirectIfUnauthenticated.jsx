@@ -6,8 +6,6 @@ import { TestsPage } from '@/pages/Pages.js';
 export const LoginRedirectIfUnauthenticated = ({ children }) => {
     const { auth } = useAuth();
 
-    console.log('LoginRedirectInLoggedOut', auth);
-
     if (!auth) {
         return <Navigate to={Routes.Login.path} replace />;
     } else {
@@ -17,8 +15,6 @@ export const LoginRedirectIfUnauthenticated = ({ children }) => {
 
 export const HomeRedirectIfAuthenticated = ({ children }) => {
     const { auth } = useAuth();
-
-    console.log('HomeRedirectIfAuthenticated', auth);
 
     if (auth) {
         return <Navigate to={`${RHome}/${TestsPage}`} replace />;

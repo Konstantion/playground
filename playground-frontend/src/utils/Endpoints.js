@@ -1,8 +1,6 @@
 import { deepFreeze } from './ObjectUtils';
 
-const BACKEND_API_URL = import.meta.env.DEV
-    ? 'http://localhost:8079/api'
-    : '/api';
+const BACKEND_API_URL = import.meta.env.DEV ? 'http://localhost:8079/api' : '/api';
 
 export const Endpoints = deepFreeze({
     Auth: {
