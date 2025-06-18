@@ -56,8 +56,12 @@ const QuestionsPage = () => {
     useEffect(() => {
         const fetchQuestions = async () => {
             setLoading(true);
+            const endpoint =
+                auth?.user?.role === 'Admin'
+                    ? Endpoints.Questions.GetAll
+                    : Endpoints.Questions.Base;
             await authenticatedReq(
-                Endpoints.Questions.Base,
+                endpoint,
                 'GET',
                 null,
                 auth.accessToken,

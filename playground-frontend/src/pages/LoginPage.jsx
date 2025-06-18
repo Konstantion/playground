@@ -62,16 +62,20 @@ const Errors = Object.freeze({
 const validate = (input, mode) => {
     const errors = sCp(Errors);
 
-    if (!between(input.username, 6, 20)) {
-        errors.username = 'Username must be 6-20 characters.';
-    } else {
-        errors.username = '';
+    if (mode === Mode.Register) {
+        if (!between(input.username, 6, 20)) {
+            errors.username = 'Username must be 6-20 characters.';
+        } else {
+            errors.username = '';
+        }
     }
 
-    if (!between(input.password, 6, 20)) {
-        errors.password = 'Password must be 6-20 characters.';
-    } else {
-        errors.password = '';
+    if (mode === Mode.Register) {
+        if (!between(input.password, 6, 20)) {
+            errors.password = 'Password must be 6-20 characters.';
+        } else {
+            errors.password = '';
+        }
     }
 
     if (mode === Mode.Register) {

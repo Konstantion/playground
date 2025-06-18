@@ -29,9 +29,7 @@ import com.konstantion.repository.UserTestRepository
 import com.konstantion.repository.VariantRepository
 import com.konstantion.service.SqlHelper.sqlAction
 import com.konstantion.service.SqlHelper.sqlOptionalAction
-import com.konstantion.utils.CommonScheduler
 import com.konstantion.utils.Either
-import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 import kotlinx.serialization.encodeToString
@@ -58,13 +56,6 @@ data class UserTestService(
   private val answerRepository: AnswerRepository,
 ) {
   private val log: Logger = LoggerFactory.getLogger(javaClass)
-
-  init {
-    CommonScheduler.loopWithDelay(
-      delay = Duration.ofMinutes(5),
-      block = ::deactivateExpiredUserTests,
-    )
-  }
 
   fun createTestForUser(
     targetUser: UserEntity,
@@ -559,48 +550,6 @@ data class UserTestService(
       }
     }
     return (correctCount.toDouble() / totalQuestions.toDouble()) * 100.0
-  }
-
-  private fun deactivateExpiredUserTests() {
-    val now = Instant.now()
-
-    val potentiallyExpiredUserTests =
-      try {
-        userTestRepository.findAll().filter { test ->
-          test.status == UserTestStatus.IN_PROGRESS &&
-            test.immutableTest().expiresAfter != null &&
-            test.immutableTest().expiresAfter!!.isBefore(now)
-        }
-      } catch (e: Exception) {
-        log.error("Failed to query for potentially expired user tests", e)
-        return
-      }
-
-    if (potentiallyExpiredUserTests.isEmpty()) {
-      return
-    }
-
-    log.info(
-      "Found {} IN_PROGRESS user tests whose time has expired. Marking as EXPIRED...",
-      potentiallyExpiredUserTests.size,
-    )
-
-    potentiallyExpiredUserTests.forEach { userTest ->
-      userTest.status = UserTestStatus.EXPIRED
-      userTest.completedAt = userTest.immutableTest().expiresAfter
-
-      try {
-        userTestRepository.save(userTest)
-        log.info("Marked UserTest id={} as EXPIRED.", userTest.id())
-      } catch (e: Exception) {
-        log.error("Failed to mark UserTest id={} as EXPIRED.", userTest.id(), e)
-      }
-    }
-    try {
-      userTestRepository.flush()
-    } catch (e: Exception) {
-      log.error("Error flushing repositories after marking user tests as expired", e)
-    }
   }
 
   private fun findTestForUser(

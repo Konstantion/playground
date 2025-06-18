@@ -51,7 +51,7 @@ data class ImmutableTestService(
   @PostConstruct
   fun scheduleTasks() {
     log.info("Scheduling background tasks for ImmutableTestService")
-    CommonScheduler.loopWithDelay(Duration.ofSeconds(30)) {
+    CommonScheduler.loopWithDelay(Duration.ofSeconds(15)) {
       transactionHelper.tx(::expireTestsTask)
     }
     log.info("Scheduled expireTestsTask to run every 30 seconds")
