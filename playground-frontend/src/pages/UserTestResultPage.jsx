@@ -73,7 +73,7 @@ function QuestionResultDisplay({ questionMetadata, userAnswerData, isStudent }) 
             <CardHeader className="pb-2">
                 {isStudent ? (
                     <CardTitle className="text-base font-semibold dark:text-slate-100">
-                        {'Question'}
+                        {questionMetadata?.text || 'Question text missing'}
                     </CardTitle>
                 ) : (
                     <>

@@ -31,6 +31,7 @@ import {
     XCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Role } from '@/entities/Role.js';
 
 const CodeDisplay = ({ formatAndCode, title = 'Code Snippet' }) => {
     if (!formatAndCode || !formatAndCode.code) {
@@ -97,8 +98,13 @@ export default function StatisticsPage() {
         setIsLoadingTests(true);
         setError(null);
 
+        const endpoint =
+            auth?.user?.role === Role.Admin
+                ? Endpoints.ImmutableTest.GetAll
+                : Endpoints.ImmutableTest.Base;
+
         await authenticatedReq(
-            Endpoints.ImmutableTest.Base,
+            endpoint,
             'GET',
             null,
             auth.accessToken,

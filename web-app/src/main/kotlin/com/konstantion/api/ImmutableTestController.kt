@@ -46,6 +46,19 @@ data class ImmutableTestController(
         ResponseEntity.ok(result.value.map { immutableTest -> immutableTest.asPreviewResponse() })
     }
 
+  @GetMapping("/all")
+  fun findAllAdmin(
+    @AuthenticationPrincipal userEntity: UserEntity,
+  ): ResponseEntity<*> =
+    when (
+      val result: Either<ServiceIssue, List<ImmutableTestEntity>> =
+        transactionsHelper.tx { immutableTestService.findAll(userEntity) }
+    ) {
+      is Either.Left -> result.value.asError()
+      is Either.Right ->
+        ResponseEntity.ok(result.value.map { immutableTest -> immutableTest.asPreviewResponse() })
+    }
+
   @GetMapping("/{id}")
   fun findById(
     @AuthenticationPrincipal userEntity: UserEntity,

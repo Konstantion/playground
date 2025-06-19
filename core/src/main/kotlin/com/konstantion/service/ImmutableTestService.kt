@@ -147,6 +147,26 @@ data class ImmutableTestService(
     return Either.right(Unit)
   }
 
+  fun findAll(user: UserEntity): Either<ServiceIssue, List<ImmutableTestEntity>> {
+    log.info(
+      "FindAll[userId={}, username={}]",
+      user.id(),
+      user.username(),
+    )
+
+    if (!user.isAdmin()) {
+      return Forbidden.asEither("User is not allowed to find immutable tests.")
+    }
+
+    return when (
+      val result: Either<ServiceIssue, List<ImmutableTestEntity>> =
+        immutableTestRepository.sqlAction { findAll() }
+    ) {
+      is Either.Left -> Either.left(result.value)
+      is Either.Right -> Either.right(result.value)
+    }
+  }
+
   fun findAllByCreator(user: UserEntity): Either<ServiceIssue, List<ImmutableTestEntity>> {
     log.info(
       "FindAllByCreator[userId={}, username={}]",
@@ -189,7 +209,7 @@ data class ImmutableTestService(
       is Either.Left -> Either.left(result.value)
       is Either.Right -> {
         val test = result.value
-        if (test.creator?.id() == user.id()) {
+        if (test.creator?.id() == user.id() || user.isAdmin()) {
           Either.right(test)
         } else {
           Forbidden.asEither("User is not allowed to find immutable tests.")

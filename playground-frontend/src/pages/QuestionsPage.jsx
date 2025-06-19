@@ -39,6 +39,7 @@ import { Routes as RRoutes, RQuestions } from '@/rout/Routes.jsx';
 import Loading from '@/components/Loading.jsx';
 import { between, blank } from '@/utils/Strings.js';
 import { Badge } from '@/components/ui/badge';
+import { Role } from '@/entities/Role.js';
 
 const QuestionsPage = () => {
     const { auth, logout } = useAuth();
@@ -57,7 +58,7 @@ const QuestionsPage = () => {
         const fetchQuestions = async () => {
             setLoading(true);
             const endpoint =
-                auth?.user?.role === 'Admin'
+                auth?.user?.role === Role.Admin
                     ? Endpoints.Questions.GetAll
                     : Endpoints.Questions.Base;
             await authenticatedReq(

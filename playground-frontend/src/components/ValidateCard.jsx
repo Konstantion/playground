@@ -234,10 +234,10 @@ export default function ValidateCard({
                         <div className="flex items-center space-x-2.5">
                             <span className="flex-shrink-0 mt-0.5">{statusDisplay.icon}</span>
                             <pre
-                                className={`whitespace-pre-wrap font-sans leading-relaxed ${statusDisplay.textClass}`}
+                                className={`whitespace-pre-wrap break-all min-w-0 font-sans leading-relaxed ${statusDisplay.textClass}`}
                             >
                                 {statusDisplay.text}
-                            </pre>
+                            </pre>{' '}
                         </div>
                     </div>
                 </div>
